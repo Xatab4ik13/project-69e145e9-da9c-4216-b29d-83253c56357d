@@ -36,13 +36,13 @@ describe("owner economics constants", () => {
     expect(ACQUIRING_FEE).toBe(0.0256);
     expect(SBP_FEE).toBe(0.004);
     expect(TAX_RATE).toBe(0.06);
-    expect(monthlyFixedTotal()).toBeCloseTo(154756.5, 2);
+    expect(monthlyFixedTotal()).toBeCloseTo(109905.5, 2);
     expect(WASHERS).toEqual(["Рома", "Малик", "Сергей"]);
   });
 
   it("breaks even once revenue covers the fixed plan", () => {
     // 100% - 6% tax - 30% washers = 64% of every rouble left for the plan.
-    expect(breakevenRevenue(154756.5, 0)).toBeCloseTo(154756.5 / 0.64, 1);
+    expect(breakevenRevenue(109905.5, 0)).toBeCloseTo(109905.5 / 0.64, 1);
   });
 });
 
@@ -129,14 +129,20 @@ describe("washer on the booking", () => {
 
 describe("fixedForPeriod", () => {
   it("books the whole month plan on the 1st", () => {
-    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-01" })).toBeCloseTo(154756.5, 2);
+    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-01" })).toBeCloseTo(109905.5, 2);
     expect(fixedForPeriod({ from: "2026-10-02", to: "2026-10-31" })).toBe(0);
   });
 
   it("uses the owner's plan for the month and a bigger actual bill", () => {
     const overrides = { "2026-12": { rent: 100000 } };
-    const ops: FinOp[] = [{ id: "u", date: "2026-12-28", kind: "expense", article: "utilities", name: "Коммуналка", amount: 30000 }];
-    expect(fixedForPeriod({ from: "2026-12-01", to: "2026-12-01" }, ops, overrides)).toBeCloseTo(154756.5 - 97955.5 + 100000 - 24851 + 30000, 2);
+    const ops: FinOp[] = [{ id: "a", date: "2026-12-10", kind: "expense", article: "accounting", name: "Бухгалтерия", amount: 15000 }];
+    expect(fixedForPeriod({ from: "2026-12-01", to: "2026-12-01" }, ops, overrides)).toBeCloseTo(100000 + 15000 + 950, 2);
+  });
+
+  it("utilities and supplies count only when paid, on the bill date", () => {
+    const ops: FinOp[] = [{ id: "u", date: "2026-10-28", kind: "expense", article: "utilities", name: "Коммуналка", amount: 25000 }];
+    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-27" }, ops)).toBeCloseTo(109905.5, 2);
+    expect(fixedForPeriod({ from: "2026-10-28", to: "2026-10-28" }, ops)).toBe(25000);
   });
 
   it("one-off expenses land on their own date", () => {

@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Plus, Trash2, X } from "lucide-react";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { addDays, fmtDateLong, fmtDateShort, fmtTime, rub, total } from "@/lib/crm/logic";
 import {
-  WASHERS, articleStatus, daysInMonth, paidIn, summarize, washerLedger,
+  WASHERS, VARIABLE_ARTICLES, articleStatus, daysInMonth, paidIn, summarize, washerLedger,
   type FinOp, type Period, type PlanOverrides,
 } from "@/lib/crm/finance";
 import type { Booking } from "@/lib/crm/types";
@@ -183,7 +183,7 @@ export function AdminFinance(props: Props) {
         {periodOps.map((o) => (
           <div key={o.id} className="flex items-center gap-3 border-b border-border py-2 last:border-0">
             <button type="button" onClick={() => openDay(o.date)} className="w-20 shrink-0 whitespace-nowrap text-left tabular-nums text-muted-foreground underline-offset-2 hover:underline">{fmtDateShort(o.date)}</button>
-            <span className="min-w-0 flex-1 truncate">{o.name}<span className="block text-xs text-muted-foreground">{o.kind === "payout" ? "мойщику" : o.article && o.article !== "other" ? "постоянная статья" : "прочий расход"}</span></span>
+            <span className="min-w-0 flex-1 truncate">{o.name}<span className="block text-xs text-muted-foreground">{o.kind === "payout" ? "мойщику" : o.article && articles.some((a) => a.id === o.article) ? "постоянная статья" : "по счёту"}</span></span>
             <span className="font-semibold tabular-nums">{money(o.amount)}</span>
             <button type="button" aria-label={`Удалить ${o.name}`} onClick={() => props.onRemoveOp(o.id)} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
           </div>
@@ -209,7 +209,7 @@ export function AdminFinance(props: Props) {
         <OpForm
           draft={draft}
           today={today}
-          articles={articles.map((a) => ({ id: a.id, name: a.name }))}
+          articles={[...articles.map((a) => ({ id: a.id, name: a.name })), ...VARIABLE_ARTICLES]}
           onClose={() => setDraft(null)}
           onSave={(op) => { props.onAddOp(op); setDraft(null); }}
         />
