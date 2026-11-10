@@ -55,7 +55,7 @@ function Contacts() {
         <p className="mt-3 flex items-center gap-3"><Clock className="h-5 w-5" /> Ежедневно · 10:00–22:00</p>
         <a href={PHONE_HREF} className="mt-2 flex items-center gap-3 font-display text-2xl"><Phone className="h-5 w-5" /> {PHONE}</a>
         <a href={PHONE_HREF} className="mt-3 flex items-center justify-center gap-2 rounded-lg border border-foreground py-2.5 font-semibold"><Phone className="h-4 w-4" /> Позвонить</a>
-        <img src={imgMap.url} alt="Схема заезда в паркинг Aquarius: от улицы Дыбенко к въезду, 4-й уровень" width={1280} height={735} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
+        <img data-nav="map" src={imgMap.url} alt="Схема заезда в паркинг Aquarius: от улицы Дыбенко к въезду, 4-й уровень" width={1280} height={735} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
         <RouteButton className="btn-lime mt-3 flex items-center justify-center rounded-lg py-3 text-lg" />
         <h3 className="mt-6 border-t border-border pt-4 font-display text-3xl uppercase">Как нас найти</h3>
         <div className="mt-2 space-y-2">
@@ -71,7 +71,7 @@ function Contacts() {
           <h2 className="mt-2 font-display text-5xl uppercase">Ждём на Большевиков</h2>
           <p className="btn-lime mt-3 inline-block rounded-lg px-4 py-1 font-display text-2xl uppercase">Автомойка на 4-м уровне паркинга</p>
           <p className="mt-3">Заезд с проспекта Большевиков — маршрут показан на схеме.</p>
-          <img src={imgMap.url} alt="Схема заезда в паркинг Aquarius: от улицы Дыбенко к въезду, 4-й уровень" width={1280} height={735} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
+          <img data-nav="map" src={imgMap.url} alt="Схема заезда в паркинг Aquarius: от улицы Дыбенко к въезду, 4-й уровень" width={1280} height={735} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
           <div className="mt-4 flex flex-wrap items-center gap-6">
             <RouteButton className="btn-lime inline-flex items-center rounded-lg px-5 py-2.5 text-sm" />
             <a href={YMAPS} target="_blank" rel="noreferrer" className="text-sm underline underline-offset-4">Открыть в Яндекс Картах</a>
@@ -174,7 +174,7 @@ function AppPromo() {
     { v: "до 20%", t: "стоимости заказа можно оплатить бонусами" },
   ];
   return (
-    <section className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
+    <section data-nav="app" className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
       <div className="grid gap-8 rounded-2xl bg-muted p-8 max-md:gap-4 max-md:p-4 md:grid-cols-[1.2fr_1fr]">
         <div>
           <h2 className="font-display text-4xl uppercase">Aquarius в вашем телефоне</h2>
@@ -227,6 +227,15 @@ export const Route = createFileRoute("/")({
 });
 
 const nav = ["Услуги", "Приложение", "Как проехать"];
+const NAV_TARGET: Record<string, string> = { "Услуги": "services", "Приложение": "app", "Как проехать": "map" };
+function scrollToNav(e: { preventDefault: () => void }, name: string) {
+  e.preventDefault();
+  const els = Array.from(document.querySelectorAll<HTMLElement>(`[data-nav="${NAV_TARGET[name]}"]`));
+  const el = els.find((x) => x.offsetParent !== null) ?? els[0];
+  if (!el) return;
+  const top = el.getBoundingClientRect().top + window.scrollY - 16;
+  window.scrollTo({ top, behavior: "smooth" });
+}
 
 function Index() {
   const [headerBooking, setHeaderBooking] = useState(false);
@@ -239,7 +248,7 @@ function Index() {
         </a>
         <nav className="hidden items-center gap-10 text-sm font-semibold md:flex">
           {nav.map((n) => (
-            <a key={n} href="#" className="transition-colors hover:text-muted-foreground">
+            <a key={n} href="#" onClick={(e) => scrollToNav(e, n)} className="transition-colors hover:text-muted-foreground">
               {n}
             </a>
           ))}
@@ -254,7 +263,7 @@ function Index() {
           {menu && (
             <nav className="absolute inset-x-0 top-full z-20 flex flex-col border-y border-border bg-background px-4 py-2 text-base font-semibold md:hidden">
               {nav.map((n) => (
-                <a key={n} href={n === "Как проехать" ? "#contacts" : "#"} onClick={() => setMenu(false)} className="py-2.5">{n}</a>
+                <a key={n} href="#" onClick={(e) => { setMenu(false); scrollToNav(e, n); }} className="py-2.5">{n}</a>
               ))}
             </nav>
           )}
@@ -345,7 +354,7 @@ function Configurator() {
 
   return (
     <>
-      <section className="mx-auto max-w-6xl border-b border-border px-4 py-8 md:px-6 md:py-10">
+      <section data-nav="services" className="mx-auto max-w-6xl border-b border-border px-4 py-8 md:px-6 md:py-10">
         <h2 className="font-display text-4xl uppercase max-[380px]:text-3xl md:text-5xl">Выберите комплекс</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {packages.map((p, i) => {
