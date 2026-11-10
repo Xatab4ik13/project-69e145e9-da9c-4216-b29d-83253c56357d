@@ -16,7 +16,7 @@ import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, MOCK_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
-import { WASHERS } from "@/lib/crm/finance";
+import { WASHER_SHARE, WASHERS } from "@/lib/crm/finance";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
   fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
@@ -420,6 +420,7 @@ function Legend() {
 
 function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Booking; onClose: () => void; onCancel: () => void; onUpdate: (fn: (b: Booking) => Booking) => void; mobile?: boolean }) {
   const [method, setMethod] = useState<PaymentMethod>(b.paymentMethod ?? "terminal");
+  const [washer, setWasher] = useState<string | null>(b.washer ?? null);
   const sum = total(b);
   const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
   const StateIcon = TONE[state].Icon;
@@ -517,7 +518,7 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
           {b.wash === "done" && b.payment === "paid" && (
             <div className="rounded-lg bg-crm-ok p-4 text-crm-ok-foreground">
               <p className="flex items-center gap-2 font-semibold"><Check className="h-4 w-4" /> Оплачено</p>
-              <p className="mt-1">{METHOD_LABEL[b.paymentMethod!]} · {rub(sum)}</p>
+              <p className="mt-1">{METHOD_LABEL[b.paymentMethod!]} · {rub(sum)}{b.washer ? ` · ${b.washer}` : ""}</p>
             </div>
           )}
           {b.wash === "done" && b.payment !== "paid" && (
@@ -539,17 +540,20 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
               </div>
               {method === "terminal" && (
                 <>
-                  <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "terminal"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Подтвердить оплату</button>
+                  <button type="button" disabled={!washer} onClick={() => onUpdate((x) => applyPayment(x, "terminal", washer ?? undefined))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Подтвердить оплату</button>
                   <p className="mt-2 text-center text-xs text-muted-foreground">Нажмите после успешной оплаты на терминале.</p>
                 </>
               )}
               {method === "cash" && (
-                <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "cash"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Подтвердить получение наличных</button>
+                <button type="button" disabled={!washer} onClick={() => onUpdate((x) => applyPayment(x, "cash", washer ?? undefined))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Подтвердить получение наличных</button>
               )}
               {method === "app" && (b.payment === "awaiting" ? (
-                <p className="mt-3 rounded-lg bg-crm-money p-3 text-center font-medium text-crm-money-foreground">Ожидает оплаты в приложении</p>
+                <>
+                  <p className="mt-3 rounded-lg bg-crm-money p-3 text-center font-medium text-crm-money-foreground">Ожидает оплаты в приложении</p>
+                  <button type="button" disabled={!washer} onClick={() => onUpdate((x) => receivePayment(x, washer ?? undefined))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Оплата поступила</button>
+                </>
               ) : (
-                <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "app"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Выставить счёт</button>
+                <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "app", washer ?? undefined))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Выставить счёт</button>
               ))}
             </>
           )}
