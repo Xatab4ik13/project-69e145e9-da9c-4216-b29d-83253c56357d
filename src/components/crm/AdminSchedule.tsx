@@ -10,8 +10,10 @@ import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
-  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
+  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
+  bookingState, STATE_LABEL, STATE_ACTION,
 } from "@/lib/crm/logic";
+import type { BookingState } from "@/lib/crm/logic";
 
 const PX_PER_MIN = 2;
 const HOURS = Array.from({ length: (CLOSE_MIN - OPEN_MIN) / 60 + 1 }, (_, i) => OPEN_MIN + i * 60);
@@ -62,8 +64,8 @@ export function AdminSchedule() {
           </button>
         </div>
 
-        <div className="mt-3 flex items-center gap-3">
-          <span className="text-muted-foreground">Работаем 10:00–22:00</span>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Legend />
           <div className="ml-auto flex rounded-lg bg-muted p-0.5">
             <span className="rounded-md bg-crm px-4 py-1.5 font-medium text-crm-foreground">День</span>
             <span className="cursor-not-allowed px-4 py-1.5 text-muted-foreground" title="Скоро">Неделя</span>
@@ -195,7 +197,7 @@ function Grid({
               ))}
               {HOURS.filter((m) => m + SLOT_MIN <= CLOSE_MIN && !bookings.some((b) => b.box === box && b.wash !== "cancelled" && b.start < m + SLOT_MIN && m < b.start + b.duration)).map((m) => (
                 <button key={`f${m}`} type="button" onClick={() => onAdd(box, m)}
-                  className="group absolute inset-x-2 flex items-center justify-between rounded-lg border border-dashed border-crm-ok-foreground/40 bg-crm-ok/50 px-3 text-left text-crm-ok-foreground transition-colors hover:border-solid hover:bg-crm-ok"
+                  className="group absolute inset-x-2 flex items-center justify-between rounded-lg border border-dashed border-crm-ok-foreground/60 bg-crm-ok/60 px-3 text-left text-crm-ok-foreground transition-colors hover:border-solid hover:bg-crm-ok"
                   style={{ top: (m - OPEN_MIN) * PX_PER_MIN + 2, height: SLOT_MIN * PX_PER_MIN - 4 }}>
                   <span><span className="block font-semibold">{fmtTime(m)} – {fmtTime(m + SLOT_MIN)}</span><span className="text-xs">Свободно</span></span>
                   <span className="flex items-center gap-1 text-xs font-semibold opacity-60 group-hover:opacity-100"><Plus className="h-4 w-4" />Записать</span>
@@ -218,47 +220,88 @@ function Grid({
   );
 }
 
+/** One look-and-feel per booking state: card, status badge and source chip. */
+const TONE: Record<BookingState, { card: string; badge: string; chip: string; Icon: typeof Phone }> = {
+  call: { card: "border-2 border-crm-alert-foreground bg-crm-alert text-crm-alert-foreground", badge: "bg-crm-alert-foreground text-crm-foreground", chip: "bg-crm-alert-foreground/10", Icon: Phone },
+  unconfirmed: { card: "border border-crm-warn-foreground/50 bg-crm-warn text-crm-warn-foreground", badge: "bg-crm-warn-foreground/15 text-crm-warn-foreground", chip: "bg-crm-warn-foreground/10", Icon: Clock },
+  confirmed: { card: "border border-crm/25 bg-crm-soft text-crm", badge: "bg-crm text-crm-foreground", chip: "bg-crm/10", Icon: Check },
+  working: { card: "border-2 border-crm bg-crm text-crm-foreground", badge: "bg-crm-foreground/20 text-crm-foreground", chip: "bg-crm-foreground/20", Icon: Clock },
+  ready: { card: "border border-crm-money-foreground/50 bg-crm-money text-crm-money-foreground", badge: "bg-crm-money-foreground/15 text-crm-money-foreground", chip: "bg-crm-money-foreground/10", Icon: Banknote },
+  awaiting: { card: "border border-crm-money-foreground/50 bg-crm-money text-crm-money-foreground", badge: "bg-crm-money-foreground/15 text-crm-money-foreground", chip: "bg-crm-money-foreground/10", Icon: Smartphone },
+  finished: { card: "border border-border bg-muted text-muted-foreground", badge: "bg-crm-ok text-crm-ok-foreground", chip: "bg-background", Icon: Check },
+};
+
 function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; onClick: () => void }) {
-  const call = needsCall(b, DEMO_TODAY, DEMO_NOW_MIN);
-  const status = call ? "Позвонить" : statusLabel(b);
-  const finished = b.wash === "done" && b.payment === "paid";
+  const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
+  const tone = TONE[state];
   const h = b.duration * PX_PER_MIN;
   const extras = b.services.length - 1;
+  const { Icon } = tone;
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`absolute inset-x-2 flex flex-col justify-start overflow-hidden rounded-lg border px-3 py-1 text-left leading-tight transition-colors ${
-        selected ? "z-[5] border-2 border-crm bg-crm-soft" : call ? "border-2 border-crm-warn-foreground bg-crm-warn" : finished ? "border-border bg-muted" : "border-border bg-background hover:bg-crm-surface"
-      }`}
+      className={`absolute inset-x-2 flex flex-col justify-start overflow-hidden rounded-lg border px-3 py-1 text-left leading-tight transition-colors ${tone.card} ${selected ? "z-[5] ring-2 ring-crm ring-offset-2 ring-offset-background" : ""}`}
       style={{ top: (b.start - OPEN_MIN) * PX_PER_MIN + 1, height: h - 2 }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="font-semibold">{fmtTime(b.start)} – {fmtTime(b.start + b.duration)}</span>
-        {status && finished && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Check className="h-3 w-3" />{status}</span>}
+      <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
+        <span className="shrink-0 whitespace-nowrap font-semibold">{fmtTime(b.start)} – {fmtTime(b.start + b.duration)}</span>
+        {h > 45 && (
+          <span className={`flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold ${tone.badge}`}>
+            <Icon className="h-3 w-3" />{STATE_LABEL[state]}
+          </span>
+        )}
       </div>
       <p className="truncate font-semibold">{b.car}</p>
-      {h > 60 && <p className="truncate text-xs">{b.packageName}{extras > 0 ? ` + ${extras} доп${extras > 1 && extras < 5 ? "а" : extras >= 5 ? "ов" : ""}` : ""}</p>}
+      {h > 60 && <p className="truncate text-xs opacity-80">{b.packageName}{extras > 0 ? ` + ${extras} доп${extras > 1 && extras < 5 ? "а" : extras >= 5 ? "ов" : ""}` : ""}</p>}
       {h > 70 && (
         <div className="mt-1.5 flex w-full items-center gap-1.5">
-          {selected && h > 90 && <span className="mr-auto font-bold">{rub(total(b))}</span>}
-          <span className={`rounded bg-muted px-1.5 py-0.5 text-xs ${selected ? "" : "mr-auto"}`}>{SOURCE_LABEL[b.source]}</span>
-          {status && !finished && (
-            <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium ${b.wash === "in_progress" ? "bg-crm-soft text-crm" : call ? "bg-crm-warn-foreground text-crm-foreground" : b.wash === "scheduled" && !b.confirmed ? "bg-crm-warn text-crm-warn-foreground" : b.payment === "awaiting" ? "bg-crm-warn text-crm-warn-foreground" : "bg-crm-ok text-crm-ok-foreground"}`}>
-              {call && <Phone className="h-3 w-3" />}{(b.wash === "done" && b.payment === "unpaid") || (b.wash === "scheduled" && b.confirmed) ? <Check className="h-3 w-3" /> : null}{status}
-            </span>
-          )}
+          <span className="mr-auto font-bold">{rub(total(b))}</span>
+          <span className={`rounded px-1.5 py-0.5 text-xs ${tone.chip}`}>{SOURCE_LABEL[b.source]}</span>
         </div>
       )}
     </button>
   );
 }
 
+/** Key that explains every color in the schedule. */
+function Legend() {
+  const items = [
+    { t: "Позвонить", c: "border-crm-alert-foreground bg-crm-alert" },
+    { t: "Не подтверждена", c: "border-crm-warn-foreground/60 bg-crm-warn" },
+    { t: "Подтверждена", c: "border-crm/30 bg-crm-soft" },
+    { t: "В работе", c: "border-crm bg-crm" },
+    { t: "Готова · ждёт оплаты", c: "border-crm-money-foreground/60 bg-crm-money" },
+    { t: "Завершена", c: "border-border bg-muted" },
+    { t: "Свободно", c: "border-dashed border-crm-ok-foreground/60 bg-crm-ok/60" },
+  ];
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+      {items.map((i) => (
+        <span key={i.t} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className={`h-3.5 w-5 rounded border ${i.c}`} />{i.t}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: () => void; onCancel: () => void; onUpdate: (fn: (b: Booking) => Booking) => void }) {
   const [method, setMethod] = useState<PaymentMethod>(b.paymentMethod ?? "terminal");
   const sum = total(b);
-  const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : b.confirmed ? "Подтверждена" : "Не подтверждена";
+  const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
+  const StateIcon = TONE[state].Icon;
+  const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : state === "call" ? "Позвонить" : b.confirmed ? "Подтверждена" : "Не подтверждена";
   const payLabel = b.payment === "paid" ? "Оплачено" : b.payment === "awaiting" ? "Ожидает оплаты" : "Не оплачено";
+  const washTone =
+    b.wash === "done" ? "bg-crm-ok text-crm-ok-foreground"
+    : b.wash === "in_progress" ? "bg-crm text-crm-foreground"
+    : state === "call" ? "bg-crm-alert-foreground text-crm-foreground"
+    : b.confirmed ? "bg-crm-soft text-crm" : "bg-crm-warn text-crm-warn-foreground";
+  const payTone =
+    b.payment === "paid" ? "bg-crm-ok text-crm-ok-foreground"
+    : b.payment === "awaiting" || b.wash === "done" ? "bg-crm-money text-crm-money-foreground"
+    : "bg-muted text-muted-foreground";
   const methods: { id: PaymentMethod; icon: typeof CreditCard }[] = [
     { id: "terminal", icon: CreditCard },
     { id: "cash", icon: Banknote },
@@ -277,10 +320,13 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
         <p className="mt-3 flex items-center gap-2 text-base"><Calendar className="h-5 w-5" /> {fmtDateShort(b.date)} · {fmtTime(b.start)}–{fmtTime(b.start + b.duration)}</p>
         <div className="mt-3 grid grid-cols-[72px_1fr] items-center gap-y-1.5">
           <span className="text-muted-foreground">Мойка:</span>
-          <span><span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 ${b.wash === "done" || (b.wash === "scheduled" && b.confirmed) ? "bg-crm-ok text-crm-ok-foreground" : b.wash === "scheduled" ? "bg-crm-warn text-crm-warn-foreground" : "bg-crm-soft text-crm"}`}>{b.wash === "done" && <Check className="h-3 w-3" />}{washLabel}</span></span>
+          <span><span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 font-medium ${washTone}`}>{b.wash === "done" && <Check className="h-3 w-3" />}{washLabel}</span></span>
           <span className="text-muted-foreground">Оплата:</span>
-          <span><span className={`rounded px-2 py-0.5 ${b.payment === "paid" ? "bg-crm-ok text-crm-ok-foreground" : "bg-crm-warn text-crm-warn-foreground"}`}>{payLabel}</span></span>
+          <span><span className={`rounded px-2 py-0.5 font-medium ${payTone}`}>{payLabel}</span></span>
         </div>
+        {STATE_ACTION[state] && (
+          <p className={`mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${TONE[state].card}`}>{StateIcon && <StateIcon className="h-4 w-4" />}{STATE_ACTION[state]}</p>
+        )}
 
         <div className="mt-4 space-y-2 border-t border-border pt-4">
           <p><span className="text-muted-foreground">Телефон:</span> {b.phone ? <a href={`tel:+7${b.phone}`} className="text-crm">{fmtPhone(b.phone)}</a> : <span className="text-muted-foreground">не указан</span>}</p>
@@ -315,14 +361,14 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
           {b.wash === "scheduled" && !b.confirmed && (
             <>
               {needsCall(b, DEMO_TODAY, DEMO_NOW_MIN) && (
-                <p className="mb-3 flex items-center gap-2 rounded-lg bg-crm-warn p-3 text-crm-warn-foreground"><Phone className="h-4 w-4" /> Позвоните клиенту: до начала меньше 15 минут</p>
+                <p className="mb-3 flex items-center gap-2 rounded-lg border-2 border-crm-alert-foreground bg-crm-alert p-3 font-medium text-crm-alert-foreground"><Phone className="h-4 w-4" /> Позвоните клиенту: до начала меньше 15 минут</p>
               )}
               <button type="button" onClick={() => onUpdate((x) => confirmBooking(x, DEMO_TODAY, DEMO_NOW_MIN))} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Клиент подтвердил</button>
               <p className="mt-2 text-center text-xs text-muted-foreground">Мойка начнётся автоматически во время записи.</p>
             </>
           )}
           {b.wash === "scheduled" && b.confirmed && (
-            <p className="rounded-lg bg-crm-ok p-3 text-center text-crm-ok-foreground">Запись подтверждена. Мойка начнётся автоматически в {fmtTime(b.start)}.</p>
+            <p className="rounded-lg bg-crm-soft p-3 text-center font-medium text-crm">Запись подтверждена. Мойка начнётся автоматически в {fmtTime(b.start)}.</p>
           )}
           {b.wash === "scheduled" && (
             <button type="button" onClick={onCancel} className="mt-3 w-full rounded-lg border border-destructive py-2.5 font-semibold text-destructive">Отменить бронь</button>
@@ -369,7 +415,7 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
                 <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "cash"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Подтвердить получение наличных</button>
               )}
               {method === "app" && (b.payment === "awaiting" ? (
-                <p className="mt-3 rounded-lg bg-crm-warn p-3 text-center text-crm-warn-foreground">Ожидает оплаты в приложении</p>
+                <p className="mt-3 rounded-lg bg-crm-money p-3 text-center font-medium text-crm-money-foreground">Ожидает оплаты в приложении</p>
               ) : (
                 <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "app"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Выставить счёт</button>
               ))}

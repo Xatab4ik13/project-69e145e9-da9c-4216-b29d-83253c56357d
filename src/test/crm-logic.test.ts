@@ -64,8 +64,7 @@ describe("booking identity", () => {
   });
 });
 
-import { autoStart, cancelBooking, confirmBooking, needsCall } from "@/lib/crm/logic";
-describe("confirmation", () => {
+import { autoStart, cancelBooking, confirmBooking, needsCall } from "@/lib/crm/logic";describe("confirmation", () => {
   const lada = MOCK_BOOKINGS.find((b) => b.id === "b4")!; // 17:00, unconfirmed
   it("unconfirmed booking within 15 min needs a call", () => {
     expect(needsCall(lada, lada.date, 16 * 60 + 45)).toBe(true);
@@ -80,4 +79,21 @@ describe("confirmation", () => {
     const list = MOCK_BOOKINGS.map((b) => (b.id === "b4" ? cancelBooking(b) : b));
     expect(findConflict(list, { date: lada.date, box: 1, start: 17 * 60, duration: 60 })).toBeUndefined();
   });
+});
+
+import { bookingState, STATE_LABEL } from "@/lib/crm/logic";
+describe("booking colors", () => {
+  const lada = MOCK_BOOKINGS.find((b) => b.id === "b4")!; // 17:00, unconfirmed
+  const camry = MOCK_BOOKINGS.find((b) => b.id === "b6")!; // 16:00, in progress
+  it("unconfirmed within 15 min reads as a red call", () => {
+    expect(bookingState(lada, lada.date, 16 * 60 + 50)).toBe("call");
+    expect(STATE_LABEL.call).toBe("Позвонить");
+    expect(bookingState(lada, lada.date, 16 * 60 + 30)).toBe("unconfirmed");
+  });
+  it("money still owed is its own state, not the call one", () => {
+    expect(bookingState(kia, kia.date, 17 * 60)).toBe("ready");
+    expect(bookingState({ ...kia, payment: "awaiting" }, kia.date, 17 * 60)).toBe("awaiting");
+    expect(bookingState({ ...kia, payment: "paid" }, kia.date, 17 * 60)).toBe("finished");
+  });
+  it("a wash under way is working", () => expect(bookingState(camry, camry.date, 16 * 60 + 55)).toBe("working"));
 });
