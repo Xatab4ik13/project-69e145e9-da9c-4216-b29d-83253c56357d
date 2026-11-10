@@ -33,4 +33,31 @@ describe("CRM clients", () => {
     expect(filterClients(clients, "921 345", "all", DEMO_TODAY).map((client) => client.id)).toEqual(["lc1"]);
     expect(filterClients(clients, "multivan", "all", DEMO_TODAY).map((client) => client.id)).toEqual(["lc6"]);
   });
+
+  it("shows no more than eight clients per page and keeps the requested page in range", () => {
+    expect(CLIENTS_PER_PAGE).toBe(8);
+    const manyClients = Array.from({ length: 19 }, (_, index) => ({
+      ...clients[index % clients.length]!,
+      id: `client-${index + 1}`,
+    }));
+    const firstPage = paginateClients(manyClients, 1);
+    expect(firstPage.items).toHaveLength(8);
+    expect(firstPage.pageCount).toBe(3);
+    expect(firstPage.start).toBe(1);
+    expect(firstPage.end).toBe(8);
+    expect(paginateClients(manyClients, 3).items).toHaveLength(3);
+    expect(paginateClients(manyClients, 99).currentPage).toBe(3);
+  });
+
+  it("paginates only after searching the complete client list", () => {
+    const manyClients = Array.from({ length: 12 }, (_, index) => ({
+      ...clients[index % clients.length]!,
+      id: `client-${index + 1}`,
+    }));
+    const found = filterClients(manyClients, "multivan", "all", DEMO_TODAY);
+    const result = paginateClients(found, 4);
+    expect(found.length).toBeGreaterThan(0);
+    expect(result.currentPage).toBe(1);
+    expect(result.items.every((client) => client.cars.some((car) => car.name === "Volkswagen Multivan"))).toBe(true);
+  });
 });

@@ -38,6 +38,7 @@ export function AdminClients({
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ClientFilter>("all");
+  const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const clients = useMemo(
     () => buildClients(MOCK_LOYALTY_CLIENTS, MOCK_BOOKINGS, MOCK_CLIENT_CARS, DEMO_TODAY, MOCK_CLIENT_FIRST_CONTACT),
@@ -45,6 +46,14 @@ export function AdminClients({
   );
   const metrics = useMemo(() => clientMetrics(clients, DEMO_TODAY), [clients]);
   const visible = useMemo(() => filterClients(clients, query, filter, DEMO_TODAY), [clients, filter, query]);
+  const pagination = useMemo(() => paginateClients(visible, page), [page, visible]);
+  const pageNumbers = useMemo(() => {
+    const firstPage = Math.min(
+      Math.max(1, pagination.currentPage - 2),
+      Math.max(1, pagination.pageCount - 4),
+    );
+    return Array.from({ length: Math.min(5, pagination.pageCount) }, (_, index) => firstPage + index);
+  }, [pagination.currentPage, pagination.pageCount]);
   const openClient = useCallback((id: string) => setSelectedId(id), []);
   const selected = clients.find((client) => client.id === selectedId) ?? null;
 
@@ -71,7 +80,7 @@ export function AdminClients({
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Телефон или автомобиль"
               aria-label="Поиск клиента по телефону или автомобилю"
               className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
@@ -82,7 +91,7 @@ export function AdminClients({
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setFilter(item.id)}
+                onClick={() => { setFilter(item.id); setPage(1); }}
                 className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm ${filter === item.id ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
               >
                 {item.label}
