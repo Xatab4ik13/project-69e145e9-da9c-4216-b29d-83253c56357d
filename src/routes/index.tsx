@@ -1,6 +1,87 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight, ArrowUpRight, Check, Clock, MapPin, Plus } from "lucide-react";
+import { ArrowRight, ArrowUp, ArrowUpRight, Check, Clock, Copy, CornerUpRight, MapPin, Phone, Plus } from "lucide-react";
+import imgMap from "@/assets/parking-map.webp.asset.json";
+import imgParkCar from "@/assets/parking-car.webp.asset.json";
+
+const ADDRESS = "Санкт-Петербург, проспект Большевиков, 18к2";
+const PHONE = "+7 (904) 511-73-96";
+const PHONE_HREF = "tel:+79045117396";
+const YMAPS = "https://yandex.ru/maps/?text=" + encodeURIComponent(ADDRESS);
+
+function Contacts() {
+  const [copied, setCopied] = useState(false);
+  const steps = [
+    { icon: <ArrowUp className="h-7 w-7" />, t: "С проспекта Большевиков", d: "Двигайтесь со стороны улицы Дыбенко. Сверните направо в боковой проезд рядом с «Вкусно — и точка»." },
+    { icon: <CornerUpRight className="h-7 w-7" />, t: "Во въезд паркинга", d: "Проедьте вдоль здания и поверните направо во въезд паркинга." },
+    { icon: <span className="flex h-7 w-7 items-center justify-center rounded-md border-2 border-foreground font-display text-base">P</span>, t: "На 5-й уровень", d: "Поднимитесь на 5-й уровень паркинга. Здесь находится автомойка Aquarius." },
+  ];
+  return (
+    <section id="contacts" className="mx-auto max-w-6xl px-6 py-10">
+      <div className="grid gap-10 md:grid-cols-[1.4fr_1fr]">
+        <div>
+          <p className="font-display text-sm uppercase tracking-[0.3em]">Контакты и проезд</p>
+          <h2 className="mt-2 font-display text-5xl uppercase">Ждём на Большевиков</h2>
+          <p className="btn-lime mt-3 inline-block rounded-lg px-4 py-1 font-display text-2xl uppercase">Автомойка на 5-м уровне паркинга</p>
+          <p className="mt-3">Заезд с проспекта Большевиков — маршрут показан на схеме.</p>
+          <img src={imgMap.url} alt="Схема заезда в паркинг Aquarius" width={1400} height={800} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
+          <div className="mt-4 flex flex-wrap items-center gap-6">
+            <a href={YMAPS} target="_blank" rel="noreferrer" className="btn-lime inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm">Маршрут до въезда <ArrowUpRight className="h-4 w-4" /></a>
+            <a href={YMAPS} target="_blank" rel="noreferrer" className="text-sm underline underline-offset-4">Открыть в Яндекс Картах</a>
+          </div>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border p-4">
+            <div>
+              <p className="font-display text-2xl">Первый раз у нас?</p>
+              <p className="text-sm">Если запутались на подъезде, позвоните — подскажем дорогу.</p>
+            </div>
+            <div className="flex flex-col items-center gap-1 sm:border-l sm:border-border sm:pl-4">
+              <a href={PHONE_HREF} className="inline-flex items-center gap-2 rounded-lg border border-foreground px-6 py-1.5 text-sm font-semibold"><Phone className="h-4 w-4" /> Позвонить</a>
+              <button type="button" onClick={() => { navigator.clipboard?.writeText(ADDRESS); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="inline-flex items-center gap-2 text-sm underline underline-offset-4">
+                <Copy className="h-4 w-4" /> {copied ? "Адрес скопирован" : "Скопировать адрес"}
+              </button>
+            </div>
+          </div>
+          <img src={imgParkCar.url} alt="Автомобиль у метки паркинга, 5 уровень" width={800} height={381} loading="lazy" decoding="async" className="mt-4 w-3/5" />
+        </div>
+        <div>
+          <p className="font-display text-sm uppercase tracking-[0.3em]">Адрес</p>
+          <p className="mt-2 font-display text-3xl leading-tight">Санкт-Петербург<br />проспект Большевиков, 18к2</p>
+          <p className="btn-lime mt-3 inline-block rounded-lg px-4 py-1 font-display text-xl">Паркинг · 5-й уровень</p>
+          <p className="mt-3 flex items-center gap-2"><Clock className="h-5 w-5" /> Ежедневно · 10:00–22:00</p>
+          <div className="mt-6 border-t border-border pt-6">
+            <a href={PHONE_HREF} className="font-display text-4xl">{PHONE}</a>
+            <a href={PHONE_HREF} className="mt-3 flex w-64 items-center justify-center gap-2 rounded-lg border border-foreground py-2 text-sm font-semibold"><Phone className="h-4 w-4" /> Позвонить</a>
+          </div>
+          <div className="mt-6 border-t border-border pt-6">
+            <h3 className="font-display text-3xl uppercase">Как заехать</h3>
+            {steps.map((s, i) => (
+              <div key={s.t} className={`flex gap-4 py-4 ${i > 0 ? "border-t border-border" : ""}`}>
+                <div className="shrink-0 border-r border-border pr-4">{s.icon}</div>
+                <div>
+                  <p className="font-display text-xl">{s.t}</p>
+                  <p className="text-sm">{s.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SiteFooter() {
+  return (
+    <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-5">
+      <img src={logo.url} alt="Aquarius автомойка" width={160} height={64} loading="lazy" className="h-12 w-auto" />
+      <nav className="flex gap-8 text-sm font-semibold">
+        <a href="#">Услуги</a>
+        <a href="#contacts">Контакты</a>
+        <a href="#">Политика конфиденциальности</a>
+      </nav>
+    </footer>
+  );
+}
 import imgFoam from "@/assets/care-foam-wash.webp.asset.json";
 import imgWax from "@/assets/care-quartz-wax.webp.asset.json";
 import imgRain from "@/assets/care-antirain.webp.asset.json";
@@ -154,6 +235,8 @@ function Index() {
       <Configurator />
       <MoreCare />
       <AppPromo />
+      <Contacts />
+      <SiteFooter />
     </div>
   );
 }
