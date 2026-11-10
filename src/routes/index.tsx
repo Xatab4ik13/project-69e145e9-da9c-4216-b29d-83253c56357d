@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { BookingModal } from "@/components/BookingModal";
-import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, Check, ChevronRight, Clock, Copy, CornerUpRight, MapPin, Phone, Plus, X } from "lucide-react";
+import { BookingModal, MobileBookingBar, MOBILE_SHEET } from "@/components/BookingModal";
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, Check, Menu, ChevronRight, Clock, Copy, CornerUpRight, MapPin, Phone, Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import imgMap from "@/assets/parking-map-aquarius.webp.asset.json";
 import imgParkCar from "@/assets/parking-car-4.webp.asset.json";
@@ -19,8 +19,29 @@ function Contacts() {
     { icon: <span className="flex h-8 w-8 items-center justify-center rounded-md border-[3px] border-foreground font-display text-lg">P</span>, t: "На 4-й уровень", d: "Поднимитесь на 4-й уровень паркинга. Здесь находится автомойка Aquarius." },
   ];
   return (
-    <section id="contacts" className="mx-auto max-w-6xl px-6 py-10">
-      <div className="grid gap-10 md:grid-cols-[1.4fr_1fr]">
+    <section id="contacts" className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
+      <div className="md:hidden">
+        <h2 className="font-display text-4xl uppercase max-[380px]:text-3xl">Ждём на Большевиков</h2>
+        <p className="mt-2 text-lg leading-snug">Санкт-Петербург,<br />проспект Большевиков, <b>18к2</b></p>
+        <p className="mt-3 flex items-center gap-3">
+          <span className="flex overflow-hidden rounded-md border-2 border-foreground font-display text-xl leading-none"><span className="px-1.5 py-1">P</span><span className="bg-lime px-1.5 py-1">4</span></span>
+          <span className="h-7 border-l border-border" />
+          <span className="text-lg"><b>Паркинг</b> · 4-й уровень</span>
+        </p>
+        <p className="mt-3 flex items-center gap-3"><Clock className="h-5 w-5" /> Ежедневно · 10:00–22:00</p>
+        <a href={PHONE_HREF} className="mt-2 flex items-center gap-3 font-display text-2xl"><Phone className="h-5 w-5" /> {PHONE}</a>
+        <a href={PHONE_HREF} className="mt-3 flex items-center justify-center gap-2 rounded-lg border border-foreground py-2.5 font-semibold"><Phone className="h-4 w-4" /> Позвонить</a>
+        <img src={imgMap.url} alt="Схема заезда в паркинг Aquarius: от улицы Дыбенко к въезду, 4-й уровень" width={1280} height={735} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
+        <a href={YMAPS} target="_blank" rel="noreferrer" className="btn-lime mt-3 flex items-center justify-center gap-2 rounded-lg py-3 text-lg">Маршрут до въезда <ArrowUpRight className="h-5 w-5" /></a>
+        <h3 className="mt-6 border-t border-border pt-4 font-display text-3xl uppercase">Как нас найти</h3>
+        <div className="mt-2 space-y-2">
+          <p>Со стороны ул. Дыбенко поверните направо у «Вкусно — и точка».</p>
+          <p>Проедьте вдоль здания и поверните направо во въезд паркинга.</p>
+          <p>Поднимитесь на 4-й уровень — мы здесь.</p>
+        </div>
+        <img src={imgParkCar.url} alt="Автомобиль у метки паркинга, 4-й уровень" width={1000} height={315} loading="lazy" decoding="async" className="mt-4 w-full" />
+      </div>
+      <div className="grid gap-10 max-md:hidden md:grid-cols-[1.4fr_1fr]">
         <div>
           <p className="font-display text-sm uppercase tracking-[0.3em]">Контакты и проезд</p>
           <h2 className="mt-2 font-display text-5xl uppercase">Ждём на Большевиков</h2>
@@ -74,11 +95,11 @@ function Contacts() {
 
 function SiteFooter() {
   return (
-    <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-5">
+    <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-5 max-md:px-4">
       <img src={logo.url} alt="Aquarius автомойка" width={160} height={64} loading="lazy" className="h-12 w-auto" />
-      <nav className="flex gap-8 text-sm font-semibold">
-        <a href="#">Услуги</a>
-        <a href="#contacts">Контакты</a>
+      <nav className="flex gap-8 text-sm font-semibold max-md:text-xs max-md:underline max-md:underline-offset-4">
+        <a href="#" className="max-md:hidden">Услуги</a>
+        <a href="#contacts" className="max-md:hidden">Контакты</a>
         <a href="#">Политика конфиденциальности</a>
       </nav>
     </footer>
@@ -104,17 +125,18 @@ const moreCare = [
 
 function MoreCare() {
   return (
-    <section className="mx-auto max-w-6xl border-t border-border px-6 pt-8">
+    <section className="mx-auto max-w-6xl border-t border-border px-4 pt-8 md:px-6">
       <h2 className="font-display text-4xl uppercase">Больше ухода</h2>
       <div className="mt-6 grid gap-6 md:grid-cols-3">
         {moreCare.map((m, i) => (
-          <div key={m.name} className={`flex items-center gap-4 ${i > 0 ? "md:border-l md:border-border md:pl-6" : ""}`}>
-            <img src={m.img.url} alt={m.alt} width={480} height={320} loading="lazy" decoding="async" className="w-2/5 shrink-0 rounded-xl object-cover" />
-            <div>
+          <div key={m.name} className={`flex items-center gap-4 ${i > 0 ? "max-md:border-t max-md:border-border max-md:pt-4 md:border-l md:border-border md:pl-6" : ""}`}>
+            <img src={m.img.url} alt={m.alt} width={480} height={320} loading="lazy" decoding="async" className="w-2/5 shrink-0 rounded-xl object-cover max-md:w-1/3" />
+            <div className="min-w-0 flex-1">
               <h3 className="font-display text-xl uppercase leading-tight">{m.name}</h3>
               <p className="mt-1 text-sm">{m.info}</p>
               {m.note && <p className="text-xs text-muted-foreground">{m.note}</p>}
             </div>
+            <ArrowRight className="h-6 w-6 shrink-0 md:hidden" />
           </div>
         ))}
       </div>
@@ -129,31 +151,31 @@ function AppPromo() {
     { v: "до 20%", t: "стоимости заказа можно оплатить бонусами" },
   ];
   return (
-    <section className="mx-auto max-w-6xl px-6 py-10">
-      <div className="grid gap-8 rounded-2xl bg-muted p-8 md:grid-cols-[1.2fr_1fr]">
+    <section className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
+      <div className="grid gap-8 rounded-2xl bg-muted p-8 max-md:gap-4 max-md:p-4 md:grid-cols-[1.2fr_1fr]">
         <div>
           <h2 className="font-display text-4xl uppercase">Aquarius в вашем телефоне</h2>
-          <p className="mt-2">Ваш автомобиль, любимая мойка и бонусная карта — всегда под рукой.</p>
-          <div className="mt-6 grid grid-cols-3 gap-4">
+          <p className="mt-2 max-md:hidden">Ваш автомобиль, любимая мойка и бонусная карта — всегда под рукой.</p>
+          <div className="mt-6 grid grid-cols-3 gap-4 max-md:mt-0 max-md:grid-cols-1 max-md:gap-0">
             {stats.map((s, i) => (
-              <div key={s.v} className={i > 0 ? "border-l border-border pl-4" : ""}>
-                <p className="font-display text-4xl">{s.v}</p>
+              <div key={s.v} className={`max-md:grid max-md:grid-cols-[6rem_1fr] max-md:items-center max-md:gap-3 max-md:border-b max-md:border-border max-md:py-2 ${i > 0 ? "md:border-l md:border-border md:pl-4" : ""}`}>
+                <p className="font-display text-4xl max-md:border-r max-md:border-border">{s.v}</p>
                 <p className="text-sm">{s.t}</p>
               </div>
             ))}
           </div>
           <p className="mt-4 text-xs">1 бонус = 1 ₽. Списание со следующего визита. На комплексы и допы.</p>
-          <div className="mt-6 flex flex-wrap items-center gap-4">
+          <div className="mt-6 flex flex-wrap items-center gap-4 max-md:mt-4 max-md:grid max-md:grid-cols-2 max-md:gap-3">
             <a href="#" className="inline-flex flex-col rounded-lg border border-foreground bg-background px-5 py-1.5 font-semibold leading-tight"><span className="text-[10px] font-normal">Загрузите в</span>App Store</a>
             <a href="#" className="inline-flex flex-col rounded-lg border border-foreground bg-background px-5 py-1.5 font-semibold leading-tight"><span className="text-[10px] font-normal">Доступно в</span>Google Play</a>
-            <ul className="space-y-1 text-sm sm:border-l sm:border-border sm:pl-4">
+            <ul className="space-y-1 text-sm max-md:hidden sm:border-l sm:border-border sm:pl-4">
               <li>Сохранённые автомобили</li>
               <li>Повтор прошлой мойки</li>
               <li>История визитов</li>
             </ul>
           </div>
         </div>
-        <div className="min-h-[320px]" aria-hidden="true" />
+        <div className="min-h-[320px] max-md:order-first max-md:min-h-[200px]" aria-hidden="true" />
       </div>
     </section>
   );
@@ -185,9 +207,10 @@ const nav = ["Услуги", "Приложение", "Как проехать"];
 
 function Index() {
   const [headerBooking, setHeaderBooking] = useState(false);
+  const [menu, setMenu] = useState(false);
   return (
     <div className="min-h-screen bg-background">
-      <header className="mx-auto flex max-w-6xl items-center justify-between gap-6 border-b border-border px-6 py-3">
+      <header className="relative mx-auto flex max-w-6xl items-center justify-between gap-6 border-b border-border px-6 py-3 max-md:gap-3 max-md:px-4 max-md:border-b-0">
         <a href="/" aria-label="Aquarius — автомойка">
           <img src={logo.url} alt="Логотип автомойки Aquarius" width={160} height={62} className="h-12 w-auto" />
         </a>
@@ -198,32 +221,46 @@ function Index() {
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-6">
-          <button type="button" onClick={() => setHeaderBooking(true)} className="btn-lime rounded-lg px-5 py-2.5 text-sm">
+        <div className="flex items-center gap-6 max-md:gap-3">
+          <button type="button" onClick={() => setHeaderBooking(true)} className="btn-lime rounded-lg px-5 py-2.5 text-sm max-md:px-3 max-md:py-2">
             Записаться
           </button>
+          <button type="button" onClick={() => setMenu((m) => !m)} aria-label="Меню" className="md:hidden">
+            {menu ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
+          </button>
+          {menu && (
+            <nav className="absolute inset-x-0 top-full z-20 flex flex-col border-y border-border bg-background px-4 py-2 text-base font-semibold md:hidden">
+              {nav.map((n) => (
+                <a key={n} href={n === "Как проехать" ? "#contacts" : "#"} onClick={() => setMenu(false)} className="py-2.5">{n}</a>
+              ))}
+            </nav>
+          )}
           <HeaderBooking open={headerBooking} onOpenChange={setHeaderBooking} />
         </div>
       </header>
 
-      <section className="mx-auto grid max-w-6xl items-center gap-8 border-b border-border px-6 py-10 md:grid-cols-[1fr_1.4fr]">
-        <div>
-          <h1 className="font-display text-5xl uppercase leading-[0.95] md:text-6xl">
+      <section className="mx-auto flex max-w-6xl flex-col gap-5 border-b border-border px-4 pb-8 pt-4 md:grid md:grid-cols-[1fr_1.4fr] md:items-center md:gap-8 md:px-6 md:py-10">
+        <div className="max-md:contents">
+          <h1 className="order-1 font-display text-5xl uppercase leading-[0.95] max-[380px]:text-4xl md:text-6xl">
             Автомойка
             <br />
             <span className="whitespace-nowrap">на Большевиков</span>
           </h1>
-          <p className="mt-4 text-base leading-snug">
+          <p className="order-1 -mt-2 text-base leading-snug md:mt-4">
             Выберите мойку и нужный уход.
             <br />
             Стоимость и время — до записи.
           </p>
-          <a href="#" className="btn-lime mt-6 inline-flex items-center gap-3 rounded-lg px-7 py-3 text-base">
+          <a href="#" className="btn-lime order-3 inline-flex items-center justify-center gap-3 rounded-lg px-7 py-3 text-base max-md:py-3.5 max-md:text-xl md:mt-6">
             Выбрать мойку <ArrowUpRight className="h-4 w-4" />
           </a>
-          <p className="mt-6 flex items-center gap-2 text-sm">
+          <p className="order-3 mt-6 flex items-center gap-2 text-sm max-md:hidden">
             <MapPin className="h-4 w-4" /> Большевиков, 18к2 · Ежедневно <b>10:00–22:00</b>
           </p>
+          <div className="order-3 space-y-2 border-b border-border pb-2 text-base md:hidden">
+            <p className="flex items-center gap-3"><MapPin className="h-5 w-5" /> Большевиков, 18к2 · 4-й уровень</p>
+            <p className="flex items-center gap-3"><Clock className="h-5 w-5" /> Ежедневно 10:00–22:00</p>
+          </div>
         </div>
         <img
           src={hero.url}
@@ -232,7 +269,7 @@ function Index() {
           height={667}
           fetchPriority="high"
           decoding="async"
-          className="h-auto w-full"
+          className="order-2 h-auto w-full"
         />
       </section>
 
@@ -285,27 +322,29 @@ function Configurator() {
 
   return (
     <>
-      <section className="mx-auto max-w-6xl border-b border-border px-6 py-10">
-        <h2 className="font-display text-4xl uppercase md:text-5xl">Выберите комплекс</h2>
+      <section className="mx-auto max-w-6xl border-b border-border px-4 py-8 md:px-6 md:py-10">
+        <h2 className="font-display text-4xl uppercase max-[380px]:text-3xl md:text-5xl">Выберите комплекс</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {packages.map((p, i) => {
             const active = i === selected;
             return (
               <div
                 key={p.name}
-                className={`relative flex flex-col rounded-xl p-6 ${active ? "bg-muted" : ""} ${i > 0 && !active && selected !== i - 1 ? "md:border-l md:border-border" : ""}`}
+                className={`relative grid grid-cols-2 gap-x-4 rounded-xl p-4 max-md:border max-md:border-border md:flex md:flex-col md:p-6 ${active ? "bg-muted" : ""} ${i > 0 && !active && selected !== i - 1 ? "md:border-l md:border-border" : ""}`}
               >
                 {active && (
                   <span className="btn-lime absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full">
                     <Check className="h-4 w-4" />
                   </span>
                 )}
-                <h3 className="font-display text-3xl uppercase">{p.name}</h3>
-                <p className="mt-1 font-display text-3xl">от {rub(p.price)} ₽</p>
-                <p className="mt-2 flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4" /> {p.time[0] === p.time[1] ? p.time[0] : `${p.time[0]}–${p.time[1]}`} минут
-                </p>
-                <ul className="mt-3 flex-1 space-y-1 text-sm">
+                <div>
+                  <h3 className="font-display text-3xl uppercase">{p.name}</h3>
+                  <p className="mt-1 font-display text-3xl max-md:text-2xl">от {rub(p.price)} ₽</p>
+                  <p className="mt-2 flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4" /> {p.time[0] === p.time[1] ? p.time[0] : `${p.time[0]}–${p.time[1]}`} мин<span className="max-md:hidden">ут</span>
+                  </p>
+                </div>
+                <ul className="mt-3 flex-1 space-y-1 text-sm max-md:mt-1 max-md:self-center max-md:border-l max-md:border-border max-md:pl-3 max-md:pr-8">
                   {p.items.map((it) => (
                     <li key={it} className="flex items-center gap-2">
                       <Check className="h-4 w-4" /> {it}
@@ -315,7 +354,7 @@ function Configurator() {
                 <button
                   type="button"
                   onClick={() => setSelected(i)}
-                  className={`mt-5 rounded-lg py-2.5 text-sm font-semibold ${active ? "btn-lime" : "border border-foreground bg-background"}`}
+                  className={`col-span-2 mt-5 rounded-lg py-2.5 text-sm font-semibold max-md:mt-4 max-md:text-base ${active ? "btn-lime" : "border border-foreground bg-background"}`}
                 >
                   {active ? "Выбрано" : "Выбрать"}
                 </button>
@@ -326,10 +365,10 @@ function Configurator() {
         <p className="mt-3 text-xs">Сушка включена во время комплекса.</p>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-10">
+      <section className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="font-display text-4xl uppercase md:text-5xl">Добавьте уход</h2>
-          <div className="flex gap-3">
+          <div className="flex gap-3 max-md:grid max-md:w-full max-md:grid-cols-3">
             {([["all", "Все"], ["body", "Кузов"], ["salon", "Салон"]] as const).map(([k, l]) => (
               <button
                 key={k}
@@ -343,7 +382,10 @@ function Configurator() {
           </div>
         </div>
 
-        <div className="mt-16 grid gap-x-4 gap-y-8 sm:grid-cols-2 md:grid-cols-3">
+        <div className="md:hidden">
+          <MobileCareList phase={phase} setPhase={setPhase} added={added} toggle={toggle} show={show} />
+        </div>
+        <div className="mt-16 grid gap-x-4 gap-y-8 max-md:hidden md:grid-cols-3">
           {show("body") && (
             <div className="flex flex-col">
               <div className="relative">
@@ -406,14 +448,14 @@ function Configurator() {
           })}
         </div>
 
-        <div className="mt-10 flex flex-col gap-4 rounded-xl bg-muted px-6 py-5 md:flex-row md:items-center">
+        <div className="mt-10 flex flex-col gap-4 rounded-xl bg-muted px-6 py-5 max-md:mt-6 max-md:gap-3 max-md:px-4 md:flex-row md:items-center">
           <h3 className="font-display text-3xl uppercase md:border-r md:border-border md:pr-6">Ваша мойка</h3>
-          <p className="flex-1 text-sm">{summary}</p>
-          <div className="md:border-l md:border-border md:pl-6">
+          <p className="flex-1 text-sm max-md:text-base">{summary}</p>
+          <div className="max-md:flex max-md:items-center max-md:gap-4 md:border-l md:border-border md:pl-6">
             <p className="font-display text-3xl">от {rub(total)} ₽</p>
             <p className="flex items-center gap-2 text-sm"><Clock className="h-4 w-4" /> {tMin === tMax ? tMin : `${tMin}–${tMax}`} минут</p>
           </div>
-          <button type="button" onClick={() => setBooking(true)} className="btn-lime inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm">
+          <button type="button" onClick={() => setBooking(true)} className="btn-lime inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm max-md:py-3.5 max-md:text-xl">
             Записаться <ArrowRight className="h-4 w-4" />
           </button>
           <BookingModal
@@ -439,6 +481,7 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
   const [selected, setSelected] = useState<number | null>(null);
   const [added, setAdded] = useState<string[]>([]);
   const [phase, setPhase] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | Cat>("all");
 
   const reset = () => { setStage("pkg"); setSelected(null); setAdded([]); setPhase(null); };
   const close = () => { onOpenChange(false); setTimeout(reset, 300); };
@@ -470,15 +513,16 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
-      <DialogContent className="max-h-[95vh] max-w-4xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden">
-        <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6">
+      <DialogContent className={`max-h-[95vh] max-w-4xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
+        <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
           <X className="h-7 w-7" />
         </button>
-        <div className="flex items-center gap-4">
+        <MobileBookingBar label={steps[cur]!} step={cur + 1} onBack={() => (cur === 1 ? setStage("pkg") : close())} onClose={close} />
+        <div className="flex items-center gap-4 max-md:hidden">
           <img src="/apple-touch-icon.png" alt="" width={64} height={64} className="h-16 w-16" />
           <DialogTitle className="font-display text-4xl uppercase sm:text-5xl">Запись на мойку</DialogTitle>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-6 text-lg">
+        <div className="mt-2 flex flex-wrap items-center gap-6 text-lg max-md:hidden">
           {steps.map((s, i) => (
             <span key={s} className="flex items-center gap-6">
               {i > 0 && <ChevronRight className="mb-2 h-5 w-5" />}
@@ -497,14 +541,16 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
 
         {stage === "pkg" ? (
           <>
-            <h2 className="mt-4 font-display text-4xl uppercase sm:text-5xl">Выберите комплекс</h2>
+            <h2 className="font-display text-3xl uppercase sm:text-5xl md:mt-4">Выберите комплекс</h2>
             <div className="mt-2 grid gap-4 md:grid-cols-3">
               {packages.map((p, i) => (
-                <div key={p.name} className="flex flex-col rounded-xl border border-border p-5 shadow-sm">
-                  <h3 className="font-display text-3xl uppercase">{p.name}</h3>
-                  <p className="font-display text-3xl">от {rub(p.price)} ₽</p>
-                  <p className="mt-2 flex items-center gap-2"><Clock className="h-5 w-5" /> {p.time[0] === p.time[1] ? p.time[0] : `${p.time[0]}–${p.time[1]}`} минут</p>
-                  <ul className="mb-5 mt-3 space-y-1.5">
+                <div key={p.name} className="grid grid-cols-2 gap-x-4 rounded-xl border border-border p-4 shadow-sm md:flex md:flex-col md:p-5">
+                  <div>
+                    <h3 className="font-display text-3xl uppercase">{p.name}</h3>
+                    <p className="font-display text-3xl max-md:text-2xl">от {rub(p.price)} ₽</p>
+                    <p className="mt-2 flex items-center gap-2"><Clock className="h-5 w-5" /> {p.time[0] === p.time[1] ? p.time[0] : `${p.time[0]}–${p.time[1]}`} мин<span className="max-md:hidden">ут</span></p>
+                  </div>
+                  <ul className="mt-3 space-y-1.5 max-md:mt-1 max-md:text-sm md:mb-5">
                     {p.items.map((it) => (
                       <li key={it} className="flex items-center gap-2"><Check className="h-4 w-4" strokeWidth={3} /> {it === "Кузов пеной" ? "Мойка кузова пеной" : it}</li>
                     ))}
@@ -512,7 +558,7 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
                   <button
                     type="button"
                     onClick={() => { setSelected(i); setStage("care"); }}
-                    className="mt-auto flex items-center justify-center gap-2 rounded-lg border border-foreground py-2.5 font-semibold"
+                    className="col-span-2 mt-4 flex items-center justify-center gap-2 rounded-lg border border-foreground py-2.5 font-semibold md:mt-auto"
                   >
                     Выбрать <ArrowRight className="h-5 w-5" />
                   </button>
@@ -520,19 +566,27 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               ))}
             </div>
             <div className="border-t border-border pt-4 text-sm">
-              <p>Сушка включена во время комплекса.</p>
+              <p className="max-md:hidden">Сушка включена во время комплекса.</p>
               <p>Точная стоимость — после выбора автомобиля.</p>
-              <p className="mt-2 text-muted-foreground">Далее можно добавить уход или перейти к выбору автомобиля.</p>
+              <p className="mt-2 text-muted-foreground max-md:hidden">Далее можно добавить уход или перейти к выбору автомобиля.</p>
             </div>
           </>
         ) : (
           <>
-            <div className="mt-4 flex items-baseline justify-between gap-4">
-              <h2 className="font-display text-4xl uppercase sm:text-5xl">Добавьте уход</h2>
-              <p className="text-sm">Комплекс: <b>{pkg.name}</b></p>
+            <div className="flex flex-col gap-3 md:mt-4 md:flex-row md:items-baseline md:justify-between md:gap-4">
+              <h2 className="font-display text-3xl uppercase sm:text-5xl">Добавьте уход</h2>
+              <p className="flex items-center justify-between gap-4 text-sm max-md:rounded-lg max-md:bg-muted max-md:px-3 max-md:py-2">
+                <span>Комплекс: <b>{pkg.name}</b></span>
+                <button type="button" onClick={() => setStage("pkg")} className="underline underline-offset-4 md:hidden">Изменить</button>
+              </p>
             </div>
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-border p-4">
+            <div className="grid grid-cols-3 gap-2 md:hidden">
+              {([["all", "Все"], ["body", "Кузов"], ["salon", "Салон"]] as const).map(([k, l]) => (
+                <button key={k} type="button" onClick={() => setFilter(k)} className={`rounded-md py-1.5 text-sm font-semibold ${filter === k ? "btn-lime" : "border border-foreground"}`}>{l}</button>
+              ))}
+            </div>
+            <div className="mt-2 grid gap-3 sm:grid-cols-2 max-md:mt-0">
+              <div className={`rounded-xl border border-border p-4 ${filter === "salon" ? "max-md:hidden" : ""}`}>
                 <p className="font-semibold">Способ мойки</p>
                 <p className="text-sm text-muted-foreground">Без добавочного времени</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
@@ -549,27 +603,27 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               {care.map((c) => {
                 const on = added.includes(c.id);
                 return (
-                  <div key={c.id} className="flex items-center gap-4 rounded-xl border border-border p-4">
+                  <div key={c.id} className={`flex items-center gap-4 rounded-xl border border-border p-4 max-md:gap-3 max-md:p-3 ${filter !== "all" && filter !== c.cat ? "max-md:hidden" : ""}`}>
                     <img src={c.img.url} alt={c.alt} width={96} height={64} loading="lazy" className="h-16 w-24 object-contain" />
                     <div className="flex-1">
                       <p className="font-semibold">{c.name}</p>
                       <p className="text-sm">от {rub(c.price)} ₽{c.extra > 0 ? ` +${c.extra} минут` : ""}</p>
                     </div>
                     <button type="button" onClick={() => toggle(c.id)} className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold ${on ? "btn-lime" : "border border-foreground"}`}>
-                      {on ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />} {on ? "Добавлено" : "Добавить"}
+                      {on ? <Check className="h-5 w-5 md:h-4 md:w-4" strokeWidth={3} /> : <Plus className="h-5 w-5 md:h-4 md:w-4" />} <span className="max-md:hidden">{on ? "Добавлено" : "Добавить"}</span>
                     </button>
                   </div>
                 );
               })}
             </div>
-            <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between max-md:sticky max-md:-bottom-5 max-md:-mx-5 max-md:gap-3 max-md:bg-background max-md:px-5 max-md:pb-5 max-md:pt-4">
               <div>
-                <div className="flex items-center gap-6">
-                  <p className="font-display text-4xl">{rub(total)} ₽</p>
+                <div className="flex items-center gap-6 max-md:gap-4">
+                  <p className="font-display text-4xl max-md:text-3xl"><span className="md:hidden">от </span>{rub(total)} ₽</p>
                   <span className="h-10 border-l border-foreground/30" />
                   <span className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5" /> {tMin === tMax ? tMin : `${tMin}–${tMax}`} минут</span>
                 </div>
-                <button type="button" onClick={() => setStage("pkg")} className="mt-3 flex items-center gap-2">
+                <button type="button" onClick={() => setStage("pkg")} className="mt-3 flex items-center gap-2 max-md:hidden">
                   <ArrowLeft className="h-5 w-5" /> <span className="underline underline-offset-4">Назад</span>
                 </button>
               </div>
@@ -577,12 +631,64 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
                 <button type="button" onClick={() => setStage("rest")} className="btn-lime flex w-full items-center justify-center gap-2 rounded-lg py-3.5 text-lg font-semibold">
                   {chosen.length || ph ? "Продолжить" : "Без ухода, продолжить"} <ArrowRight className="h-5 w-5" />
                 </button>
-                <p className="mt-2 text-sm text-muted-foreground">Далее — автомобиль и время</p>
+                <p className="mt-2 text-sm text-muted-foreground max-md:hidden">Далее — автомобиль и время</p>
               </div>
             </div>
           </>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function MobileCareList({ phase, setPhase, added, toggle, show }: { phase: string | null; setPhase: (p: string | null) => void; added: string[]; toggle: (id: string) => void; show: (c: Cat) => boolean }) {
+  const [phaseOpen, setPhaseOpen] = useState(false);
+  const iconBtn = (on: boolean) => `flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${on ? "btn-lime" : "border border-foreground bg-background"}`;
+  return (
+    <div className="mt-4">
+      {show("body") && (
+        <div className="border-b border-border py-3">
+          <div className="flex items-center gap-3">
+            <img src={imgFoam.url} alt="Ручная мойка кузова в пене" width={720} height={405} loading="lazy" decoding="async" className="aspect-[3/2] w-1/3 shrink-0 rounded-lg object-cover" />
+            <div className="min-w-0 flex-1">
+              <h3 className="font-display text-xl leading-tight">Способ мойки</h3>
+              <p className="text-sm">2 фазы · <b>от 500 ₽</b></p>
+              <p className="text-sm">3 фазы · <b>от 800 ₽</b></p>
+            </div>
+            <button type="button" onClick={() => setPhaseOpen((o) => !o)} className={`shrink-0 rounded-lg px-3 py-2 text-sm font-semibold ${phase ? "btn-lime" : "border border-foreground bg-background"}`}>
+              {phase ? <Check className="h-5 w-5" strokeWidth={3} /> : "Выбрать"}
+            </button>
+          </div>
+          {(phaseOpen || phase) && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {phases.map((p) => {
+                const on = phase === p.id;
+                return (
+                  <button key={p.id} type="button" onClick={() => setPhase(on ? null : p.id)} className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold ${on ? "btn-lime" : "border border-foreground bg-background"}`}>
+                    {on ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />} {p.label} · {rub(p.price)} ₽
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+      {care.filter((c) => show(c.cat)).map((c) => {
+        const on = added.includes(c.id);
+        return (
+          <div key={c.id} className="flex items-center gap-3 border-b border-border py-3">
+            <img src={c.img.url} alt={c.alt} width={720} height={480} loading="lazy" decoding="async" className="aspect-[3/2] w-1/3 shrink-0 rounded-lg object-cover" />
+            <div className="min-w-0 flex-1">
+              <h3 className="font-display text-xl leading-tight">{c.name}</h3>
+              <p className="text-sm"><b className="font-display text-base">от {rub(c.price)} ₽</b>{c.extra > 0 && ` +${c.extra} мин`}</p>
+              {c.extra === 0 && <p className="text-xs">Без доп. времени</p>}
+            </div>
+            <button type="button" onClick={() => toggle(c.id)} aria-label={on ? `Убрать: ${c.name}` : `Добавить: ${c.name}`} className={iconBtn(on)}>
+              {on ? <Check className="h-6 w-6" strokeWidth={3} /> : <Plus className="h-6 w-6" />}
+            </button>
+          </div>
+        );
+      })}
+    </div>
   );
 }
