@@ -21,8 +21,8 @@ describe("crm logic", () => {
   });
 });
 
-import { bookingDuration, freeSlots, readyAndInvoice } from "@/lib/crm/logic";
-import { SLOT_MIN } from "@/lib/crm/mock";
+import { bookingDuration, freeSlots, isPastSlot, readyAndInvoice } from "@/lib/crm/logic";
+import { DEMO_NOW_MIN, DEMO_TODAY, SLOT_MIN } from "@/lib/crm/mock";
 
 describe("slots", () => {
   it("base slot is 60 min plus timed add-ons", () => {
@@ -32,6 +32,15 @@ describe("slots", () => {
   it("auto-assigns box 2 when box 1 is busy", () => {
     expect(freeSlots(MOCK_BOOKINGS, kia.date, 60).find((s) => s.start === 18 * 60)?.box).toBe(1);
     expect(freeSlots(MOCK_BOOKINGS, kia.date, 60).find((s) => s.start === 14 * 60)).toBeUndefined();
+  });
+  it("does not offer slots before the current-time line or on past dates", () => {
+    const todaySlots = freeSlots([], DEMO_TODAY, 60, 60, DEMO_TODAY, DEMO_NOW_MIN);
+    expect(todaySlots[0]?.start).toBe(17 * 60);
+    expect(todaySlots.every((slot) => !isPastSlot(DEMO_TODAY, slot.start, DEMO_TODAY, DEMO_NOW_MIN))).toBe(true);
+    expect(isPastSlot(DEMO_TODAY, 16 * 60, DEMO_TODAY, DEMO_NOW_MIN)).toBe(true);
+    expect(isPastSlot(DEMO_TODAY, DEMO_NOW_MIN, DEMO_TODAY, DEMO_NOW_MIN)).toBe(false);
+    expect(freeSlots([], "2026-11-10", 60, 60, DEMO_TODAY, DEMO_NOW_MIN)).toEqual([]);
+    expect(freeSlots([], "2026-11-12", 60, 60, DEMO_TODAY, DEMO_NOW_MIN)[0]?.start).toBe(10 * 60);
   });
   it("«Машина готова» marks ready and awaits app payment", () => {
     expect(readyAndInvoice({ ...kia, wash: "in_progress" })).toMatchObject({ wash: "done", payment: "awaiting", paymentMethod: "app" });

@@ -126,10 +126,23 @@ export const fmtDateShort = (iso: string) =>
 export const bookingDuration = (slotMin: number, extraMinutes: number[]) =>
   slotMin + extraMinutes.reduce((a, b) => a + b, 0);
 
+/** A slot is unavailable once its start time is behind the current-time line. */
+export function isPastSlot(date: string, start: number, today: string, nowMin: number): boolean {
+  return date < today || (date === today && start < nowMin);
+}
+
 /** Free start times (every slot step) with the box the system assigns automatically. */
-export function freeSlots(list: Booking[], date: string, duration: number, step = 60): { start: number; box: 1 | 2 }[] {
+export function freeSlots(
+  list: Booking[],
+  date: string,
+  duration: number,
+  step = 60,
+  today?: string,
+  nowMin = 0,
+): { start: number; box: 1 | 2 }[] {
   const out: { start: number; box: 1 | 2 }[] = [];
   for (let s = OPEN_MIN; s + duration <= CLOSE_MIN; s += step) {
+    if (today && isPastSlot(date, s, today, nowMin)) continue;
     const box = ([1, 2] as const).find((bx) => !findConflict(list, { date, box: bx, start: s, duration }));
     if (box) out.push({ start: s, box });
   }

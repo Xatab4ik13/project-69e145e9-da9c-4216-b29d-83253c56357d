@@ -15,7 +15,7 @@ import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES } f
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
   fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
-  bookingState, STATE_LABEL, STATE_ACTION,
+  bookingState, STATE_LABEL, STATE_ACTION, isPastSlot,
 } from "@/lib/crm/logic";
 import type { BookingState } from "@/lib/crm/logic";
 
@@ -197,6 +197,7 @@ function Grid({
   const height = (CLOSE_MIN - OPEN_MIN) * PX_PER_MIN;
   const showNow = date === DEMO_TODAY;
   const nowTop = (DEMO_NOW_MIN - OPEN_MIN) * PX_PER_MIN;
+  const pastHeight = date < DEMO_TODAY ? height : showNow ? nowTop : 0;
 
   return (
     <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border">
@@ -209,7 +210,7 @@ function Grid({
         <div className="relative grid grid-cols-[5rem_1fr_1fr] py-3" style={{ height: height + 24 }}>
           <div className="relative">
             {HOURS.flatMap((m) => [m, m + 30]).filter((m) => m <= CLOSE_MIN).map((m) => (
-              <span key={m} className={`absolute right-3 -translate-y-1/2 whitespace-nowrap tabular-nums ${m % 60 ? "text-xs text-muted-foreground" : "text-base"}`} style={{ top: (m - OPEN_MIN) * PX_PER_MIN }}>
+              <span key={m} className={`absolute right-3 -translate-y-1/2 whitespace-nowrap tabular-nums ${m % 60 ? "text-xs text-muted-foreground" : "text-base"} ${isPastSlot(date, m, DEMO_TODAY, DEMO_NOW_MIN) ? "opacity-50" : ""}`} style={{ top: (m - OPEN_MIN) * PX_PER_MIN }}>
                 {fmtTime(m)}
               </span>
             ))}
@@ -220,29 +221,47 @@ function Grid({
               className="relative border-l border-border"
               onDoubleClick={(e) => {
                 const y = e.clientY - e.currentTarget.getBoundingClientRect().top;
-                onAdd(box, OPEN_MIN + Math.round(y / PX_PER_MIN / 15) * 15);
+                const start = OPEN_MIN + Math.round(y / PX_PER_MIN / 15) * 15;
+                if (!isPastSlot(date, start, DEMO_TODAY, DEMO_NOW_MIN)) onAdd(box, start);
               }}
             >
               {HOURS.map((m) => (
                 <div key={m} className="absolute inset-x-0 border-t border-border/60" style={{ top: (m - OPEN_MIN) * PX_PER_MIN }} />
               ))}
-              {HOURS.filter((m) => m + SLOT_MIN <= CLOSE_MIN && !bookings.some((b) => b.box === box && b.wash !== "cancelled" && b.start < m + SLOT_MIN && m < b.start + b.duration)).map((m) => (
-                <button key={`f${m}`} type="button" onClick={() => onAdd(box, m)}
-                  className="group absolute inset-x-2 flex items-center justify-between rounded-lg border border-dashed border-crm-ok-foreground/60 bg-crm-ok/60 px-3 text-left text-crm-ok-foreground transition-colors hover:border-solid hover:bg-crm-ok"
-                  style={{ top: (m - OPEN_MIN) * PX_PER_MIN + 2, height: SLOT_MIN * PX_PER_MIN - 4 }}>
-                  <span><span className="block font-semibold">{fmtTime(m)} – {fmtTime(m + SLOT_MIN)}</span><span className="text-xs">Свободно</span></span>
-                  <span className="flex items-center gap-1 text-xs font-semibold opacity-60 group-hover:opacity-100"><Plus className="h-4 w-4" />Записать</span>
-                </button>
-              ))}
+              {pastHeight > 0 && (
+                <div className="pointer-events-none absolute inset-x-0 top-0 bg-muted/50" style={{ height: pastHeight }} />
+              )}
+              {HOURS.filter((m) => m + SLOT_MIN <= CLOSE_MIN && !bookings.some((b) => b.box === box && b.wash !== "cancelled" && b.start < m + SLOT_MIN && m < b.start + b.duration)).map((m) => {
+                const past = isPastSlot(date, m, DEMO_TODAY, DEMO_NOW_MIN);
+                return (
+                  <button
+                    key={`f${m}`}
+                    type="button"
+                    disabled={past}
+                    onClick={() => onAdd(box, m)}
+                    aria-label={`${fmtTime(m)}–${fmtTime(m + SLOT_MIN)}, бокс ${box}: ${past ? "время прошло" : "свободно, записать"}`}
+                    className={past
+                      ? "absolute inset-x-2 flex cursor-default items-center rounded-lg border border-border bg-muted px-3 text-left text-muted-foreground"
+                      : "group absolute inset-x-2 flex items-center justify-between rounded-lg border border-dashed border-crm-ok-foreground/60 bg-crm-ok/60 px-3 text-left text-crm-ok-foreground transition-colors hover:border-solid hover:bg-crm-ok"}
+                    style={{ top: (m - OPEN_MIN) * PX_PER_MIN + 2, height: SLOT_MIN * PX_PER_MIN - 4 }}
+                  >
+                    <span>
+                      <span className="block font-semibold">{fmtTime(m)} – {fmtTime(m + SLOT_MIN)}</span>
+                      <span className="text-xs">{past ? "Время прошло" : "Свободно"}</span>
+                    </span>
+                    {!past && <span className="flex items-center gap-1 text-xs font-semibold opacity-60 group-hover:opacity-100"><Plus className="h-4 w-4" />Записать</span>}
+                  </button>
+                );
+              })}
               {bookings.filter((b) => b.box === box).map((b) => (
                 <BookingCard key={b.id} b={b} selected={b.id === selectedId} onClick={() => onSelect(b.id)} />
               ))}
             </div>
           ))}
           {showNow && (
-            <div className="pointer-events-none absolute inset-x-0 z-10 flex h-0 items-center" style={{ top: 12 + nowTop }}>
-              <span className="ml-1 -translate-y-1/2 rounded bg-crm px-1.5 py-0.5 text-xs font-semibold text-crm-foreground">{fmtTime(DEMO_NOW_MIN)}</span>
-              <span className="h-0.5 flex-1 -translate-y-1/2 bg-crm" />
+            <div className="pointer-events-none absolute inset-x-0 z-20 flex h-0 items-center" style={{ top: 12 + nowTop }}>
+              <span className="ml-1 -translate-y-1/2 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs font-bold text-background ring-2 ring-background">Сейчас · {fmtTime(DEMO_NOW_MIN)}</span>
+              <span className="h-1 flex-1 -translate-y-1/2 bg-foreground" />
             </div>
           )}
         </div>
@@ -305,6 +324,8 @@ function Legend() {
     { t: "Готова · ждёт оплаты", c: "border-crm-money-foreground/60 bg-crm-money" },
     { t: "Завершена", c: "border-border bg-muted" },
     { t: "Свободно", c: "border-dashed border-crm-ok-foreground/60 bg-crm-ok/60" },
+    { t: "Время прошло", c: "border-border bg-muted" },
+    { t: "Сейчас", c: "border-foreground bg-foreground" },
   ];
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
@@ -479,7 +500,7 @@ function NewBookingDialog({
   const chosenExtras = EXTRAS.filter((e) => extras.includes(e.name));
   const services = [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...chosenExtras.map(({ name, price }) => ({ name, price }))];
   const duration = bookingDuration(SLOT_MIN, chosenExtras.map((e) => e.minutes));
-  const slots = freeSlots(bookings, date, duration);
+  const slots = freeSlots(bookings, date, duration, 60, DEMO_TODAY, DEMO_NOW_MIN);
   const picked = slots.find((s) => s.start === slot);
 
   const submit = () => {
