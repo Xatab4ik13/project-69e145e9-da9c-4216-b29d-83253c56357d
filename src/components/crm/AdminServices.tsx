@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   CAR_CLASSES, DEFAULT_SERVICE_CATALOG, SERVICE_GROUPS, updateServiceCell,
 } from "@/lib/crm/services";
@@ -13,6 +14,7 @@ type SaveStatus = "idle" | "dirty" | "saved" | "error";
 export function AdminServices() {
   const [catalog, setCatalog] = useState<CatalogService[]>(DEFAULT_SERVICE_CATALOG);
   const [status, setStatus] = useState<SaveStatus>("idle");
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -39,6 +41,7 @@ export function AdminServices() {
     } catch {
       setStatus("error");
     }
+    setConfirmOpen(false);
   };
 
   const statusText = {
@@ -127,13 +130,26 @@ export function AdminServices() {
         <p className={`text-sm ${status === "error" ? "text-destructive" : "text-muted-foreground"}`} aria-live="polite">{statusText}</p>
         <button
           type="button"
-          onClick={save}
+          onClick={() => setConfirmOpen(true)}
           disabled={status === "idle" || status === "saved"}
           className="w-36 shrink-0 rounded-lg bg-crm px-5 py-2.5 font-semibold text-crm-foreground disabled:cursor-default disabled:opacity-50"
         >
           {status === "saved" ? "Сохранено" : "Сохранить"}
         </button>
       </div>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Сохранить изменения?</DialogTitle>
+            <DialogDescription>Изменённые цены и время будут записаны в прайс.</DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 flex justify-end gap-2">
+            <button type="button" onClick={() => setConfirmOpen(false)} className="rounded-lg border border-border px-4 py-2 font-semibold">Отмена</button>
+            <button type="button" onClick={save} className="rounded-lg bg-crm px-4 py-2 font-semibold text-crm-foreground">Да, сохранить</button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
