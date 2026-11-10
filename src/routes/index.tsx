@@ -504,7 +504,7 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
                   <h3 className="font-display text-3xl uppercase">{p.name}</h3>
                   <p className="font-display text-3xl">от {rub(p.price)} ₽</p>
                   <p className="mt-2 flex items-center gap-2"><Clock className="h-5 w-5" /> {p.time[0] === p.time[1] ? p.time[0] : `${p.time[0]}–${p.time[1]}`} минут</p>
-                  <ul className="mt-3 space-y-1.5">
+                  <ul className="mb-5 mt-3 space-y-1.5">
                     {p.items.map((it) => (
                       <li key={it} className="flex items-center gap-2"><Check className="h-4 w-4" strokeWidth={3} /> {it === "Кузов пеной" ? "Мойка кузова пеной" : it}</li>
                     ))}
@@ -513,7 +513,6 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
                     type="button"
                     onClick={() => { setSelected(i); setStage("care"); }}
                     className="mt-auto flex items-center justify-center gap-2 rounded-lg border border-foreground py-2.5 font-semibold"
-                    style={{ marginTop: "1.25rem" }}
                   >
                     Выбрать <ArrowRight className="h-5 w-5" />
                   </button>
