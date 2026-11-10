@@ -30,7 +30,7 @@ describe("CRM clients", () => {
   });
 
   it("searches by phone digits and by any car in the garage", () => {
-    expect(filterClients(clients, "912 345", "all", DEMO_TODAY).map((client) => client.id)).toEqual(["lc1"]);
+    expect(filterClients(clients, "921 345", "all", DEMO_TODAY).map((client) => client.id)).toEqual(["lc1"]);
     expect(filterClients(clients, "multivan", "all", DEMO_TODAY).map((client) => client.id)).toEqual(["lc6"]);
   });
 });
