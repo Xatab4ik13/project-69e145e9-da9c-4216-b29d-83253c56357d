@@ -134,7 +134,7 @@ export function AdminSchedule() {
   );
 }
 
-type AdminSection = "schedule" | "services" | "loyalty";
+type AdminSection = "schedule" | "clients" | "services" | "loyalty";
 
 function Sidebar({ section, onChange }: { section: AdminSection; onChange: (section: AdminSection) => void }) {
   const items: { label: string; icon: typeof CalendarDays; target?: AdminSection }[] = [
