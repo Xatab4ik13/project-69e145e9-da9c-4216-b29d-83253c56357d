@@ -167,16 +167,16 @@ function Grid({
 
   return (
     <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border">
-      <div className="grid grid-cols-[64px_1fr_1fr] border-b border-border bg-crm-surface text-center text-base font-semibold">
+      <div className="grid grid-cols-[5rem_1fr_1fr] border-b border-border bg-crm-surface text-center text-base font-semibold">
         <span />
         <span className="border-l border-border py-2.5">Бокс 1</span>
         <span className="border-l border-border py-2.5">Бокс 2</span>
       </div>
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
-        <div className="relative grid grid-cols-[64px_1fr_1fr] py-3" style={{ height: height + 24 }}>
+        <div className="relative grid grid-cols-[5rem_1fr_1fr] py-3" style={{ height: height + 24 }}>
           <div className="relative">
             {HOURS.flatMap((m) => [m, m + 30]).filter((m) => m <= CLOSE_MIN).map((m) => (
-              <span key={m} className={`absolute right-3 -translate-y-1/2 ${m % 60 ? "text-xs text-muted-foreground" : "text-base"}`} style={{ top: (m - OPEN_MIN) * PX_PER_MIN }}>
+              <span key={m} className={`absolute right-3 -translate-y-1/2 whitespace-nowrap tabular-nums ${m % 60 ? "text-xs text-muted-foreground" : "text-base"}`} style={{ top: (m - OPEN_MIN) * PX_PER_MIN }}>
                 {fmtTime(m)}
               </span>
             ))}
