@@ -553,7 +553,7 @@ function NewBookingDialog({
     if (!car.trim()) return setError("Укажите автомобиль.");
     if (phone.length !== 10) return setError("Введите номер телефона полностью: +7 (___) ___-__-__.");
     if (isCustom && !customName.trim()) return setError("Укажите название услуги.");
-    if (isCustom && (!Number.isInteger(custom.services[0].price) || custom.services[0].price <= 0)) return setError("Укажите цену услуги в рублях.");
+    if (isCustom && (!Number.isInteger(customPriceValue) || customPriceValue <= 0)) return setError("Укажите цену услуги в рублях.");
     if (isCustom && (!Number.isInteger(duration) || duration <= 0)) return setError("Укажите длительность услуги в минутах.");
     if (!picked) return setError("Выберите свободное время.");
     onCreate({
@@ -627,9 +627,9 @@ function NewBookingDialog({
             </div>
           )}
           <div>
-            <p className="mb-2 font-medium">Свободное время · {duration} минут</p>
+            <p className="mb-2 font-medium">Свободное время{duration > 0 ? ` · ${duration} минут` : ""}</p>
             {slots.length === 0 ? (
-              <p className="text-muted-foreground">На этот день свободных слотов нет.</p>
+              <p className="text-muted-foreground">{isCustom && duration <= 0 ? "Укажите длительность, чтобы увидеть свободное время." : "На этот день свободных слотов нет."}</p>
             ) : (
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {slots.map((s) => (
