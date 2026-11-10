@@ -126,13 +126,13 @@ function Metric({ Icon, label, value }: { Icon: typeof Users; label: string; val
   );
 }
 
-function ClientRow({ client, onSelect }: { client: LoyaltyClient; onSelect: () => void }) {
+const ClientRow = memo(function ClientRow({ client, onSelect }: { client: LoyaltyClient; onSelect: (id: string) => void }) {
   const balance = loyaltyBalance(client, DEMO_TODAY);
   return (
     <tr
       tabIndex={0}
-      onClick={onSelect}
-      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onSelect(); }}
+      onClick={() => onSelect(client.id)}
+      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onSelect(client.id); }}
       className="cursor-pointer border-t border-border outline-none transition-colors hover:bg-crm-soft/45 focus:bg-crm-soft/45"
     >
       <td className="whitespace-nowrap px-4 py-4 font-semibold">{fmtPhone(client.phone)}</td>
@@ -144,7 +144,7 @@ function ClientRow({ client, onSelect }: { client: LoyaltyClient; onSelect: () =
       <td className="pr-3 text-muted-foreground"><ChevronRight className="h-4 w-4" /></td>
     </tr>
   );
-}
+});
 
 function AccountStatus({ activated }: { activated: boolean }) {
   return activated
