@@ -19,6 +19,8 @@ export interface Booking {
   car: string;
   carType: string;
   client: string;
+  /** 10 digits after +7 */
+  phone?: string;
   source: BookingSource;
   worker: string;
   packageName: string;
