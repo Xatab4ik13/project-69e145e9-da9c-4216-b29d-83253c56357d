@@ -275,7 +275,7 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
         </div>
 
         <div className="mt-4 space-y-2 border-t border-border pt-4">
-          <p><span className="text-muted-foreground">Клиент:</span> <b className="text-base">{b.client}</b>{b.phone && <a href={`tel:+7${b.phone}`} className="ml-2 text-crm">{fmtPhone(b.phone)}</a>}</p>
+          <p><span className="text-muted-foreground">Телефон:</span> {b.phone ? <a href={`tel:+7${b.phone}`} className="text-crm">{fmtPhone(b.phone)}</a> : <span className="text-muted-foreground">не указан</span>}</p>
           <p><span className="text-muted-foreground">Источник:</span> {SOURCE_LABEL[b.source].toLowerCase()}</p>
           <label className="flex items-center gap-2">
             <span className="text-muted-foreground">Исполнитель:</span>
@@ -383,7 +383,6 @@ function NewBookingDialog({
   onClose: () => void;
   onCreate: (b: Booking) => void;
 }) {
-  const [client, setClient] = useState("");
   const [phone, setPhone] = useState("");
   const [car, setCar] = useState("");
   const [pkgName, setPkgName] = useState("Комфорт");
@@ -394,7 +393,7 @@ function NewBookingDialog({
   useEffect(() => {
     if (open) {
       setSlot(null);
-      setClient(""); setPhone(""); setCar(""); setPkgName("Комфорт"); setExtras([]); setError("");
+      setPhone(""); setCar(""); setPkgName("Комфорт"); setExtras([]); setError("");
     }
   }, [open, initial]);
 
@@ -406,12 +405,12 @@ function NewBookingDialog({
   const picked = slots.find((s) => s.start === slot);
 
   const submit = () => {
-    if (!client.trim() || !car.trim()) return setError("Укажите клиента и автомобиль.");
+    if (!car.trim()) return setError("Укажите автомобиль.");
     if (phone.length !== 10) return setError("Введите номер телефона полностью: +7 (___) ___-__-__.");
     if (!picked) return setError("Выберите свободное время.");
     onCreate({
       id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: "Седан",
-      client: client.trim(), phone, source: "admin", worker: WORKERS[0] ?? "", packageName: pkg.name, services,
+      phone, source: "admin", worker: WORKERS[0] ?? "", packageName: pkg.name, services,
       wash: "scheduled", confirmed: false, payment: "unpaid",
     });
   };
@@ -422,7 +421,6 @@ function NewBookingDialog({
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>Новая запись · {fmtDateShort(date)}</DialogTitle></DialogHeader>
         <div className="space-y-3 text-sm">
-          <input className={field} placeholder="Клиент" value={client} onChange={(e) => setClient(e.target.value)} />
           <input type="tel" inputMode="tel" className={field} placeholder="+7 (___) ___-__-__" value={fmtPhone(phone)}
             onChange={(e) => {
               const raw = e.target.value;
