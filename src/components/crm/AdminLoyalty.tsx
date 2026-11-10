@@ -102,7 +102,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
             </thead>
             <tbody>
               {clients.map((client) => (
-                <ClientRow key={client.id} client={client} onSelect={() => setSelectedId(client.id)} />
+                <ClientRow key={client.id} client={client} onSelect={openClient} />
               ))}
             </tbody>
           </table>
