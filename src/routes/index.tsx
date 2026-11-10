@@ -463,6 +463,7 @@ function Configurator() {
             onOpenChange={setBooking}
             pkgName={pkg.name}
             extras={[...(ph ? [ph.label] : []), ...chosen.map((c) => c.name)]}
+            extraPrices={[...(ph ? [ph.price] : []), ...chosen.map((c) => c.price)]}
             basePrice={total}
             time={[tMin, tMax]}
           />
@@ -502,6 +503,7 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         onBack={() => setStage("care")}
         pkgName={pkg.name}
         extras={[...(ph ? [ph.label] : []), ...chosen.map((c) => c.name)]}
+        extraPrices={[...(ph ? [ph.price] : []), ...chosen.map((c) => c.price)]}
         basePrice={total}
         time={[tMin, tMax]}
       />
