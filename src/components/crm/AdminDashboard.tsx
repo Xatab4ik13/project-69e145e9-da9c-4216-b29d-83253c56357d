@@ -5,8 +5,8 @@ import {
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { addDays, fmtDateLong, fmtDateShort, rub } from "@/lib/crm/logic";
 import {
-  WASHERS, WASHER_SHARE, billRows, summarize,
-  type ExpenseBill,
+  WASHERS, WASHER_SHARE, fixedRowsForPeriod, summarize,
+  type FinOp, type PlanOverrides,
   type FinanceSummary, type Period,
 } from "@/lib/crm/finance";
 import type { Booking } from "@/lib/crm/types";
@@ -33,23 +33,24 @@ function periodFor(kind: PeriodKind, today: string, from: string, to: string): P
 const periodLabel = (p: Period) =>
   p.from === p.to ? fmtDateLong(p.from) : `${fmtDateShort(p.from)} — ${fmtDateShort(p.to)} ${p.to.slice(0, 4)}`;
 
-function useDashboard(bookings: Booking[], bills: ExpenseBill[], today: string) {
+function useDashboard(bookings: Booking[], ops: FinOp[], overrides: PlanOverrides, today: string) {
   const [kind, setKind] = useState<PeriodKind>("month");
   const [from, setFrom] = useState(() => addDays(today, -13));
   const [to, setTo] = useState(today);
   const period = useMemo(() => periodFor(kind, today, from, to), [kind, today, from, to]);
-  const summary = useMemo(() => summarize(bookings, period, today, bills), [bookings, period, today, bills]);
+  const summary = useMemo(() => summarize(bookings, period, today, ops, overrides), [bookings, period, today, ops, overrides]);
   return { kind, setKind, from, setFrom, to, setTo, period, summary };
 }
 
 interface DashProps {
   bookings: Booking[];
-  bills: ExpenseBill[];
+  ops: FinOp[];
+  overrides: PlanOverrides;
   today: string;
 }
 
-export function AdminDashboard({ bookings, bills, today }: DashProps) {
-  const { kind, setKind, from, setFrom, to, setTo, period, summary } = useDashboard(bookings, bills, today);
+export function AdminDashboard({ bookings, ops, overrides, today }: DashProps) {
+  const { kind, setKind, from, setFrom, to, setTo, period, summary } = useDashboard(bookings, ops, overrides, today);
   return (
     <main className="hidden min-w-0 flex-1 flex-col px-6 pb-4 pt-5 md:flex">
       <div className="flex items-center gap-4">
@@ -146,7 +147,7 @@ export function AdminDashboard({ bookings, bills, today }: DashProps) {
 
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
           <Card title="Расходы за период">
-            <ExpenseRows summary={summary} bills={bills} />
+            <ExpenseRows summary={summary} ops={ops} overrides={overrides} />
           </Card>
         </div>
       </div>
@@ -154,8 +155,8 @@ export function AdminDashboard({ bookings, bills, today }: DashProps) {
   );
 }
 
-export function MobileDashboard({ bookings, bills, today }: DashProps) {
-  const { kind, setKind, from, setFrom, to, setTo, period, summary } = useDashboard(bookings, bills, today);
+export function MobileDashboard({ bookings, ops, overrides, today }: DashProps) {
+  const { kind, setKind, from, setFrom, to, setTo, period, summary } = useDashboard(bookings, ops, overrides, today);
   return (
     <main className="min-h-0 flex-1 overflow-y-auto bg-crm-surface px-4 py-4 md:hidden">
       <h1 className="text-2xl font-bold tracking-tight">Дашборд</h1>
@@ -256,7 +257,7 @@ export function MobileDashboard({ bookings, bills, today }: DashProps) {
 
       <div className="mt-3 mb-2 rounded-xl border border-border bg-background p-4">
         <p className="text-sm font-semibold text-muted-foreground">Расходы за период</p>
-        <div className="mt-3"><ExpenseRows summary={summary} bills={bills} /></div>
+        <div className="mt-3"><ExpenseRows summary={summary} ops={ops} overrides={overrides} /></div>
       </div>
     </main>
   );
@@ -322,9 +323,9 @@ function BarRow({ label, value, share, hint }: { label: string; value: string; s
   );
 }
 
-function ExpenseRows({ summary, bills }: { summary: FinanceSummary; bills: ExpenseBill[] }) {
+function ExpenseRows({ summary, ops, overrides }: { summary: FinanceSummary; ops: FinOp[]; overrides: PlanOverrides }) {
   const rows = [
-    ...billRows(bills, summary.period),
+    ...fixedRowsForPeriod(summary.period, ops, overrides),
     { name: "Мойщики, 30%", value: summary.payroll },
     { name: "Налог УСН, 6%", value: summary.tax },
     { name: "Эквайринг, 2,56%", value: summary.acquiring },
