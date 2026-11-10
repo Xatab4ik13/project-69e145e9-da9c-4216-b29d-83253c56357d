@@ -540,7 +540,8 @@ function NewBookingDialog({
   const isCustom = pkgName === CUSTOM_PACKAGE_NAME;
   const pkg = PACKAGES.find((p) => p.name === pkgName);
   const chosenExtras = EXTRAS.filter((e) => extras.includes(e.name));
-  const custom = customServiceDetails(customName, Number(customPrice), Number(customMinutes));
+  const customPriceValue = Number(customPrice);
+  const custom = customServiceDetails(customName, customPriceValue, Number(customMinutes));
   const services = isCustom ? custom.services : pkg
     ? [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...chosenExtras.map(({ name, price }) => ({ name, price }))]
     : [];
