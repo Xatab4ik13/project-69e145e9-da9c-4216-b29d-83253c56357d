@@ -134,7 +134,7 @@ export function AdminFinance(props: Props) {
         </section>
       )}
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+      <div className="mt-3 grid gap-3 xl:grid-cols-[3fr_2fr]">
         <section className="rounded-xl border border-border bg-background p-4">
           <h2 className="font-semibold">Мойщики</h2>
           <p className="text-sm text-muted-foreground">начислено 30% за {view === "day" ? "день" : "месяц"} · долг на сегодня по всем заказам</p>
