@@ -27,6 +27,10 @@ export const MONTHLY_EXPENSES: ExpenseItem[] = [
   { id: "accounting", name: "Бухгалтерия", monthly: 11000 },
   { id: "bank", name: "Банковское обслуживание", monthly: 950 },
   { id: "supplies", name: "Химия и расходники", monthly: 20000 },
+  /** Sublease income received in cash reduces the real rent cost. */
+  { id: "sublease", name: "Субаренда (доход, наличные)", monthly: -70000 },
+  /** УСН 6% is also due on the sublease income. */
+  { id: "sublease_tax", name: "Налог 6% с субаренды", monthly: 4200 },
 ];
 
 export const monthlyFixedTotal = (items: ExpenseItem[] = MONTHLY_EXPENSES) =>
