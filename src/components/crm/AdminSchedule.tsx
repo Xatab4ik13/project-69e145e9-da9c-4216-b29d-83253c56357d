@@ -10,7 +10,7 @@ import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
-  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches, findConflict,
+  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
 } from "@/lib/crm/logic";
 
 const PX_PER_MIN = 2;
@@ -192,6 +192,14 @@ function Grid({
             >
               {HOURS.map((m) => (
                 <div key={m} className="absolute inset-x-0 border-t border-border/60" style={{ top: (m - OPEN_MIN) * PX_PER_MIN }} />
+              ))}
+              {HOURS.filter((m) => m + SLOT_MIN <= CLOSE_MIN && !bookings.some((b) => b.box === box && b.wash !== "cancelled" && b.start < m + SLOT_MIN && m < b.start + b.duration)).map((m) => (
+                <button key={`f${m}`} type="button" onClick={() => onAdd(box, m)}
+                  className="group absolute inset-x-2 flex items-center justify-between rounded-lg border border-dashed border-crm-ok-foreground/40 bg-crm-ok/50 px-3 text-left text-crm-ok-foreground transition-colors hover:border-solid hover:bg-crm-ok"
+                  style={{ top: (m - OPEN_MIN) * PX_PER_MIN + 2, height: SLOT_MIN * PX_PER_MIN - 4 }}>
+                  <span><span className="block font-semibold">{fmtTime(m)} – {fmtTime(m + SLOT_MIN)}</span><span className="text-xs">Свободно</span></span>
+                  <span className="flex items-center gap-1 text-xs font-semibold opacity-60 group-hover:opacity-100"><Plus className="h-4 w-4" />Записать</span>
+                </button>
               ))}
               {bookings.filter((b) => b.box === box).map((b) => (
                 <BookingCard key={b.id} b={b} selected={b.id === selectedId} onClick={() => onSelect(b.id)} />
@@ -402,9 +410,7 @@ function NewBookingDialog({
   const services = [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...chosenExtras.map(({ name, price }) => ({ name, price }))];
   const duration = bookingDuration(SLOT_MIN, chosenExtras.map((e) => e.minutes));
   const slots = freeSlots(bookings, date, duration);
-  const [boxPick, setBoxPick] = useState<1 | 2 | null>(null);
-  const picked = slot !== null && boxPick !== null && !findConflict(bookings, { date, box: boxPick, start: slot, duration }) && slot + duration <= CLOSE
-    ? { start: slot, box: boxPick } : null;
+  const picked = slots.find((s) => s.start === slot);
 
   const submit = () => {
     if (!car.trim()) return setError("Укажите автомобиль.");
@@ -420,7 +426,7 @@ function NewBookingDialog({
   const field = "w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-crm";
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>Новая запись · {fmtDateShort(date)}</DialogTitle></DialogHeader>
         <div className="space-y-3 text-sm">
           <input type="tel" inputMode="tel" className={field} placeholder="+7 (___) ___-__-__" value={fmtPhone(phone)}
@@ -445,8 +451,22 @@ function NewBookingDialog({
               );
             })}
           </div>
-          <SlotPicker bookings={bookings} date={date} duration={duration} slots={slots}
-            picked={picked ?? null} onPick={(p) => { setSlot(p.start); setBoxPick(p.box); }} />
+          <div>
+            <p className="mb-2 font-medium">Свободное время · {duration} минут</p>
+            {slots.length === 0 ? (
+              <p className="text-muted-foreground">На этот день свободных слотов нет.</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {slots.map((s) => (
+                  <button key={s.start} type="button" onClick={() => setSlot(s.start)}
+                    className={`rounded-lg border py-2 ${slot === s.start ? "border-crm bg-crm text-crm-foreground" : "border-border"}`}>
+                    {fmtTime(s.start)}
+                  </button>
+                ))}
+              </div>
+            )}
+            {picked && <p className="mt-2 text-muted-foreground">Бокс {picked.box} назначен автоматически</p>}
+          </div>
           <p className="text-muted-foreground">Итого: <b className="text-foreground">{rub(services.reduce((s, x) => s + x.price, 0))}</b></p>
           {error && <p className="text-destructive">{error}</p>}
           <button type="button" onClick={submit} className="w-full rounded-lg bg-crm py-2.5 font-semibold text-crm-foreground">Создать запись</button>
@@ -456,89 +476,3 @@ function NewBookingDialog({
   );
 }
 
-const OPEN = 600, CLOSE = 1320, SPAN = CLOSE - OPEN;
-const pct = (m: number) => `${((m - OPEN) / SPAN) * 100}%`;
-
-function SlotPicker({ bookings, date, duration, slots, picked, onPick }: {
-  bookings: Booking[]; date: string; duration: number;
-  slots: { start: number; box: 1 | 2 }[];
-  picked: { start: number; box: 1 | 2 } | null;
-  onPick: (p: { start: number; box: 1 | 2 }) => void;
-}) {
-  const [hover, setHover] = useState<{ start: number; box: 1 | 2 } | null>(null);
-  const hours = Array.from({ length: SPAN / 60 }, (_, i) => OPEN + i * 60);
-  const day = bookings.filter((b) => b.date === date && b.wash !== "cancelled");
-  const ok = (box: 1 | 2, start: number) => start + duration <= CLOSE && !findConflict(bookings, { date, box, start, duration });
-  const ghost = hover ?? picked;
-  const ghostOk = ghost ? ok(ghost.box, ghost.start) : false;
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-medium">Время · длительность {duration} мин</p>
-        <div className="flex gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5"><i className="h-3 w-3 rounded-sm border border-crm-ok-foreground/30 bg-crm-ok" />Свободно</span>
-          <span className="flex items-center gap-1.5"><i className="h-3 w-3 rounded-sm bg-muted-foreground/25" />Занято</span>
-          <span className="flex items-center gap-1.5"><i className="h-3 w-3 rounded-sm bg-crm" />Ваша запись</span>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-border bg-crm-surface p-3">
-        <div className="relative ml-16 h-5 text-[11px] text-muted-foreground">
-          {hours.map((h) => <span key={h} className="absolute -translate-x-1/2" style={{ left: pct(h) }}>{fmtTime(h)}</span>)}
-          <span className="absolute -translate-x-full" style={{ left: "100%" }}>{fmtTime(CLOSE)}</span>
-        </div>
-        {([1, 2] as const).map((box) => (
-          <div key={box} className="mt-1.5 flex items-center gap-2">
-            <span className="w-14 shrink-0 text-xs font-semibold">Бокс {box}</span>
-            <div className="relative h-12 flex-1 overflow-hidden rounded-lg border border-border bg-background" onMouseLeave={() => setHover(null)}>
-              {hours.map((h) => {
-                const free = ok(box, h);
-                return (
-                  <button key={h} type="button" disabled={!free} aria-label={`Бокс ${box}, ${fmtTime(h)}`}
-                    onMouseEnter={() => setHover({ box, start: h })} onClick={() => onPick({ box, start: h })}
-                    className={`absolute inset-y-0 border-r border-border/60 transition-colors ${free ? "cursor-pointer bg-crm-ok/60 hover:bg-crm-ok" : "cursor-not-allowed"}`}
-                    style={{ left: pct(h), width: pct(OPEN + 60) }} />
-                );
-              })}
-              {day.filter((b) => b.box === box).map((b) => (
-                <div key={b.id} className="pointer-events-none absolute inset-y-1 flex items-center overflow-hidden rounded-md bg-muted-foreground/25 px-2 text-[11px] font-medium text-foreground/70"
-                  style={{ left: pct(b.start), width: `${(b.duration / SPAN) * 100}%`, backgroundImage: "repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in oklab, var(--background) 45%, transparent) 6px 12px)" }}>
-                  <span className="truncate">{fmtTime(b.start)} {b.car}</span>
-                </div>
-              ))}
-              {ghost && ghost.box === box && (
-                <div className={`pointer-events-none absolute inset-y-1 flex items-center overflow-hidden rounded-md px-2 text-[11px] font-semibold transition-all duration-150 ${ghostOk ? (ghost === picked ? "bg-crm text-crm-foreground shadow-md" : "bg-crm/60 text-crm-foreground") : "bg-destructive/70 text-destructive-foreground"}`}
-                  style={{ left: pct(ghost.start), width: `${(Math.min(duration, CLOSE - ghost.start) / SPAN) * 100}%` }}>
-                  <span className="truncate">{fmtTime(ghost.start)}–{fmtTime(ghost.start + duration)}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {slots.length === 0 ? (
-        <p className="text-muted-foreground">На этот день свободных слотов нет.</p>
-      ) : (
-        <div>
-          <p className="mb-2 text-xs text-muted-foreground">Быстрый выбор — бокс подберётся автоматически</p>
-          <div className="grid grid-cols-6 gap-2">
-            {slots.map((s) => {
-              const on = picked?.start === s.start;
-              return (
-                <button key={s.start} type="button" onClick={() => onPick(s)}
-                  className={`rounded-lg border py-2 text-sm font-semibold transition-colors ${on ? "border-crm bg-crm text-crm-foreground" : "border-crm-ok-foreground/30 bg-crm-ok text-crm-ok-foreground hover:border-crm"}`}>
-                  {fmtTime(s.start)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      <p className={`rounded-lg px-3 py-2 text-sm ${picked ? "bg-crm-soft text-crm" : "bg-muted text-muted-foreground"}`}>
-        {picked ? <>Выбрано: <b>{fmtTime(picked.start)}–{fmtTime(picked.start + duration)}</b>, Бокс {picked.box}</> : "Нажмите на зелёный участок или выберите время ниже"}
-      </p>
-    </div>
-  );
-}
