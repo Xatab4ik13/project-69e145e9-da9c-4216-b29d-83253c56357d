@@ -95,8 +95,11 @@ export function AdminClients({
             ))}
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-auto">
-          <table className="w-full min-w-[980px] text-left text-sm">
+        <div className="min-h-0 flex-1 md:overflow-auto">
+          <div className="divide-y divide-border md:hidden">
+            {pagination.items.map((client) => <ClientMobileCard key={client.id} client={client} onSelect={openClient} />)}
+          </div>
+          <table className="hidden w-full min-w-[980px] text-left text-sm md:table">
             <thead className="sticky top-0 z-10 bg-card text-xs uppercase text-muted-foreground">
               <tr className="border-b border-border">
                 <th className="px-4 py-3 font-medium">Телефон</th>
@@ -121,7 +124,7 @@ export function AdminClients({
             </div>
           )}
         </div>
-        <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+        <div className="flex min-h-14 flex-col items-center justify-between gap-3 border-t border-border px-3 py-3 [&_button]:h-11 [&_button]:min-w-11 sm:flex-row sm:[&_button]:h-8 sm:[&_button]:min-w-8 md:px-4">
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {visible.length > 0
               ? `Показано ${pagination.start}–${pagination.end} из ${visible.length}`
@@ -138,29 +141,32 @@ export function AdminClients({
 
       <Dialog open={selected !== null} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
         {selected && (
-          <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto p-0">
-            <DialogHeader className="border-b border-border px-6 py-5 pr-12">
-              <div className="flex items-center gap-3">
-                <DialogTitle className="text-2xl text-crm">{fmtPhone(selected.phone)}</DialogTitle>
+          <DialogContent
+            className="left-0 top-0 h-[100dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none p-0 sm:left-[50%] sm:top-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-3xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg"
+            closeClassName="fixed right-3 top-3 z-20 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background sm:absolute sm:right-4 sm:top-4 sm:h-8 sm:w-8 sm:border-0 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-4 sm:[&_svg]:w-4"
+          >
+            <DialogHeader className="border-b border-border bg-background px-5 py-5 pr-16 text-left sm:px-6 sm:pr-12">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <DialogTitle className="text-xl leading-tight text-crm sm:text-2xl">{fmtPhone(selected.phone)}</DialogTitle>
                 <AccountStatus activated={selected.activated} />
               </div>
               <DialogDescription>Первое обращение: {fmtDateShort(selected.firstContact)}</DialogDescription>
             </DialogHeader>
-            <div className="px-6 pb-6">
+            <div className="px-4 pb-6 pt-4 sm:px-6 sm:pt-0">
               <div className="grid grid-cols-3 gap-3">
                 <Summary label="Визитов" value={String(selected.visits)} />
                 <Summary label="Оплачено" value={rub(selected.totalSpent)} />
                 <Summary label="Бонусы" value={formatBonuses(selected.bonusBalance)} />
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => onNewBooking(selected)} className="flex items-center justify-center gap-2 rounded-lg bg-crm px-3 py-2.5 text-sm font-semibold text-crm-foreground">
-                  <CalendarPlus className="h-4 w-4" /> Новая запись
+                <button type="button" onClick={() => onNewBooking(selected)} className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-crm px-3 py-3 text-base font-semibold text-crm-foreground sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm">
+                  <CalendarPlus className="h-5 w-5 sm:h-4 sm:w-4" /> Новая запись
                 </button>
-                <a href={`tel:+7${selected.phone}`} className="flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-semibold">
-                  <Phone className="h-4 w-4" /> Позвонить
+                <a href={`tel:+7${selected.phone}`} className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border px-3 py-3 text-base font-semibold sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm">
+                  <Phone className="h-5 w-5 sm:h-4 sm:w-4" /> Позвонить
                 </a>
               </div>
-              <button type="button" onClick={() => onOpenLoyalty(selected.id)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium text-crm">
+              <button type="button" onClick={() => onOpenLoyalty(selected.id)} className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-border px-3 py-3 text-base font-medium text-crm sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm">
                 <WalletCards className="h-4 w-4" /> Открыть бонусы
               </button>
 
