@@ -142,7 +142,7 @@ export function AdminClients({
       <Dialog open={selected !== null} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
         {selected && (
           <DialogContent
-            className="left-0 top-0 h-[100dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none p-0 sm:left-[50%] sm:top-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-3xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg"
+            className="left-0 top-0 h-[100dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none p-0 text-base sm:left-[50%] sm:gap-4 sm:text-sm sm:top-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-3xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg"
             closeClassName="fixed right-3 top-3 z-20 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background sm:absolute sm:right-4 sm:top-4 sm:h-8 sm:w-8 sm:border-0 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-4 sm:[&_svg]:w-4"
           >
             <DialogHeader className="border-b border-border bg-background px-5 py-5 pr-16 text-left sm:px-6 sm:pr-12">
@@ -172,7 +172,7 @@ export function AdminClients({
 
               <section className="mt-6">
                 <h2 className="flex items-center gap-2 font-semibold"><CarFront className="h-4 w-4 text-crm" /> Автомобили</h2>
-                <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {selected.cars.map((car) => (
                     <div key={car.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
                       <div className="min-w-0 flex-1">
@@ -245,6 +245,36 @@ const ClientTableRow = memo(function ClientTableRow({ client, onSelect }: { clie
   );
 });
 
+const ClientMobileCard = memo(function ClientMobileCard({ client, onSelect }: { client: CrmClient; onSelect: (id: string) => void }) {
+  const primaryCar = client.cars.find((car) => car.primary) ?? client.cars[0];
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(client.id)}
+      aria-label={`Открыть клиента ${fmtPhone(client.phone)}`}
+      className="block min-h-40 w-full p-4 text-left active:bg-crm-soft/45"
+    >
+      <span className="flex items-center justify-between gap-3">
+        <span className="text-base font-semibold text-crm">{fmtPhone(client.phone)}</span>
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+      </span>
+      <span className="mt-2 block text-base font-medium">{primaryCar?.name ?? "Автомобиль не указан"}</span>
+      <span className="mt-0.5 block text-sm text-muted-foreground">
+        {primaryCar ? `${carClassRoman(primaryCar.carClass)} класс` : ""}
+        {client.cars.length > 1 ? ` · ещё ${client.cars.length - 1}` : ""}
+      </span>
+      <span className="mt-3 grid grid-cols-2 gap-2 text-sm">
+        <span><span className="text-muted-foreground">Визитов: </span><b>{client.visits}</b></span>
+        <span className="text-right"><span className="text-muted-foreground">Оплачено: </span><b>{rub(client.totalSpent)}</b></span>
+      </span>
+      <span className="mt-3 flex items-center justify-between gap-3">
+        <AccountStatus activated={client.activated} />
+        <span className="text-sm font-semibold">{formatBonuses(client.bonusBalance)} бонусов</span>
+      </span>
+    </button>
+  );
+});
+
 function AccountStatus({ activated }: { activated: boolean }) {
   return (
     <span className={`inline-flex whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ${activated ? "bg-crm-soft text-crm" : "bg-muted text-muted-foreground"}`}>
@@ -255,12 +285,12 @@ function AccountStatus({ activated }: { activated: boolean }) {
 
 function Metric({ Icon, label, value, note }: { Icon: typeof Coins; label: string; value: number; note?: string }) {
   return (
-    <article className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-crm-soft text-crm"><Icon className="h-5 w-5" /></div>
-      <div>
-        <p className="text-2xl font-bold leading-none">{value}</p>
-        <p className="mt-1.5 text-sm text-muted-foreground">{label}</p>
-        {note && <p className="mt-0.5 text-xs text-muted-foreground">{note}</p>}
+    <article className="flex items-center gap-2 rounded-xl border border-border bg-card p-3 md:gap-3 md:p-4">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-crm-soft text-crm md:h-11 md:w-11"><Icon className="h-4 w-4 md:h-5 md:w-5" /></div>
+      <div className="min-w-0">
+        <p className="text-xl font-bold leading-none md:text-2xl">{value}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground md:text-sm">{label}</p>
+        {note && <p className="mt-0.5 hidden text-xs text-muted-foreground md:block">{note}</p>}
       </div>
     </article>
   );
@@ -268,8 +298,8 @@ function Metric({ Icon, label, value, note }: { Icon: typeof Coins; label: strin
 
 function Summary({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-muted/70 px-3 py-4 text-center">
-      <p className="text-xl font-bold">{value}</p>
+    <div className="rounded-xl bg-muted/70 px-2 py-4 text-center sm:rounded-lg sm:px-3">
+      <p className="text-lg font-bold sm:text-xl">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{label}</p>
     </div>
   );
