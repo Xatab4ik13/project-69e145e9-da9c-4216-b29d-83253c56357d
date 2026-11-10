@@ -1,24 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowRight, Banknote, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
-  Clock, CreditCard, Phone, Plus, Search, Smartphone, Star, User, Wrench, X,
+  ArrowRight, Banknote, Bell, Building2, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
+  Clock, CreditCard, LayoutDashboard, Phone, Plus, Search, Smartphone, Star, User, Wallet, Wrench, X,
 } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminServices } from "@/components/crm/AdminServices";
 import { AdminLoyalty } from "@/components/crm/AdminLoyalty";
 import { AdminClients } from "@/components/crm/AdminClients";
+import { AdminDashboard, MobileDashboard } from "@/components/crm/AdminDashboard";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { MobileAdminHeader, MobileAdminNavigation, MobileSchedule } from "@/components/crm/MobileSchedule";
 import { TONE } from "@/components/crm/booking-tone";
 import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
-import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
+import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, MOCK_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
+import { WASHERS } from "@/lib/crm/finance";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
   fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
-  bookingState, STATE_LABEL, STATE_ACTION, isPastSlot, CUSTOM_PACKAGE_NAME, customServiceDetails,
+  bookingState, STATE_LABEL, STATE_ACTION, isPastSlot, CUSTOM_PACKAGE_NAME, customServiceDetails, receivePayment,
 } from "@/lib/crm/logic";
 
 type NewBookingInitial = { box: 1 | 2; start: number; phone?: string; car?: string; carType?: string };
