@@ -462,7 +462,7 @@ function NewBookingDialog({
   open, initial, date, bookings, onClose, onCreate,
 }: {
   open: boolean;
-  initial: { box: 1 | 2; start: number } | null;
+  initial: NewBookingInitial | null;
   date: string;
   bookings: Booking[];
   onClose: () => void;
