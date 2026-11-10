@@ -16,7 +16,7 @@ import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, MOCK_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
-import { WASHER_SHARE, WASHERS } from "@/lib/crm/finance";
+import { WASHERS } from "@/lib/crm/finance";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
   fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
@@ -552,9 +552,6 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-center text-xs text-muted-foreground">
-                {washer ? `${washer} получит 30% — ${rub(Math.round(sum * WASHER_SHARE))}` : "Выберите мойщика: с его заказа считается 30%."}
-              </p>
               {method === "terminal" && (
                 <>
                   <button type="button" disabled={!washer} onClick={() => onUpdate((x) => applyPayment(x, "terminal", washer ?? undefined))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Подтвердить оплату</button>
