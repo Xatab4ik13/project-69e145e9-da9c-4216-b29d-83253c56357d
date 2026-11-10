@@ -112,6 +112,19 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
           </table>
           {clients.length === 0 && <p className="px-4 py-10 text-center text-muted-foreground">Клиенты с таким номером не найдены.</p>}
         </div>
+        <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+          <p className="text-sm text-muted-foreground" aria-live="polite">
+            {clients.length > 0
+              ? `Показано ${pagination.start}–${pagination.end} из ${clients.length}`
+              : "Клиентов не найдено"}
+          </p>
+          <CrmPagination
+            currentPage={pagination.currentPage}
+            pageCount={pagination.pageCount}
+            onPageChange={setPage}
+            label="Страницы лояльности"
+          />
+        </div>
       </section>
 
       <Dialog open={selected !== null} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
