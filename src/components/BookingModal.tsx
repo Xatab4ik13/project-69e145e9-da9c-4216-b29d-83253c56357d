@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import logoAsset from "@/assets/aquarius-logo.webp.asset.json";
+import { ArrowUpRight } from "lucide-react";
 import { ArrowLeft, ArrowRight, CalendarDays, CalendarClock, Car, Check, ChevronDown, ChevronRight, Clock, MapPin, Phone, Search, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -46,6 +48,19 @@ export function MobileBookingBar({ label, step, onBack, onClose }: { label: stri
       </div>
     </div>
   );
+}
+
+const YMAPS = "https://yandex.ru/maps/?text=" + encodeURIComponent("Санкт-Петербург, проспект Большевиков, 18к2");
+function downloadIcs(day: Date, slot: string, minutes: number, pkg: string) {
+  const [h, m] = slot.split(":").map(Number) as [number, number];
+  const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m);
+  const end = new Date(start.getTime() + minutes * 60000);
+  const f = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", `DTSTART:${f(start)}`, `DTEND:${f(end)}`, `SUMMARY:Автомойка Аквариус — ${pkg}`, "LOCATION:Санкт-Петербург\\, проспект Большевиков\\, 18к2\\, паркинг 4-й уровень", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  a.download = "aquarius.ics";
+  a.click();
 }
 
 const rub = (n: number) => n.toLocaleString("ru-RU").replace(/\u00a0/g, " ");
