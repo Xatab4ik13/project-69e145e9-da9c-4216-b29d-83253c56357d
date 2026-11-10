@@ -412,9 +412,9 @@ function Configurator() {
             <p className="font-display text-3xl">от {rub(total)} ₽</p>
             <p className="flex items-center gap-2 text-sm"><Clock className="h-4 w-4" /> {tMin === tMax ? tMin : `${tMin}–${tMax}`} минут</p>
           </div>
-          <a href="#" className="btn-lime inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm">
-            Выбрать автомобиль <ArrowRight className="h-4 w-4" />
-          </a>
+          <button type="button" className="btn-lime inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm">
+            Записаться <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
         <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs">
           <p>Точная стоимость после выбора автомобиля. Затем — дата и время.</p>
