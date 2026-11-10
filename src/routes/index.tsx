@@ -225,12 +225,14 @@ function Configurator() {
                 </div>
                 <h3 className="mt-3 font-display text-2xl uppercase">{c.name}</h3>
                 <p className="font-display text-xl">от {rub(c.price)} ₽{c.extra > 0 && <span> · +{c.extra} минут</span>}</p>
-                <p className="mb-4 text-sm">{c.desc}</p>
-                {c.extra === 0 && <p className="-mt-2 mb-4 flex items-center gap-2 text-sm"><Check className="h-4 w-4" /> Без добавочного времени</p>}
+                <p className="text-sm">{c.desc}</p>
+                <p className={`mt-2 flex h-5 items-center gap-2 text-sm ${c.extra === 0 ? "" : "invisible"}`} aria-hidden={c.extra !== 0}>
+                  <Check className="h-4 w-4" /> Без добавочного времени
+                </p>
                 <button
                   type="button"
                   onClick={() => toggle(c.id)}
-                  className={`mt-3 flex items-center justify-center gap-2 rounded-lg py-2 text-sm ${on ? "btn-lime" : "border border-foreground bg-background"}`}
+                  className={`mt-auto flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold ${on ? "btn-lime" : "border border-foreground bg-background"}`}
                 >
                   {on ? <><Check className="h-4 w-4" /> Добавлено</> : <><Plus className="h-4 w-4" /> Добавить</>}
                 </button>
