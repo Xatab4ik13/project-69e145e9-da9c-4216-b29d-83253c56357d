@@ -226,7 +226,7 @@ function Configurator() {
                 <h3 className="mt-3 font-display text-2xl uppercase">{c.name}</h3>
                 <p className="font-display text-xl">от {rub(c.price)} ₽{c.extra > 0 && <span> · +{c.extra} минут</span>}</p>
                 <p className="text-sm">{c.desc}</p>
-                <p className={`mt-2 flex h-5 items-center gap-2 text-sm ${c.extra === 0 ? "" : "invisible"}`} aria-hidden={c.extra !== 0}>
+                <p className={`mt-2 mb-3 flex h-5 items-center gap-2 text-sm ${c.extra === 0 ? "" : "invisible"}`} aria-hidden={c.extra !== 0}>
                   <Check className="h-4 w-4" /> Без добавочного времени
                 </p>
                 <button
