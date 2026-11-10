@@ -7,10 +7,10 @@ import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
-import { DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
+import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, findConflict, finishWash, fmtDateLong, fmtDateShort,
-  fmtTime, rub, startWash, statusLabel, total, withinHours,
+  fmtTime, rub, startWash, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice,
 } from "@/lib/crm/logic";
 
 const PX_PER_MIN = 2;
@@ -304,8 +304,14 @@ function OrderPanel({ b, onClose, onUpdate }: { b: Booking; onClose: () => void;
           {b.wash === "scheduled" && (
             <button type="button" onClick={() => onUpdate(startWash)} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Начать мойку</button>
           )}
-          {b.wash === "in_progress" && (
-            <button type="button" onClick={() => onUpdate(finishWash)} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Завершить мойку</button>
+          {b.wash === "in_progress" && (b.source === "app" ? (
+              <>
+                <button type="button" onClick={() => onUpdate(readyAndInvoice)} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Машина готова</button>
+                <p className="mt-2 text-center text-xs text-muted-foreground">Клиент получит уведомление и счёт в приложении.</p>
+              </>
+            ) : (
+              <button type="button" onClick={() => onUpdate(finishWash)} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Завершить мойку</button>
+            )
           )}
           {b.wash === "done" && b.payment === "paid" && (
             <div className="rounded-lg bg-crm-ok p-4 text-crm-ok-foreground">
@@ -366,30 +372,28 @@ function NewBookingDialog({
   const [car, setCar] = useState("");
   const [pkgName, setPkgName] = useState("Комфорт");
   const [extras, setExtras] = useState<string[]>([]);
-  const [box, setBox] = useState<1 | 2>(1);
-  const [time, setTime] = useState("12:00");
+  const [slot, setSlot] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (open && initial) {
-      setBox(initial.box);
-      setTime(fmtTime(Math.min(Math.max(initial.start, OPEN_MIN), CLOSE_MIN - 40)));
+    if (open) {
+      setSlot(null);
       setClient(""); setCar(""); setPkgName("Комфорт"); setExtras([]); setError("");
     }
   }, [open, initial]);
 
   const pkg = PACKAGES.find((p) => p.name === pkgName)!;
-  const services = [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...EXTRAS.filter((e) => extras.includes(e.name))];
-  const [hh = 0, mm = 0] = time.split(":").map(Number);
-  const start = hh * 60 + mm;
+  const chosenExtras = EXTRAS.filter((e) => extras.includes(e.name));
+  const services = [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...chosenExtras.map(({ name, price }) => ({ name, price }))];
+  const duration = bookingDuration(SLOT_MIN, chosenExtras.map((e) => e.minutes));
+  const slots = freeSlots(bookings, date, duration);
+  const picked = slots.find((s) => s.start === slot);
 
   const submit = () => {
     if (!client.trim() || !car.trim()) return setError("Укажите клиента и автомобиль.");
-    if (!withinHours(start, pkg.duration)) return setError("Запись должна укладываться в 10:00–22:00.");
-    const c = findConflict(bookings, { date, box, start, duration: pkg.duration });
-    if (c) return setError(`В боксе ${box} уже есть запись ${fmtTime(c.start)}–${fmtTime(c.start + c.duration)} (${c.car}).`);
+    if (!picked) return setError("Выберите свободное время.");
     onCreate({
-      id: crypto.randomUUID(), date, box, start, duration: pkg.duration, car: car.trim(), carType: "Седан",
+      id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: "Седан",
       client: client.trim(), source: "admin", worker: WORKERS[0] ?? "", packageName: pkg.name, services,
       wash: "scheduled", payment: "unpaid",
     });
@@ -404,27 +408,36 @@ function NewBookingDialog({
           <input className={field} placeholder="Клиент" value={client} onChange={(e) => setClient(e.target.value)} />
           <input className={field} placeholder="Автомобиль" value={car} onChange={(e) => setCar(e.target.value)} />
           <select className={field} value={pkgName} onChange={(e) => setPkgName(e.target.value)}>
-            {PACKAGES.map((p) => <option key={p.name} value={p.name}>{p.name} · {rub(p.price)} · {p.duration} мин</option>)}
+            {PACKAGES.map((p) => <option key={p.name} value={p.name}>{p.name} · {rub(p.price)}</option>)}
           </select>
           <div className="flex flex-wrap gap-2">
             {EXTRAS.map((e) => {
               const on = extras.includes(e.name);
               return (
-                <button key={e.name} type="button" onClick={() => setExtras((l) => on ? l.filter((x) => x !== e.name) : [...l, e.name])}
+                <button key={e.name} type="button" onClick={() => { setSlot(null); setExtras((l) => on ? l.filter((x) => x !== e.name) : [...l, e.name]); }}
                   className={`rounded-full border px-3 py-1 text-xs ${on ? "border-crm bg-crm-soft text-crm" : "border-border"}`}>
-                  {e.name} · {rub(e.price)}
+                  {e.name} · {rub(e.price)}{e.minutes ? ` +${e.minutes} мин` : ""}
                 </button>
               );
             })}
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <select className={field} value={box} onChange={(e) => setBox(Number(e.target.value) as 1 | 2)}>
-              <option value={1}>Бокс 1</option>
-              <option value={2}>Бокс 2</option>
-            </select>
-            <input type="time" step={300} min="10:00" max="22:00" className={field} value={time} onChange={(e) => setTime(e.target.value)} />
+          <div>
+            <p className="mb-2 font-medium">Свободное время · {duration} минут</p>
+            {slots.length === 0 ? (
+              <p className="text-muted-foreground">На этот день свободных слотов нет.</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {slots.map((s) => (
+                  <button key={s.start} type="button" onClick={() => setSlot(s.start)}
+                    className={`rounded-lg border py-2 ${slot === s.start ? "border-crm bg-crm text-crm-foreground" : "border-border"}`}>
+                    {fmtTime(s.start)}
+                  </button>
+                ))}
+              </div>
+            )}
+            {picked && <p className="mt-2 text-muted-foreground">Бокс {picked.box} назначен автоматически</p>}
           </div>
-          <p className="text-muted-foreground">Итого: <b className="text-foreground">{rub(services.reduce((s, x) => s + x.price, 0))}</b> · {pkg.duration} минут</p>
+          <p className="text-muted-foreground">Итого: <b className="text-foreground">{rub(services.reduce((s, x) => s + x.price, 0))}</b></p>
           {error && <p className="text-destructive">{error}</p>}
           <button type="button" onClick={submit} className="w-full rounded-lg bg-crm py-2.5 font-semibold text-crm-foreground">Создать запись</button>
         </div>
