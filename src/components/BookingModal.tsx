@@ -230,13 +230,13 @@ export function BookingModal({
               ) : (
                 <div className="relative mt-3">
                   <div className="flex items-center gap-4 rounded-lg border border-foreground/40 px-5 py-3">
-                    <Search className="h-6 w-6" />
+                    <Search className="h-6 w-6 shrink-0" />
                     <input
                       value={query}
                       onChange={(e) => { setQuery(e.target.value); setListOpen(true); }}
                       onFocus={() => setListOpen(true)}
                       placeholder="Начните вводить марку или модель"
-                      className="flex-1 bg-transparent text-lg outline-none placeholder:text-muted-foreground"
+                      className="min-w-0 flex-1 bg-transparent text-lg outline-none placeholder:text-muted-foreground"
                     />
                     <button type="button" onClick={() => setListOpen((o) => !o)} aria-label="Список автомобилей">
                       <ChevronDown className="h-6 w-6" />
@@ -322,7 +322,7 @@ export function BookingModal({
                   else if (phone) d = d.slice(1);
                   setPhone(d.slice(0, 10));
                 }}
-                className="flex-1 bg-transparent text-lg outline-none placeholder:text-muted-foreground"
+                className="min-w-0 flex-1 bg-transparent text-lg outline-none placeholder:text-muted-foreground"
               />
             </div>
             <p className="mt-2 text-sm text-muted-foreground">Чтобы связаться с вами по записи</p>
