@@ -307,7 +307,7 @@ function Index() {
 const packages = [
   { name: "Стандарт", price: 1200, time: [40, 60] as [number, number], items: ["Кузов пеной", "Сушка", "Мойка ковров"] },
   { name: "Комфорт", price: 1600, time: [50, 60] as [number, number], items: ["Всё из «Стандарта»", "Пылесос салона"] },
-  { name: "Люкс", price: 1900, time: [80, 80] as [number, number], items: ["Всё из «Комфорта»", "Очистка стёкол", "Очистка пластика"] },
+  { name: "Люкс", price: 1900, time: [60, 80] as [number, number], items: ["Всё из «Комфорта»", "Очистка стёкол", "Очистка пластика"] },
 ];
 
 type Cat = "body" | "salon";
