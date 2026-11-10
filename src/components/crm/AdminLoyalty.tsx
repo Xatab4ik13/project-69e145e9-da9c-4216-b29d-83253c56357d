@@ -93,8 +93,11 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left">
+        <div className="min-h-0 flex-1 md:overflow-auto">
+          <div className="divide-y divide-border md:hidden">
+            {pagination.items.map((client) => <ClientMobileCard key={client.id} client={client} onSelect={openClient} />)}
+          </div>
+          <table className="hidden w-full min-w-[720px] border-collapse text-left md:table">
             <thead className="sticky top-0 z-10 bg-crm-surface text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Телефон</th>
@@ -114,7 +117,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
           </table>
           {clients.length === 0 && <p className="px-4 py-10 text-center text-muted-foreground">Клиенты с таким номером не найдены.</p>}
         </div>
-        <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+        <div className="flex min-h-14 flex-col items-center justify-between gap-3 border-t border-border px-3 py-3 [&_button]:h-11 [&_button]:min-w-11 sm:flex-row sm:[&_button]:h-8 sm:[&_button]:min-w-8 md:px-4">
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {clients.length > 0
               ? `Показано ${pagination.start}–${pagination.end} из ${clients.length}`
@@ -138,9 +141,9 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
 
 function Metric({ Icon, label, value }: { Icon: typeof Users; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border px-4 py-3">
+    <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-3 md:gap-3 md:px-4">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-crm-soft text-crm"><Icon className="h-4 w-4" /></span>
-      <div><p className="text-xs text-muted-foreground">{label}</p><p className="mt-0.5 text-xl font-bold tabular-nums">{value}</p></div>
+      <div className="min-w-0"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-0.5 truncate text-lg font-bold tabular-nums md:text-xl">{value}</p></div>
     </div>
   );
 }
@@ -162,6 +165,35 @@ const ClientRow = memo(function ClientRow({ client, onSelect }: { client: Loyalt
       <td className="whitespace-nowrap px-3 py-4 text-muted-foreground">{client.lastVisit ? fmtDateShort(client.lastVisit) : "Ещё не было"}</td>
       <td className="pr-3 text-muted-foreground"><ChevronRight className="h-4 w-4" /></td>
     </tr>
+  );
+});
+
+const ClientMobileCard = memo(function ClientMobileCard({ client, onSelect }: { client: LoyaltyClient; onSelect: (id: string) => void }) {
+  const balance = loyaltyBalance(client, DEMO_TODAY);
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(client.id)}
+      aria-label={`Открыть бонусы клиента ${fmtPhone(client.phone)}`}
+      className="block min-h-44 w-full p-4 text-left active:bg-crm-soft/45"
+    >
+      <span className="flex items-center justify-between gap-3">
+        <span className="text-base font-semibold text-crm">{fmtPhone(client.phone)}</span>
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+      </span>
+      <span className="mt-2 block"><AccountStatus activated={client.activated} /></span>
+      <span className="mt-3 flex items-end justify-between gap-3">
+        <span>
+          <span className="block text-xs text-muted-foreground">Доступно бонусов</span>
+          <span className="mt-0.5 block text-2xl font-bold tabular-nums">{formatBonuses(balance)}</span>
+        </span>
+        <span className="text-right text-sm"><span className="text-muted-foreground">Визитов: </span><b>{client.visits}</b></span>
+      </span>
+      <span className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3 text-sm">
+        <span className="text-muted-foreground">{client.lastVisit ? fmtDateShort(client.lastVisit) : "Визитов ещё не было"}</span>
+        <span className="font-semibold">{rub(client.totalSpent)}</span>
+      </span>
+    </button>
   );
 });
 
