@@ -57,6 +57,7 @@ export function BookingModal({
   const [slot, setSlot] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [agree, setAgree] = useState(false);
+  const [done, setDone] = useState(false);
 
   const days = useMemo(() => {
     const now = new Date();
@@ -72,7 +73,10 @@ export function BookingModal({
   const canContinue = !!car && !!slot;
   const canConfirm = phone.length === 10 && agree;
 
-  const close = () => onOpenChange(false);
+  const close = () => {
+    onOpenChange(false);
+    if (done) setTimeout(() => { setDone(false); setStep(1); setCar(null); setSlot(null); setPhone(""); setAgree(false); }, 300);
+  };
   const pickCar = (c: CarItem) => {
     setCar(c);
     setQuery("");
@@ -80,11 +84,46 @@ export function BookingModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
       <DialogContent className="max-h-[95vh] max-w-3xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden">
         <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6">
           <X className="h-7 w-7" />
         </button>
+        {done && car && slot ? (
+          <div>
+            <div className="flex items-center gap-4">
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-lime"><Check className="h-9 w-9" strokeWidth={3} /></span>
+              <DialogTitle className="font-display text-4xl uppercase sm:text-5xl">Вы записаны!</DialogTitle>
+            </div>
+            <p className="mt-4 text-lg">Спасибо, что выбрали Aquarius! Мы уже ждём вас и вашу машину — подготовим всё к приезду. Если планы изменятся, просто позвоните нам.</p>
+            <div className="mt-6 space-y-3 rounded-2xl bg-muted px-7 py-6">
+              <p className="font-display text-2xl">{pkgName}{extras.length > 0 ? ` + ${extras.join(" + ").toLowerCase()}` : ""}</p>
+              <p className="flex items-center gap-3"><Car className="h-6 w-6" /> {car.name} · {car.body}</p>
+              <p className="flex items-center gap-3"><CalendarDays className="h-6 w-6" /> {WD_FULL[day.getDay()]}, {day.getDate()} {MONTHS_GEN[day.getMonth()]} · {range}</p>
+              <p className="flex items-center gap-3"><MapPin className="h-6 w-6" /> Большевиков, 18к2 · Паркинг, 4-й уровень</p>
+              <p className="flex items-center gap-3"><Phone className="h-6 w-6" /> {fmtPhone(phone)}</p>
+              <p className="font-display text-3xl">{rub(price)} ₽</p>
+            </div>
+            <div className="mt-6 rounded-2xl border border-border px-7 py-6">
+              <p className="font-display text-2xl uppercase">Aquarius в вашем телефоне</p>
+              <p className="mt-2">Ваш автомобиль, любимая мойка и бонусная карта — всегда под рукой.</p>
+              <div className="mt-4 grid grid-cols-3 gap-4">
+                {[["5%", "бонусами с оплаченной суммы"], ["200", "приветственных бонусов после первого оплаченного визита"], ["до 20%", "стоимости заказа можно оплатить бонусами"]].map(([v, t]) => (
+                  <div key={v} className="border-l-2 border-lime pl-3">
+                    <p className="font-display text-3xl">{v}</p>
+                    <p className="text-sm">{t}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-xs">1 бонус = 1 ₽. Списание со следующего визита. На комплексы и допы.</p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <a href="#" className="inline-flex flex-col rounded-lg border border-foreground bg-background px-5 py-1.5 font-semibold leading-tight"><span className="text-[10px] font-normal">Загрузите в</span>App Store</a>
+                <a href="#" className="inline-flex flex-col rounded-lg border border-foreground bg-background px-5 py-1.5 font-semibold leading-tight"><span className="text-[10px] font-normal">Доступно в</span>Google Play</a>
+              </div>
+            </div>
+            <button type="button" onClick={close} className="btn-lime mt-6 w-full rounded-lg py-3.5 text-lg font-semibold">Отлично</button>
+          </div>
+        ) : (<>
         <div className="flex items-center gap-4">
           <img src="/apple-touch-icon.png" alt="" width={64} height={64} className="h-16 w-16" />
           <DialogTitle className="font-display text-4xl uppercase sm:text-5xl">Запись на мойку</DialogTitle>
@@ -284,6 +323,7 @@ export function BookingModal({
               <button
                 type="button"
                 disabled={!canConfirm}
+                onClick={() => setDone(true)}
                 className={`w-full rounded-lg py-3.5 text-lg font-semibold ${canConfirm ? "btn-lime" : "cursor-not-allowed bg-muted text-muted-foreground"}`}
               >
                 Подтвердить запись
@@ -291,6 +331,7 @@ export function BookingModal({
             )}
           </div>
         </div>
+        </>)}
       </DialogContent>
     </Dialog>
   );
