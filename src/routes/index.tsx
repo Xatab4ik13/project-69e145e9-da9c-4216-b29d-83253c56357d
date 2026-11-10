@@ -190,25 +190,34 @@ function Configurator() {
         <div className="mt-16 grid gap-x-4 gap-y-8 sm:grid-cols-2 md:grid-cols-3">
           {show("body") && (
             <div className="flex flex-col">
-              <img src={imgFoam.url} alt="Ручная мойка кузова в пене" width={720} height={405} loading="lazy" decoding="async" className="aspect-[3/2] w-full rounded-xl object-cover" />
-              <h3 className="mt-3 font-display text-2xl uppercase">Способ мойки</h3>
-              <p className="text-sm">Дополнение к комплексу</p>
-              <div className="mt-2 space-y-1 text-sm">
-                {phases.map((p) => (
-                  <label key={p.id} className="flex cursor-pointer items-center gap-2">
-                    <input
-                      type="radio"
-                      name="phase"
-                      checked={phase === p.id}
-                      onClick={() => phase === p.id && setPhase(null)}
-                      onChange={() => setPhase(p.id)}
-                      className="accent-foreground"
-                    />
-                    {p.label} · от {p.price} ₽
-                  </label>
-                ))}
+              <div className="relative">
+                <img src={imgFoam.url} alt="Ручная мойка кузова в пене" width={720} height={405} loading="lazy" decoding="async" className="aspect-[3/2] w-full rounded-xl object-cover" />
+                {phase && (
+                  <span className="btn-lime absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full">
+                    <Check className="h-4 w-4" />
+                  </span>
+                )}
               </div>
-              <p className="mt-2 flex items-center gap-2 text-sm"><Check className="h-4 w-4" /> Без добавочного времени</p>
+              <h3 className="mt-3 font-display text-2xl uppercase">Способ мойки</h3>
+              <p className="font-display text-xl">от {rub(phases[0]!.price)} ₽</p>
+              <p className="text-sm">Дополнение к комплексу</p>
+              <p className="mt-2 mb-3 flex h-5 items-center text-sm">Без добавочного времени</p>
+              <div className="mt-auto grid grid-cols-2 gap-2">
+                {phases.map((p) => {
+                  const on = phase === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setPhase(on ? null : p.id)}
+                      className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold ${on ? "btn-lime" : "border border-foreground bg-background"}`}
+                    >
+                      {on ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                      {p.label} · {rub(p.price)} ₽
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
           {care.filter((c) => show(c.cat)).map((c) => {
@@ -226,8 +235,8 @@ function Configurator() {
                 <h3 className="mt-3 font-display text-2xl uppercase">{c.name}</h3>
                 <p className="font-display text-xl">от {rub(c.price)} ₽{c.extra > 0 && <span> · +{c.extra} минут</span>}</p>
                 <p className="text-sm">{c.desc}</p>
-                <p className={`mt-2 mb-3 flex h-5 items-center gap-2 text-sm ${c.extra === 0 ? "" : "invisible"}`} aria-hidden={c.extra !== 0}>
-                  <Check className="h-4 w-4" /> Без добавочного времени
+                <p className={`mt-2 mb-3 flex h-5 items-center text-sm ${c.extra === 0 ? "" : "invisible"}`} aria-hidden={c.extra !== 0}>
+                  Без добавочного времени
                 </p>
                 <button
                   type="button"
