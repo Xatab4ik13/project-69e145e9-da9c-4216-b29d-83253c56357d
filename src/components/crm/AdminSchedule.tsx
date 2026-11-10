@@ -13,7 +13,7 @@ import {
   fmtTime, rub, startWash, statusLabel, total, withinHours,
 } from "@/lib/crm/logic";
 
-const PX_PER_MIN = 1.6;
+const PX_PER_MIN = 2;
 const HOURS = Array.from({ length: (CLOSE_MIN - OPEN_MIN) / 60 + 1 }, (_, i) => OPEN_MIN + i * 60);
 
 export function AdminSchedule() {
@@ -197,7 +197,7 @@ function Grid({
             </div>
           ))}
           {showNow && (
-            <div className="pointer-events-none absolute inset-x-0 z-10 flex items-center" style={{ top: 12 + nowTop }}>
+            <div className="pointer-events-none absolute inset-x-0 z-10 flex h-0 items-center" style={{ top: 12 + nowTop }}>
               <span className="ml-1 -translate-y-1/2 rounded bg-crm px-1.5 py-0.5 text-xs font-semibold text-crm-foreground">{fmtTime(DEMO_NOW_MIN)}</span>
               <span className="h-0.5 flex-1 -translate-y-1/2 bg-crm" />
             </div>
@@ -227,10 +227,10 @@ function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; 
         {status && finished && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Check className="h-3 w-3" />{status}</span>}
       </div>
       <p className="truncate font-semibold">{b.car}</p>
-      {h > 70 && <p className="truncate text-xs">{b.packageName}{extras > 0 ? ` + ${extras} доп${extras > 1 && extras < 5 ? "а" : extras >= 5 ? "ов" : ""}` : ""}</p>}
-      {h > 60 && (
+      {h > 60 && <p className="truncate text-xs">{b.packageName}{extras > 0 ? ` + ${extras} доп${extras > 1 && extras < 5 ? "а" : extras >= 5 ? "ов" : ""}` : ""}</p>}
+      {h > 75 && (
         <div className="mt-1 flex items-center gap-1.5">
-          {selected && h > 76 && <span className="mr-auto font-bold">{rub(total(b))}</span>}
+          {selected && h > 90 && <span className="mr-auto font-bold">{rub(total(b))}</span>}
           <span className={`rounded bg-muted px-1.5 py-0.5 text-xs ${selected ? "" : "mr-auto"}`}>{SOURCE_LABEL[b.source]}</span>
           {status && !finished && (
             <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium ${b.wash === "in_progress" ? "bg-crm-soft text-crm" : b.payment === "awaiting" ? "bg-crm-warn text-crm-warn-foreground" : "bg-crm-ok text-crm-ok-foreground"}`}>
