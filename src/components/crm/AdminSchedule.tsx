@@ -1,0 +1,434 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Bell, Banknote, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
+  Clock, CreditCard, Plus, Search, Smartphone, Star, User, X,
+} from "lucide-react";
+import logo from "@/assets/aquarius-logo.webp.asset.json";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
+import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
+import { DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
+import {
+  CLOSE_MIN, OPEN_MIN, addDays, applyPayment, findConflict, finishWash, fmtDateLong, fmtDateShort,
+  fmtTime, rub, startWash, statusLabel, total, withinHours,
+} from "@/lib/crm/logic";
+
+const PX_PER_MIN = 1.6;
+const HOURS = Array.from({ length: (CLOSE_MIN - OPEN_MIN) / 60 + 1 }, (_, i) => OPEN_MIN + i * 60);
+
+export function AdminSchedule() {
+  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
+  const [date, setDate] = useState(DEMO_TODAY);
+  const [selectedId, setSelectedId] = useState<string | null>("b3");
+  const [query, setQuery] = useState("");
+  const [source, setSource] = useState<"all" | BookingSource>("all");
+  const [newOpen, setNewOpen] = useState<null | { box: 1 | 2; start: number }>(null);
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return bookings.filter(
+      (b) =>
+        b.date === date &&
+        (source === "all" || b.source === source) &&
+        (!q || b.client.toLowerCase().includes(q) || b.car.toLowerCase().includes(q)),
+    );
+  }, [bookings, date, query, source]);
+
+  const selected = bookings.find((b) => b.id === selectedId) ?? null;
+  const update = (id: string, fn: (b: Booking) => Booking) =>
+    setBookings((list) => list.map((b) => (b.id === id ? fn(b) : b)));
+
+  return (
+    <div className="flex h-screen bg-background text-sm text-foreground">
+      <Sidebar />
+      <main className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-4">
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold tracking-tight">Расписание</h1>
+          <label className="ml-auto flex w-80 items-center gap-2 rounded-lg border border-border px-3 py-2">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Клиент или автомобиль" className="w-full bg-transparent outline-none placeholder:text-muted-foreground" />
+          </label>
+          <button type="button" aria-label="Уведомления" className="p-2"><Bell className="h-5 w-5" /></button>
+        </div>
+
+        <div className="mt-4 flex items-center gap-3">
+          <button type="button" aria-label="Предыдущий день" onClick={() => setDate(addDays(date, -1))} className="rounded-lg border border-border p-2"><ChevronLeft className="h-4 w-4" /></button>
+          <span className="min-w-60 text-center text-lg font-semibold">{fmtDateLong(date)}</span>
+          <button type="button" aria-label="Следующий день" onClick={() => setDate(addDays(date, 1))} className="rounded-lg border border-border p-2"><ChevronRight className="h-4 w-4" /></button>
+          <button type="button" onClick={() => setDate(DEMO_TODAY)} className="ml-3 rounded-lg border border-border px-4 py-2 font-medium">Сегодня</button>
+          <button type="button" onClick={() => setNewOpen({ box: 1, start: 12 * 60 })} className="ml-auto inline-flex items-center gap-2 rounded-lg bg-crm px-5 py-2.5 font-semibold text-crm-foreground">
+            <Plus className="h-4 w-4" /> Новая запись
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center gap-3">
+          <span className="text-muted-foreground">Работаем 10:00–22:00</span>
+          <div className="ml-auto flex rounded-lg bg-muted p-0.5">
+            <span className="rounded-md bg-crm px-4 py-1.5 font-medium text-crm-foreground">День</span>
+            <span className="cursor-not-allowed px-4 py-1.5 text-muted-foreground" title="Скоро">Неделя</span>
+          </div>
+          <div className="relative">
+            <select value={source} onChange={(e) => setSource(e.target.value as typeof source)} className="appearance-none rounded-lg border border-border bg-background py-2 pl-3 pr-9">
+              <option value="all">Все источники</option>
+              <option value="site">Сайт</option>
+              <option value="app">Приложение</option>
+              <option value="admin">Администратор</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+          </div>
+        </div>
+
+        <Grid
+          date={date}
+          bookings={visible}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onAdd={(box, start) => setNewOpen({ box, start })}
+        />
+      </main>
+
+      {selected && (
+        <OrderPanel
+          key={selected.id}
+          b={selected}
+          onClose={() => setSelectedId(null)}
+          onUpdate={(fn) => update(selected.id, fn)}
+        />
+      )}
+
+      <NewBookingDialog
+        open={!!newOpen}
+        initial={newOpen}
+        date={date}
+        bookings={bookings}
+        onClose={() => setNewOpen(null)}
+        onCreate={(b) => {
+          setBookings((l) => [...l, b]);
+          setSelectedId(b.id);
+          setNewOpen(null);
+        }}
+      />
+    </div>
+  );
+}
+
+function Sidebar() {
+  const items = [
+    { label: "Расписание", icon: CalendarDays, active: true },
+    { label: "Клиенты", icon: User },
+    { label: "Лояльность", icon: Star },
+    { label: "Уведомления", icon: Bell },
+  ];
+  return (
+    <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-crm-surface px-3 py-5">
+      <div className="px-2">
+        <img src={logo.url} alt="Aquarius" width={160} height={62} className="h-11 w-auto" />
+        <p className="mt-3 text-muted-foreground">Управление мойкой</p>
+      </div>
+      <nav className="mt-6 space-y-1">
+        {items.map(({ label, icon: Icon, active }) => (
+          <span key={label} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium ${active ? "bg-crm-soft text-crm" : "text-foreground"}`}>
+            <Icon className="h-5 w-5" /> {label}
+          </span>
+        ))}
+      </nav>
+      <div className="mt-auto space-y-4">
+        <span className="flex items-center gap-3 px-3"><CircleHelp className="h-5 w-5" /> Помощь</span>
+        <div className="flex items-center gap-3 border-t border-border px-2 pt-4">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-crm font-semibold text-crm-foreground">А</span>
+          <div>
+            <p className="font-semibold">Администратор</p>
+            <p className="text-xs text-crm">Мой аккаунт</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function Grid({
+  date, bookings, selectedId, onSelect, onAdd,
+}: {
+  date: string;
+  bookings: Booking[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onAdd: (box: 1 | 2, start: number) => void;
+}) {
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (scroller.current) scroller.current.scrollTop = (14 * 60 - OPEN_MIN) * PX_PER_MIN - 12;
+  }, []);
+  const height = (CLOSE_MIN - OPEN_MIN) * PX_PER_MIN;
+  const showNow = date === DEMO_TODAY;
+  const nowTop = (DEMO_NOW_MIN - OPEN_MIN) * PX_PER_MIN;
+
+  return (
+    <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border">
+      <div className="grid grid-cols-[64px_1fr_1fr] border-b border-border bg-crm-surface text-center text-base font-semibold">
+        <span />
+        <span className="border-l border-border py-2.5">Бокс 1</span>
+        <span className="border-l border-border py-2.5">Бокс 2</span>
+      </div>
+      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
+        <div className="relative grid grid-cols-[64px_1fr_1fr] py-3" style={{ height: height + 24 }}>
+          <div className="relative">
+            {HOURS.flatMap((m) => [m, m + 30]).filter((m) => m <= CLOSE_MIN).map((m) => (
+              <span key={m} className={`absolute right-3 -translate-y-1/2 ${m % 60 ? "text-xs text-muted-foreground" : "text-base"}`} style={{ top: (m - OPEN_MIN) * PX_PER_MIN }}>
+                {fmtTime(m)}
+              </span>
+            ))}
+          </div>
+          {([1, 2] as const).map((box) => (
+            <div
+              key={box}
+              className="relative border-l border-border"
+              onDoubleClick={(e) => {
+                const y = e.clientY - e.currentTarget.getBoundingClientRect().top;
+                onAdd(box, OPEN_MIN + Math.round(y / PX_PER_MIN / 15) * 15);
+              }}
+            >
+              {HOURS.map((m) => (
+                <div key={m} className="absolute inset-x-0 border-t border-border/60" style={{ top: (m - OPEN_MIN) * PX_PER_MIN }} />
+              ))}
+              {bookings.filter((b) => b.box === box).map((b) => (
+                <BookingCard key={b.id} b={b} selected={b.id === selectedId} onClick={() => onSelect(b.id)} />
+              ))}
+            </div>
+          ))}
+          {showNow && (
+            <div className="pointer-events-none absolute inset-x-0 z-10 flex items-center" style={{ top: 12 + nowTop }}>
+              <span className="ml-1 -translate-y-1/2 rounded bg-crm px-1.5 py-0.5 text-xs font-semibold text-crm-foreground">{fmtTime(DEMO_NOW_MIN)}</span>
+              <span className="h-0.5 flex-1 -translate-y-1/2 bg-crm" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; onClick: () => void }) {
+  const status = statusLabel(b);
+  const finished = b.wash === "done" && b.payment === "paid";
+  const h = b.duration * PX_PER_MIN;
+  const extras = b.services.length - 1;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`absolute inset-x-2 overflow-hidden rounded-lg border px-3 py-1.5 text-left transition-colors ${
+        selected ? "z-[5] border-2 border-crm bg-crm-soft" : finished ? "border-border bg-muted" : "border-border bg-background hover:bg-crm-surface"
+      }`}
+      style={{ top: (b.start - OPEN_MIN) * PX_PER_MIN + 1, height: h - 2 }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="font-semibold">{fmtTime(b.start)} – {fmtTime(b.start + b.duration)}</span>
+        {status && finished && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Check className="h-3 w-3" />{status}</span>}
+      </div>
+      <p className="truncate font-semibold">{b.car}</p>
+      {h > 70 && <p className="truncate text-xs">{b.packageName}{extras > 0 ? ` + ${extras} доп${extras > 1 && extras < 5 ? "а" : extras >= 5 ? "ов" : ""}` : ""}</p>}
+      {h > 60 && (
+        <div className="mt-1 flex items-center gap-1.5">
+          {selected && h > 76 && <span className="mr-auto font-bold">{rub(total(b))}</span>}
+          <span className={`rounded bg-muted px-1.5 py-0.5 text-xs ${selected ? "" : "mr-auto"}`}>{SOURCE_LABEL[b.source]}</span>
+          {status && !finished && (
+            <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium ${b.wash === "in_progress" ? "bg-crm-soft text-crm" : b.payment === "awaiting" ? "bg-crm-warn text-crm-warn-foreground" : "bg-crm-ok text-crm-ok-foreground"}`}>
+              {b.wash === "done" && b.payment === "unpaid" && <Check className="h-3 w-3" />}{status}
+            </span>
+          )}
+        </div>
+      )}
+    </button>
+  );
+}
+
+function OrderPanel({ b, onClose, onUpdate }: { b: Booking; onClose: () => void; onUpdate: (fn: (b: Booking) => Booking) => void }) {
+  const [method, setMethod] = useState<PaymentMethod>(b.paymentMethod ?? "terminal");
+  const sum = total(b);
+  const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : "Ожидает";
+  const payLabel = b.payment === "paid" ? "Оплачено" : b.payment === "awaiting" ? "Ожидает оплаты" : "Не оплачено";
+  const methods: { id: PaymentMethod; icon: typeof CreditCard }[] = [
+    { id: "terminal", icon: CreditCard },
+    { id: "cash", icon: Banknote },
+    { id: "app", icon: Smartphone },
+  ];
+
+  return (
+    <aside className="flex w-[380px] shrink-0 flex-col border-l border-border">
+      <div className="flex items-center justify-between px-5 pt-5">
+        <h2 className="text-lg font-semibold">Карточка заказа</h2>
+        <button type="button" aria-label="Закрыть карточку" onClick={onClose} className="p-1"><X className="h-5 w-5" /></button>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
+        <p className="mt-3 text-2xl font-bold">{b.car}</p>
+        <p className="text-muted-foreground">{b.carType} · Бокс {b.box}</p>
+        <p className="mt-3 flex items-center gap-2 text-base"><Calendar className="h-5 w-5" /> {fmtDateShort(b.date)} · {fmtTime(b.start)}–{fmtTime(b.start + b.duration)}</p>
+        <div className="mt-3 grid grid-cols-[72px_1fr] items-center gap-y-1.5">
+          <span className="text-muted-foreground">Мойка:</span>
+          <span><span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 ${b.wash === "done" ? "bg-crm-ok text-crm-ok-foreground" : "bg-crm-soft text-crm"}`}>{b.wash === "done" && <Check className="h-3 w-3" />}{washLabel}</span></span>
+          <span className="text-muted-foreground">Оплата:</span>
+          <span><span className={`rounded px-2 py-0.5 ${b.payment === "paid" ? "bg-crm-ok text-crm-ok-foreground" : "bg-crm-warn text-crm-warn-foreground"}`}>{payLabel}</span></span>
+        </div>
+
+        <div className="mt-4 space-y-2 border-t border-border pt-4">
+          <p><span className="text-muted-foreground">Клиент:</span> <b className="text-base">{b.client}</b></p>
+          <p><span className="text-muted-foreground">Источник:</span> {SOURCE_LABEL[b.source].toLowerCase()}</p>
+          <label className="flex items-center gap-2">
+            <span className="text-muted-foreground">Исполнитель:</span>
+            <select value={b.worker} onChange={(e) => onUpdate((x) => ({ ...x, worker: e.target.value }))} className="rounded-md border border-border bg-background px-2 py-1">
+              {WORKERS.map((w) => <option key={w}>{w}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-4 border-t border-border pt-4">
+          <p className="text-base font-semibold">Услуги</p>
+          <ul className="mt-2 space-y-1.5">
+            {b.services.map((s) => (
+              <li key={s.name} className="flex justify-between"><span>{s.name}</span><span>{rub(s.price)}</span></li>
+            ))}
+          </ul>
+          <p className="mt-3 flex items-center gap-2"><Clock className="h-4 w-4" /> {b.duration} минут</p>
+        </div>
+
+        <div className="mt-4 border-t border-border pt-4">
+          <div className="flex items-baseline justify-between">
+            <span className="text-lg font-semibold">К оплате</span>
+            <span className="text-2xl font-bold">{rub(sum)}</span>
+          </div>
+          <button type="button" className="mt-1 text-crm hover:underline">Бонусы и купоны →</button>
+        </div>
+
+        <div className="mt-4 border-t border-border pt-4">
+          {b.wash === "scheduled" && (
+            <button type="button" onClick={() => onUpdate(startWash)} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Начать мойку</button>
+          )}
+          {b.wash === "in_progress" && (
+            <button type="button" onClick={() => onUpdate(finishWash)} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Завершить мойку</button>
+          )}
+          {b.wash === "done" && b.payment === "paid" && (
+            <div className="rounded-lg bg-crm-ok p-4 text-crm-ok-foreground">
+              <p className="flex items-center gap-2 font-semibold"><Check className="h-4 w-4" /> Оплачено</p>
+              <p className="mt-1">{METHOD_LABEL[b.paymentMethod!]} · {rub(sum)}</p>
+            </div>
+          )}
+          {b.wash === "done" && b.payment !== "paid" && (
+            <>
+              <p className="text-base font-semibold">Способ оплаты</p>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {methods.map(({ id, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setMethod(id)}
+                    className={`relative flex flex-col items-center gap-2 rounded-lg border px-1 py-3 ${method === id ? "border-2 border-crm bg-crm-soft" : "border-border"}`}
+                  >
+                    {method === id && <Check className="absolute right-1.5 top-1.5 h-4 w-4 rounded-full bg-crm p-0.5 text-crm-foreground" />}
+                    <Icon className="h-6 w-6" />
+                    <span className="text-xs">{METHOD_LABEL[id]}</span>
+                  </button>
+                ))}
+              </div>
+              {method === "terminal" && (
+                <>
+                  <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "terminal"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Подтвердить оплату</button>
+                  <p className="mt-2 text-center text-xs text-muted-foreground">Нажмите после успешной оплаты на терминале.</p>
+                </>
+              )}
+              {method === "cash" && (
+                <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "cash"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Подтвердить получение наличных</button>
+              )}
+              {method === "app" && (b.payment === "awaiting" ? (
+                <p className="mt-3 rounded-lg bg-crm-warn p-3 text-center text-crm-warn-foreground">Ожидает оплаты в приложении</p>
+              ) : (
+                <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "app"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Выставить счёт</button>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function NewBookingDialog({
+  open, initial, date, bookings, onClose, onCreate,
+}: {
+  open: boolean;
+  initial: { box: 1 | 2; start: number } | null;
+  date: string;
+  bookings: Booking[];
+  onClose: () => void;
+  onCreate: (b: Booking) => void;
+}) {
+  const [client, setClient] = useState("");
+  const [car, setCar] = useState("");
+  const [pkgName, setPkgName] = useState("Комфорт");
+  const [extras, setExtras] = useState<string[]>([]);
+  const [box, setBox] = useState<1 | 2>(1);
+  const [time, setTime] = useState("12:00");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (open && initial) {
+      setBox(initial.box);
+      setTime(fmtTime(Math.min(Math.max(initial.start, OPEN_MIN), CLOSE_MIN - 40)));
+      setClient(""); setCar(""); setPkgName("Комфорт"); setExtras([]); setError("");
+    }
+  }, [open, initial]);
+
+  const pkg = PACKAGES.find((p) => p.name === pkgName)!;
+  const services = [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...EXTRAS.filter((e) => extras.includes(e.name))];
+  const [hh, mm] = time.split(":").map(Number);
+  const start = hh * 60 + mm;
+
+  const submit = () => {
+    if (!client.trim() || !car.trim()) return setError("Укажите клиента и автомобиль.");
+    if (!withinHours(start, pkg.duration)) return setError("Запись должна укладываться в 10:00–22:00.");
+    const c = findConflict(bookings, { date, box, start, duration: pkg.duration });
+    if (c) return setError(`В боксе ${box} уже есть запись ${fmtTime(c.start)}–${fmtTime(c.start + c.duration)} (${c.car}).`);
+    onCreate({
+      id: crypto.randomUUID(), date, box, start, duration: pkg.duration, car: car.trim(), carType: "Седан",
+      client: client.trim(), source: "admin", worker: WORKERS[0], packageName: pkg.name, services,
+      wash: "scheduled", payment: "unpaid",
+    });
+  };
+
+  const field = "w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-crm";
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Новая запись · {fmtDateShort(date)}</DialogTitle></DialogHeader>
+        <div className="space-y-3 text-sm">
+          <input className={field} placeholder="Клиент" value={client} onChange={(e) => setClient(e.target.value)} />
+          <input className={field} placeholder="Автомобиль" value={car} onChange={(e) => setCar(e.target.value)} />
+          <select className={field} value={pkgName} onChange={(e) => setPkgName(e.target.value)}>
+            {PACKAGES.map((p) => <option key={p.name} value={p.name}>{p.name} · {rub(p.price)} · {p.duration} мин</option>)}
+          </select>
+          <div className="flex flex-wrap gap-2">
+            {EXTRAS.map((e) => {
+              const on = extras.includes(e.name);
+              return (
+                <button key={e.name} type="button" onClick={() => setExtras((l) => on ? l.filter((x) => x !== e.name) : [...l, e.name])}
+                  className={`rounded-full border px-3 py-1 text-xs ${on ? "border-crm bg-crm-soft text-crm" : "border-border"}`}>
+                  {e.name} · {rub(e.price)}
+                </button>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <select className={field} value={box} onChange={(e) => setBox(Number(e.target.value) as 1 | 2)}>
+              <option value={1}>Бокс 1</option>
+              <option value={2}>Бокс 2</option>
+            </select>
+            <input type="time" step={300} min="10:00" max="22:00" className={field} value={time} onChange={(e) => setTime(e.target.value)} />
+          </div>
+          <p className="text-muted-foreground">Итого: <b className="text-foreground">{rub(services.reduce((s, x) => s + x.price, 0))}</b> · {pkg.duration} минут</p>
+          {error && <p className="text-destructive">{error}</p>}
+          <button type="button" onClick={submit} className="w-full rounded-lg bg-crm py-2.5 font-semibold text-crm-foreground">Создать запись</button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
