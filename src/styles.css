@@ -154,6 +154,15 @@
     border-color: var(--color-border);
   }
 
+  html {
+    font-size: 16px;
+  }
+  @media (min-width: 1440px) {
+    html {
+      font-size: clamp(16px, 1.1vw, 22px);
+    }
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
