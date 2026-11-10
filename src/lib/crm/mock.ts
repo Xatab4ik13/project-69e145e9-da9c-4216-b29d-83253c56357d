@@ -17,6 +17,8 @@ export const PACKAGES = [
 export const EXTRAS = [
   { name: "Кварцевый воск", price: 600, minutes: 0 },
   { name: "Чернение резины", price: 300, minutes: 0 },
+  { name: "Обезжиривание кузова", price: 500, minutes: 0 },
+  { name: "Силикон уплотнителей", price: 300, minutes: 0 },
   { name: "Антидождь", price: 2100, minutes: 20 },
   { name: "Кондиционер кожи", price: 600, minutes: 10 },
   { name: "Пылесос багажника", price: 300, minutes: 10 },

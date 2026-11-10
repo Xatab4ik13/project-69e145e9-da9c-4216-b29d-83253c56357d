@@ -97,3 +97,13 @@ describe("booking colors", () => {
   });
   it("a wash under way is working", () => expect(bookingState(camry, camry.date, 16 * 60 + 55)).toBe("working"));
 });
+
+import { EXTRAS } from "@/lib/crm/mock";
+describe("body care extras", () => {
+  it("body degreasing costs from 500 ₽ and adds no time", () => {
+    expect(EXTRAS.find((e) => e.name === "Обезжиривание кузова")).toMatchObject({ price: 500, minutes: 0 });
+  });
+  it("silicone seal care costs from 300 ₽ and adds no time", () => {
+    expect(EXTRAS.find((e) => e.name === "Силикон уплотнителей")).toMatchObject({ price: 300, minutes: 0 });
+  });
+});

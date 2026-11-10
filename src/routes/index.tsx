@@ -135,6 +135,8 @@ import imgRain from "@/assets/care-antirain.webp.asset.json";
 import imgTire from "@/assets/care-tire-black.webp.asset.json";
 import imgLeather from "@/assets/care-leather.webp.asset.json";
 import imgTrunk from "@/assets/care-trunk-vacuum.webp.asset.json";
+import imgDegrease from "@/assets/care-body-degrease.webp.asset.json";
+import imgSilicone from "@/assets/care-silicone-seals.webp.asset.json";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import hero from "@/assets/car-wash-hero.webp.asset.json";
 import imgDry from "@/assets/more-dry-clean.webp.asset.json";
@@ -315,6 +317,8 @@ const care = [
   { id: "wax", name: "Кварцевый воск", short: "кварцевый воск", price: 600, extra: 0, desc: "Защитная обработка кузова", img: imgWax, cat: "body" as Cat, alt: "Нанесение кварцевого воска на капот" },
   { id: "rain", name: "Антидождь", short: "антидождь", price: 2100, extra: 20, desc: "Обработка передней полусферы", img: imgRain, cat: "body" as Cat, alt: "Лобовое стекло в каплях дождя" },
   { id: "tire", name: "Чернение резины", short: "чернение резины", price: 300, extra: 0, desc: "Ухоженный вид шин", img: imgTire, cat: "body" as Cat, alt: "Чернение боковины шины" },
+  { id: "degrease", name: "Обезжиривание кузова", short: "обезжиривание кузова", price: 500, extra: 0, desc: "Подготовка кузова к нанесению защиты", img: imgDegrease, cat: "body" as Cat, alt: "Обезжиривание кузова спреем и микрофиброй" },
+  { id: "silicone", name: "Силикон уплотнителей", short: "силикон уплотнителей", price: 300, extra: 0, desc: "Уход за дверными уплотнителями", img: imgSilicone, cat: "body" as Cat, alt: "Силиконовый уход за уплотнителем двери" },
   { id: "leather", name: "Кондиционер кожи", short: "кондиционер кожи", price: 600, extra: 10, desc: "Уход за кожаным салоном", img: imgLeather, cat: "salon" as Cat, alt: "Уход за кожаным сиденьем" },
   { id: "trunk", name: "Пылесос багажника", short: "пылесос багажника", price: 300, extra: 10, desc: "Уборка багажного отделения", img: imgTrunk, cat: "salon" as Cat, alt: "Очистка багажника пылесосом" },
 ];
