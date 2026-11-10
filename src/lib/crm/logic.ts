@@ -62,7 +62,7 @@ export const fmtDateLong = (iso: string) => {
   const dt = new Date(iso + "T12:00:00");
   const wd = dt.toLocaleDateString("ru-RU", { weekday: "long" });
   const rest = dt.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }).replace(" г.", "");
-  return wd[0].toUpperCase() + wd.slice(1) + ", " + rest;
+  return wd.charAt(0).toUpperCase() + wd.slice(1) + ", " + rest;
 };
 
 export const fmtDateShort = (iso: string) =>

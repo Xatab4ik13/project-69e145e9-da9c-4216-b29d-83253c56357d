@@ -380,7 +380,7 @@ function NewBookingDialog({
 
   const pkg = PACKAGES.find((p) => p.name === pkgName)!;
   const services = [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...EXTRAS.filter((e) => extras.includes(e.name))];
-  const [hh, mm] = time.split(":").map(Number);
+  const [hh = 0, mm = 0] = time.split(":").map(Number);
   const start = hh * 60 + mm;
 
   const submit = () => {
@@ -390,7 +390,7 @@ function NewBookingDialog({
     if (c) return setError(`В боксе ${box} уже есть запись ${fmtTime(c.start)}–${fmtTime(c.start + c.duration)} (${c.car}).`);
     onCreate({
       id: crypto.randomUUID(), date, box, start, duration: pkg.duration, car: car.trim(), carType: "Седан",
-      client: client.trim(), source: "admin", worker: WORKERS[0], packageName: pkg.name, services,
+      client: client.trim(), source: "admin", worker: WORKERS[0] ?? "", packageName: pkg.name, services,
       wash: "scheduled", payment: "unpaid",
     });
   };
