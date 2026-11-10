@@ -29,7 +29,7 @@ function Contacts() {
             <a href={YMAPS} target="_blank" rel="noreferrer" className="btn-lime inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm">Маршрут до въезда <ArrowUpRight className="h-4 w-4" /></a>
             <a href={YMAPS} target="_blank" rel="noreferrer" className="text-sm underline underline-offset-4">Открыть в Яндекс Картах</a>
           </div>
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border p-4">
+          <div className="mt-5 flex flex-col gap-4 rounded-xl sm:flex-row sm:items-center sm:justify-between border border-border p-4">
             <div>
               <p className="font-display text-2xl">Первый раз у нас?</p>
               <p className="text-sm">Если запутались на подъезде, позвоните — подскажем дорогу.</p>
