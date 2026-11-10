@@ -54,7 +54,7 @@ export function AdminClients({
   const [filter, setFilter] = useState<ClientFilter>("all");
   const [selectedId, setSelectedId] = useState("lc1");
   const clients = useMemo(
-    () => buildClients(MOCK_LOYALTY_CLIENTS, MOCK_BOOKINGS, MOCK_CLIENT_CARS, DEMO_TODAY),
+    () => buildClients(MOCK_LOYALTY_CLIENTS, MOCK_BOOKINGS, MOCK_CLIENT_CARS, DEMO_TODAY, MOCK_CLIENT_FIRST_CONTACT),
     [],
   );
   const metrics = clientMetrics(clients, DEMO_TODAY);

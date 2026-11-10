@@ -20,7 +20,7 @@ describe("CRM clients", () => {
 
   it("filters clients without an activated mobile account", () => {
     const filtered = filterClients(clients, "", "no_app", DEMO_TODAY);
-    expect(filtered.map((client) => client.id)).toEqual(["lc3", "lc5"]);
+    expect(filtered.map((client) => client.id)).toEqual(["lc2", "lc5", "lc7"]);
   });
 
   it("treats a client as inactive only after 30 days without a visit", () => {

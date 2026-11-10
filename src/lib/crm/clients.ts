@@ -76,7 +76,9 @@ export function buildClients(
       .map(visitFromBooking)
       .sort((a, b) => `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`));
     const bookingDates = bookings.filter((booking) => booking.phone === account.phone).map((booking) => booking.date);
-    const firstContact = [account.activatedAt ?? today, ...bookingDates].sort()[0] ?? today;
+    const firstContact = firstContactByClient[account.id]
+      ?? [account.activatedAt ?? today, ...bookingDates].sort()[0]
+      ?? today;
     return {
       id: account.id,
       phone: account.phone,
