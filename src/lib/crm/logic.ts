@@ -67,3 +67,23 @@ export const fmtDateLong = (iso: string) => {
 
 export const fmtDateShort = (iso: string) =>
   new Date(iso + "T12:00:00").toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+
+/** Booking length: one base slot plus time-consuming add-ons. */
+export const bookingDuration = (slotMin: number, extraMinutes: number[]) =>
+  slotMin + extraMinutes.reduce((a, b) => a + b, 0);
+
+/** Free start times (every slot step) with the box the system assigns automatically. */
+export function freeSlots(list: Booking[], date: string, duration: number, step = 60): { start: number; box: 1 | 2 }[] {
+  const out: { start: number; box: 1 | 2 }[] = [];
+  for (let s = OPEN_MIN; s + duration <= CLOSE_MIN; s += step) {
+    const box = ([1, 2] as const).find((bx) => !findConflict(list, { date, box: bx, start: s, duration }));
+    if (box) out.push({ start: s, box });
+  }
+  return out;
+}
+
+/** App client: one action marks the car ready and issues the in-app invoice (push in future). */
+export function readyAndInvoice(b: Booking): Booking {
+  if (b.wash !== "in_progress") return b;
+  return { ...b, wash: "done", payment: "awaiting", paymentMethod: "app" };
+}
