@@ -45,6 +45,8 @@ export const dateRange = (from: string, to: string): string[] => {
   return out;
 };
 
+export const addDaysSafe = addDays;
+
 export const daysInMonth = (iso: string) =>
   new Date(Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)), 0)).getUTCDate();
 
