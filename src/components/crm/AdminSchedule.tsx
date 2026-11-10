@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Bell, Banknote, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
+  ArrowRight, Bell, Banknote, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
   Clock, CreditCard, Phone, Plus, Search, Smartphone, Star, User, Wrench, X,
 } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
@@ -259,9 +259,14 @@ function Grid({
             </div>
           ))}
           {showNow && (
-            <div className="pointer-events-none absolute inset-x-0 z-20 flex h-0 items-center" style={{ top: 12 + nowTop }}>
-              <span className="ml-1 -translate-y-1/2 whitespace-nowrap rounded-md bg-lime px-2 py-1 text-xs font-bold text-lime-foreground ring-2 ring-background">Сейчас · {fmtTime(DEMO_NOW_MIN)}</span>
-              <span className="h-1 flex-1 -translate-y-1/2 bg-lime" />
+            <div
+              role="img"
+              aria-label={`Текущее время ${fmtTime(DEMO_NOW_MIN)}`}
+              className="pointer-events-none absolute inset-x-0 z-20 flex h-0 items-center"
+              style={{ top: 12 + nowTop }}
+            >
+              <ArrowRight className="ml-1 h-5 w-5 -translate-y-1/2 text-muted-foreground" strokeWidth={2.5} />
+              <span className="h-0.5 flex-1 -translate-y-1/2 bg-muted-foreground" />
             </div>
           )}
         </div>
@@ -325,7 +330,7 @@ function Legend() {
     { t: "Завершена", c: "border-border bg-muted" },
     { t: "Свободно", c: "border-dashed border-crm-ok-foreground/60 bg-crm-ok/60" },
     { t: "Время прошло", c: "border-border bg-muted" },
-    { t: "Сейчас", c: "border-lime bg-lime" },
+    { t: "Сейчас", c: "border-muted-foreground bg-muted-foreground" },
   ];
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
