@@ -567,16 +567,16 @@ function NewBookingDialog({
               const d = raw.length < fmtPhone(phone).length && phoneDigits(raw) === phone ? phone.slice(0, -1) : phoneDigits(raw);
               setPhone(d);
             }} />
-          <input className={field} placeholder="Автомобиль" value={car} onChange={(e) => setCar(e.target.value)} />
-          <select className={field} value={pkgName} onChange={(e) => setPkgName(e.target.value)}>
+          <input aria-label="Автомобиль" className={field} placeholder="Автомобиль" value={car} onChange={(e) => setCar(e.target.value)} />
+          <select aria-label="Комплекс мойки" className={field} value={pkgName} onChange={(e) => setPkgName(e.target.value)}>
             {PACKAGES.map((p) => <option key={p.name} value={p.name}>{p.name} · {rub(p.price)}</option>)}
           </select>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             {EXTRAS.map((e) => {
               const on = extras.includes(e.name);
               return (
                 <button key={e.name} type="button" onClick={() => { setSlot(null); setExtras((l) => on ? l.filter((x) => x !== e.name) : [...l, e.name]); }}
-                  className={`rounded-full border px-3 py-1 text-xs ${on ? "border-crm bg-crm-soft text-crm" : "border-border"}`}>
+                  className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm sm:min-h-0 sm:rounded-full sm:px-3 sm:py-1 sm:text-xs ${on ? "border-crm bg-crm-soft text-crm" : "border-border"}`}>
                   {e.name} · {rub(e.price)}{e.minutes ? ` +${e.minutes} мин` : ""}
                 </button>
               );
@@ -587,10 +587,10 @@ function NewBookingDialog({
             {slots.length === 0 ? (
               <p className="text-muted-foreground">На этот день свободных слотов нет.</p>
             ) : (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {slots.map((s) => (
                   <button key={s.start} type="button" onClick={() => setSlot(s.start)}
-                    className={`rounded-lg border py-2 ${slot === s.start ? "border-crm bg-crm text-crm-foreground" : "border-border"}`}>
+                    className={`min-h-12 rounded-xl border px-2 py-3 text-base font-medium sm:min-h-0 sm:rounded-lg sm:py-2 sm:text-sm sm:font-normal ${slot === s.start ? "border-crm bg-crm text-crm-foreground" : "border-border"}`}>
                     {fmtTime(s.start)}
                   </button>
                 ))}
@@ -600,7 +600,7 @@ function NewBookingDialog({
           </div>
           <p className="text-muted-foreground">Итого: <b className="text-foreground">{rub(services.reduce((s, x) => s + x.price, 0))}</b></p>
           {error && <p className="text-destructive">{error}</p>}
-          <button type="button" onClick={submit} className="w-full rounded-lg bg-crm py-2.5 font-semibold text-crm-foreground">Создать запись</button>
+          <button type="button" onClick={submit} className="min-h-14 w-full rounded-xl bg-crm px-4 py-4 text-base font-semibold text-crm-foreground sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm">Создать запись</button>
         </div>
       </DialogContent>
     </Dialog>
