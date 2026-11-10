@@ -1,5 +1,5 @@
 export type BookingSource = "site" | "app" | "admin";
-export type WashStatus = "scheduled" | "in_progress" | "done";
+export type WashStatus = "scheduled" | "in_progress" | "done" | "cancelled";
 export type PaymentStatus = "unpaid" | "awaiting" | "paid";
 export type PaymentMethod = "terminal" | "cash" | "app";
 
@@ -26,6 +26,8 @@ export interface Booking {
   packageName: string;
   services: ServiceLine[];
   wash: WashStatus;
+  /** Client confirmed the visit (call before start for site/admin bookings). */
+  confirmed: boolean;
   payment: PaymentStatus;
   paymentMethod?: PaymentMethod;
 }
