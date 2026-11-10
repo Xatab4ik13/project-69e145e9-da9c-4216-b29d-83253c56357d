@@ -13,10 +13,10 @@ const RULES = [
   { value: "12 мес.", text: "срок каждого начисления", note: "Затем бонусы сгорают" },
 ];
 
-export function AdminLoyalty() {
+export function AdminLoyalty({ initialClientId = "lc1" }: { initialClientId?: string }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
-  const [selectedId, setSelectedId] = useState("lc1");
+  const [selectedId, setSelectedId] = useState(initialClientId);
   const metrics = loyaltyMetrics(MOCK_LOYALTY_CLIENTS, DEMO_TODAY);
 
   const clients = useMemo(() => MOCK_LOYALTY_CLIENTS.filter((client) => {

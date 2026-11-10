@@ -7,6 +7,8 @@ import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminServices } from "@/components/crm/AdminServices";
 import { AdminLoyalty } from "@/components/crm/AdminLoyalty";
+import { AdminClients } from "@/components/crm/AdminClients";
+import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
@@ -17,6 +19,8 @@ import {
 } from "@/lib/crm/logic";
 import type { BookingState } from "@/lib/crm/logic";
 
+type NewBookingInitial = { box: 1 | 2; start: number; phone?: string; car?: string; carType?: string };
+
 const PX_PER_MIN = 2;
 const HOURS = Array.from({ length: (CLOSE_MIN - OPEN_MIN) / 60 + 1 }, (_, i) => OPEN_MIN + i * 60);
 
@@ -26,8 +30,9 @@ export function AdminSchedule() {
   const [selectedId, setSelectedId] = useState<string | null>("b3");
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<"all" | BookingSource>("all");
-  const [newOpen, setNewOpen] = useState<null | { box: 1 | 2; start: number }>(null);
+  const [newOpen, setNewOpen] = useState<NewBookingInitial | null>(null);
   const [section, setSection] = useState<AdminSection>("schedule");
+  const [loyaltyClientId, setLoyaltyClientId] = useState("lc1");
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -47,7 +52,17 @@ export function AdminSchedule() {
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-background text-sm text-foreground">
       <Sidebar section={section} onChange={setSection} />
-      {section === "services" ? <AdminServices /> : section === "loyalty" ? <AdminLoyalty /> : <main className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-4">
+      {section === "services" ? <AdminServices /> : section === "clients" ? (
+        <AdminClients
+          onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
+          onNewBooking={(client) => {
+            const car = client.cars.find((item) => item.primary) ?? client.cars[0];
+            setSelectedId(null);
+            setSection("schedule");
+            setNewOpen({ box: 1, start: 12 * 60, phone: client.phone, car: car?.name ?? "", carType: car ? carTypeForClass(car.carClass) : "Седан" });
+          }}
+        />
+      ) : section === "loyalty" ? <AdminLoyalty initialClientId={loyaltyClientId} /> : <main className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-4">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold tracking-tight">Расписание</h1>
           <label className="ml-auto flex w-80 items-center gap-2 rounded-lg border border-border px-3 py-2">
@@ -119,12 +134,12 @@ export function AdminSchedule() {
   );
 }
 
-type AdminSection = "schedule" | "services" | "loyalty";
+type AdminSection = "schedule" | "clients" | "services" | "loyalty";
 
 function Sidebar({ section, onChange }: { section: AdminSection; onChange: (section: AdminSection) => void }) {
   const items: { label: string; icon: typeof CalendarDays; target?: AdminSection }[] = [
     { label: "Расписание", icon: CalendarDays, target: "schedule" },
-    { label: "Клиенты", icon: User },
+    { label: "Клиенты", icon: User, target: "clients" },
     { label: "Лояльность", icon: Star, target: "loyalty" },
     { label: "Уведомления", icon: Bell },
     { label: "Услуги", icon: Wrench, target: "services" },
@@ -447,7 +462,7 @@ function NewBookingDialog({
   open, initial, date, bookings, onClose, onCreate,
 }: {
   open: boolean;
-  initial: { box: 1 | 2; start: number } | null;
+  initial: NewBookingInitial | null;
   date: string;
   bookings: Booking[];
   onClose: () => void;
@@ -463,7 +478,7 @@ function NewBookingDialog({
   useEffect(() => {
     if (open) {
       setSlot(null);
-      setPhone(""); setCar(""); setPkgName("Комфорт"); setExtras([]); setError("");
+      setPhone(initial?.phone ?? ""); setCar(initial?.car ?? ""); setPkgName("Комфорт"); setExtras([]); setError("");
     }
   }, [open, initial]);
 
@@ -479,7 +494,7 @@ function NewBookingDialog({
     if (phone.length !== 10) return setError("Введите номер телефона полностью: +7 (___) ___-__-__.");
     if (!picked) return setError("Выберите свободное время.");
     onCreate({
-      id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: "Седан",
+      id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: initial?.carType ?? "Седан",
       phone, source: "admin", worker: WORKERS[0] ?? "", packageName: pkg.name, services,
       wash: "scheduled", confirmed: false, payment: "unpaid",
     });
