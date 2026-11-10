@@ -247,12 +247,12 @@ function Index() {
             <span className="whitespace-nowrap">на Большевиков</span>
           </h1>
           <p className="order-1 -mt-2 text-base leading-snug md:mt-4">
-            Выберите мойку и нужный уход.
+            Выберите комплекс и нужный уход.
             <br />
             Стоимость и время — до записи.
           </p>
           <a href="#" className="btn-lime order-3 inline-flex items-center justify-center gap-3 rounded-lg px-7 py-3 text-base max-md:py-3.5 max-md:text-xl md:mt-6">
-            Выбрать мойку <ArrowUpRight className="h-4 w-4" />
+            Записаться
           </a>
           <p className="order-3 mt-6 flex items-center gap-2 text-sm max-md:hidden">
             <MapPin className="h-4 w-4" /> Большевиков, 18к2 · Ежедневно <b>10:00–22:00</b>
