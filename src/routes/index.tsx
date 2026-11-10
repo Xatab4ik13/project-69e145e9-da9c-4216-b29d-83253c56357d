@@ -36,7 +36,7 @@ function Contacts() {
             </div>
             <div className="flex flex-col items-center gap-1 sm:border-l sm:border-border sm:pl-4">
               <a href={PHONE_HREF} className="inline-flex items-center gap-2 rounded-lg border border-foreground px-6 py-1.5 text-sm font-semibold"><Phone className="h-4 w-4" /> Позвонить</a>
-              <button type="button" onClick={() => { navigator.clipboard?.writeText(ADDRESS); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="inline-flex items-center gap-2 text-sm underline underline-offset-4">
+              <button type="button" onClick={() => { navigator.clipboard?.writeText(ADDRESS); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="inline-flex items-center gap-2 whitespace-nowrap text-sm underline underline-offset-4">
                 <Copy className="h-4 w-4" /> {copied ? "Адрес скопирован" : "Скопировать адрес"}
               </button>
             </div>
