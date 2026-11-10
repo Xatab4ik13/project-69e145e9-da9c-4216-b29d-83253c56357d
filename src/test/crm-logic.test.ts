@@ -50,9 +50,10 @@ describe("phone", () => {
 
 import { bookingMatches } from "@/lib/crm/logic";
 describe("booking identity", () => {
-  it("a booking stores no client name", () => {
+  it("a booking stores no client name or worker", () => {
     expect("client" in kia).toBe(false);
-    expect(MOCK_BOOKINGS.every((b) => !("client" in b))).toBe(true);
+    expect("worker" in kia).toBe(false);
+    expect(MOCK_BOOKINGS.every((b) => !("client" in b) && !("worker" in b))).toBe(true);
   });
   it("search finds a booking by car or phone only", () => {
     expect(bookingMatches(kia, "rio")).toBe(true);

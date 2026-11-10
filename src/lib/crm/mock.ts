@@ -6,7 +6,6 @@ export const SLOT_MIN = 60;
 /** Demo data only — replace with API later. */
 export const DEMO_TODAY = "2026-11-11";
 export const DEMO_NOW_MIN = 16 * 60 + 55;
-export const WORKERS = ["Дмитрий", "Сергей", "Артём"];
 
 export const PACKAGES = [
   { name: "Стандарт", price: 1200, duration: 60 },
