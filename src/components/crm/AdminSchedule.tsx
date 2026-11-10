@@ -260,8 +260,8 @@ function Grid({
           ))}
           {showNow && (
             <div className="pointer-events-none absolute inset-x-0 z-20 flex h-0 items-center" style={{ top: 12 + nowTop }}>
-              <span className="ml-1 -translate-y-1/2 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs font-bold text-background ring-2 ring-background">Сейчас · {fmtTime(DEMO_NOW_MIN)}</span>
-              <span className="h-1 flex-1 -translate-y-1/2 bg-foreground" />
+              <span className="ml-1 -translate-y-1/2 whitespace-nowrap rounded-md bg-lime px-2 py-1 text-xs font-bold text-lime-foreground ring-2 ring-background">Сейчас · {fmtTime(DEMO_NOW_MIN)}</span>
+              <span className="h-1 flex-1 -translate-y-1/2 bg-lime" />
             </div>
           )}
         </div>
@@ -325,7 +325,7 @@ function Legend() {
     { t: "Завершена", c: "border-border bg-muted" },
     { t: "Свободно", c: "border-dashed border-crm-ok-foreground/60 bg-crm-ok/60" },
     { t: "Время прошло", c: "border-border bg-muted" },
-    { t: "Сейчас", c: "border-foreground bg-foreground" },
+    { t: "Сейчас", c: "border-lime bg-lime" },
   ];
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
