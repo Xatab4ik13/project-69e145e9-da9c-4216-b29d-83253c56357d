@@ -28,6 +28,8 @@ export interface Booking {
   confirmed: boolean;
   payment: PaymentStatus;
   paymentMethod?: PaymentMethod;
+  /** Washer who took the order — chosen when the money is accepted. */
+  washer?: string;
 }
 
 export const SOURCE_LABEL: Record<BookingSource, string> = {
