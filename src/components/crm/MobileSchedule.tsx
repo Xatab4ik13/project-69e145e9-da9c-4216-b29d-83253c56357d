@@ -37,7 +37,7 @@ const MORE: Record<CrmRole, SheetItem[]> = {
   owner: [
     { id: "loyalty", label: "Лояльность", Icon: Star },
     { id: "services", label: "Услуги", Icon: Wrench },
-    { id: "finance", label: "Финансы", Icon: Wallet, soon: true },
+    { id: "finance", label: "Финансы", Icon: Wallet },
     { id: "notifications", label: "Уведомления", Icon: Bell, soon: true },
   ],
 };
