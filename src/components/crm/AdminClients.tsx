@@ -53,50 +53,53 @@ export function AdminClients({
   const selected = clients.find((client) => client.id === selectedId) ?? null;
 
   return (
-    <main className="min-w-0 flex-1 overflow-y-auto px-6 pb-5 pt-5">
+    <main className="min-w-0 flex-1 overflow-y-auto bg-crm-surface px-4 pb-5 pt-4 md:bg-background md:px-6 md:pb-5 md:pt-5">
       <div className="flex items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Клиенты</h1>
-          <p className="mt-1 text-muted-foreground">Телефоны, автомобили и история посещений</p>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Клиенты</h1>
+          <p className="mt-1 text-sm text-muted-foreground md:text-base">Телефоны, автомобили и история посещений</p>
         </div>
-        <span className="ml-auto rounded-lg bg-crm-soft px-3 py-2 text-crm">Один клиент — один номер телефона</span>
-        <AdminNotificationIndicator />
+        <span className="ml-auto hidden rounded-lg bg-crm-soft px-3 py-2 text-crm md:inline">Один клиент — один номер телефона</span>
+        <div className="hidden md:block"><AdminNotificationIndicator /></div>
       </div>
 
-      <section aria-label="Показатели клиентов" className="mt-5 grid grid-cols-4 gap-3">
+      <section aria-label="Показатели клиентов" className="mt-4 grid grid-cols-2 gap-2 md:mt-5 md:grid-cols-4 md:gap-3">
         <Metric Icon={Users} label="Всего клиентов" value={clients.length} />
         <Metric Icon={UserRoundPlus} label="Новых в ноябре" value={metrics.newThisMonth} />
         <Metric Icon={Repeat2} label="Постоянных" value={metrics.repeat} note="2 и более визитов" />
         <Metric Icon={Smartphone} label="В приложении" value={metrics.activated} />
       </section>
 
-      <section className="mt-5 flex min-h-[520px] flex-col overflow-hidden rounded-xl border border-border">
-        <div className="flex items-center gap-3 border-b border-border p-3">
-          <label className="flex w-80 items-center gap-2 rounded-lg border border-border px-3 py-2">
-            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <section className="mt-4 flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:mt-5 md:min-h-[520px]">
+        <div className="flex flex-col gap-3 border-b border-border p-3 md:flex-row md:items-center">
+          <label className="flex min-h-12 w-full items-center gap-2 rounded-xl border border-border bg-background px-4 py-3 md:min-h-0 md:w-80 md:rounded-lg md:px-3 md:py-2">
+            <Search className="h-5 w-5 shrink-0 text-muted-foreground md:h-4 md:w-4" />
             <input
               value={query}
               onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Телефон или автомобиль"
               aria-label="Поиск клиента по телефону или автомобилю"
-              className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
+              className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
             />
           </label>
-          <div className="ml-auto flex rounded-lg bg-muted p-0.5">
+          <div className="flex w-full gap-1 overflow-x-auto rounded-lg bg-muted p-1 md:ml-auto md:w-auto md:gap-0 md:overflow-visible md:p-0.5">
             {FILTERS.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => { setFilter(item.id); setPage(1); }}
-                className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm ${filter === item.id ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
+                className={`min-h-11 shrink-0 whitespace-nowrap rounded-md px-4 py-2.5 text-sm md:min-h-0 md:px-3 md:py-1.5 ${filter === item.id ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
               >
                 {item.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-auto">
-          <table className="w-full min-w-[980px] text-left text-sm">
+        <div className="min-h-0 flex-1 md:overflow-auto">
+          <div className="divide-y divide-border md:hidden">
+            {pagination.items.map((client) => <ClientMobileCard key={client.id} client={client} onSelect={openClient} />)}
+          </div>
+          <table className="hidden w-full min-w-[980px] text-left text-sm md:table">
             <thead className="sticky top-0 z-10 bg-card text-xs uppercase text-muted-foreground">
               <tr className="border-b border-border">
                 <th className="px-4 py-3 font-medium">Телефон</th>
@@ -121,7 +124,7 @@ export function AdminClients({
             </div>
           )}
         </div>
-        <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+        <div className="flex min-h-14 flex-col items-center justify-between gap-3 border-t border-border px-3 py-3 [&_button]:h-11 [&_button]:min-w-11 sm:flex-row sm:[&_button]:h-8 sm:[&_button]:min-w-8 md:px-4">
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {visible.length > 0
               ? `Показано ${pagination.start}–${pagination.end} из ${visible.length}`
@@ -138,35 +141,38 @@ export function AdminClients({
 
       <Dialog open={selected !== null} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
         {selected && (
-          <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto p-0">
-            <DialogHeader className="border-b border-border px-6 py-5 pr-12">
-              <div className="flex items-center gap-3">
-                <DialogTitle className="text-2xl text-crm">{fmtPhone(selected.phone)}</DialogTitle>
+          <DialogContent
+            className="left-0 top-0 h-[100dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none p-0 text-base sm:left-[50%] sm:gap-4 sm:text-sm sm:top-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-3xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg"
+            closeClassName="fixed right-3 top-3 z-20 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background sm:absolute sm:right-4 sm:top-4 sm:h-8 sm:w-8 sm:border-0 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-4 sm:[&_svg]:w-4"
+          >
+            <DialogHeader className="border-b border-border bg-background px-5 py-5 pr-16 text-left sm:px-6 sm:pr-12">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <DialogTitle className="text-xl leading-tight text-crm sm:text-2xl">{fmtPhone(selected.phone)}</DialogTitle>
                 <AccountStatus activated={selected.activated} />
               </div>
               <DialogDescription>Первое обращение: {fmtDateShort(selected.firstContact)}</DialogDescription>
             </DialogHeader>
-            <div className="px-6 pb-6">
+            <div className="px-4 pb-6 pt-4 sm:px-6 sm:pt-0">
               <div className="grid grid-cols-3 gap-3">
                 <Summary label="Визитов" value={String(selected.visits)} />
                 <Summary label="Оплачено" value={rub(selected.totalSpent)} />
                 <Summary label="Бонусы" value={formatBonuses(selected.bonusBalance)} />
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => onNewBooking(selected)} className="flex items-center justify-center gap-2 rounded-lg bg-crm px-3 py-2.5 text-sm font-semibold text-crm-foreground">
-                  <CalendarPlus className="h-4 w-4" /> Новая запись
+                <button type="button" onClick={() => onNewBooking(selected)} className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-crm px-3 py-3 text-base font-semibold text-crm-foreground sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm">
+                  <CalendarPlus className="h-5 w-5 sm:h-4 sm:w-4" /> Новая запись
                 </button>
-                <a href={`tel:+7${selected.phone}`} className="flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-semibold">
-                  <Phone className="h-4 w-4" /> Позвонить
+                <a href={`tel:+7${selected.phone}`} className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border px-3 py-3 text-base font-semibold sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm">
+                  <Phone className="h-5 w-5 sm:h-4 sm:w-4" /> Позвонить
                 </a>
               </div>
-              <button type="button" onClick={() => onOpenLoyalty(selected.id)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium text-crm">
+              <button type="button" onClick={() => onOpenLoyalty(selected.id)} className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-border px-3 py-3 text-base font-medium text-crm sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm">
                 <WalletCards className="h-4 w-4" /> Открыть бонусы
               </button>
 
               <section className="mt-6">
                 <h2 className="flex items-center gap-2 font-semibold"><CarFront className="h-4 w-4 text-crm" /> Автомобили</h2>
-                <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {selected.cars.map((car) => (
                     <div key={car.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
                       <div className="min-w-0 flex-1">
@@ -239,6 +245,36 @@ const ClientTableRow = memo(function ClientTableRow({ client, onSelect }: { clie
   );
 });
 
+const ClientMobileCard = memo(function ClientMobileCard({ client, onSelect }: { client: CrmClient; onSelect: (id: string) => void }) {
+  const primaryCar = client.cars.find((car) => car.primary) ?? client.cars[0];
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(client.id)}
+      aria-label={`Открыть клиента ${fmtPhone(client.phone)}`}
+      className="block min-h-40 w-full p-4 text-left active:bg-crm-soft/45"
+    >
+      <span className="flex items-center justify-between gap-3">
+        <span className="text-base font-semibold text-crm">{fmtPhone(client.phone)}</span>
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+      </span>
+      <span className="mt-2 block text-base font-medium">{primaryCar?.name ?? "Автомобиль не указан"}</span>
+      <span className="mt-0.5 block text-sm text-muted-foreground">
+        {primaryCar ? `${carClassRoman(primaryCar.carClass)} класс` : ""}
+        {client.cars.length > 1 ? ` · ещё ${client.cars.length - 1}` : ""}
+      </span>
+      <span className="mt-3 grid grid-cols-2 gap-2 text-sm">
+        <span><span className="text-muted-foreground">Визитов: </span><b>{client.visits}</b></span>
+        <span className="text-right"><span className="text-muted-foreground">Оплачено: </span><b>{rub(client.totalSpent)}</b></span>
+      </span>
+      <span className="mt-3 flex items-center justify-between gap-3">
+        <AccountStatus activated={client.activated} />
+        <span className="text-sm font-semibold">{formatBonuses(client.bonusBalance)} бонусов</span>
+      </span>
+    </button>
+  );
+});
+
 function AccountStatus({ activated }: { activated: boolean }) {
   return (
     <span className={`inline-flex whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ${activated ? "bg-crm-soft text-crm" : "bg-muted text-muted-foreground"}`}>
@@ -249,12 +285,12 @@ function AccountStatus({ activated }: { activated: boolean }) {
 
 function Metric({ Icon, label, value, note }: { Icon: typeof Coins; label: string; value: number; note?: string }) {
   return (
-    <article className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-crm-soft text-crm"><Icon className="h-5 w-5" /></div>
-      <div>
-        <p className="text-2xl font-bold leading-none">{value}</p>
-        <p className="mt-1.5 text-sm text-muted-foreground">{label}</p>
-        {note && <p className="mt-0.5 text-xs text-muted-foreground">{note}</p>}
+    <article className="flex items-center gap-2 rounded-xl border border-border bg-card p-3 md:gap-3 md:p-4">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-crm-soft text-crm md:h-11 md:w-11"><Icon className="h-4 w-4 md:h-5 md:w-5" /></div>
+      <div className="min-w-0">
+        <p className="text-xl font-bold leading-none md:text-2xl">{value}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground md:text-sm">{label}</p>
+        {note && <p className="mt-0.5 hidden text-xs text-muted-foreground md:block">{note}</p>}
       </div>
     </article>
   );
@@ -262,8 +298,8 @@ function Metric({ Icon, label, value, note }: { Icon: typeof Coins; label: strin
 
 function Summary({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-muted/70 px-3 py-4 text-center">
-      <p className="text-xl font-bold">{value}</p>
+    <div className="rounded-xl bg-muted/70 px-2 py-4 text-center sm:rounded-lg sm:px-3">
+      <p className="text-lg font-bold sm:text-xl">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{label}</p>
     </div>
   );
