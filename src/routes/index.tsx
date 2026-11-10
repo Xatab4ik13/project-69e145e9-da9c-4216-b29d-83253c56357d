@@ -549,7 +549,7 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
-      <DialogContent className={`max-h-[95vh] ${stage === "rest" ? (done ? "max-w-5xl" : "max-w-3xl") : "max-w-4xl"} overflow-y-auto rounded-3xl p-8 transition-[max-width] duration-300 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
+      <DialogContent className={`max-h-[95vh] ${stage === "rest" && done ? "max-w-5xl" : "max-w-4xl"} overflow-y-auto rounded-3xl p-8 transition-[max-width] duration-300 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
         {restModal || (
         <div key={stage} className="animate-in fade-in slide-in-from-right-4 duration-300">
         <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
