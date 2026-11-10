@@ -6,7 +6,7 @@ import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { TONE } from "@/components/crm/booking-tone";
 import { bookingState, fmtDateShort, fmtTime, rub, total } from "@/lib/crm/logic";
-import { DEMO_NOW_MIN, DEMO_TODAY, SLOT_MIN } from "@/lib/crm/mock";
+import { DEMO_NOW_MIN, DEMO_TODAY } from "@/lib/crm/mock";
 import { SOURCE_LABEL, type Booking } from "@/lib/crm/types";
 import { STATE_LABEL } from "@/lib/crm/logic";
 
@@ -185,4 +185,3 @@ function MobileBookingCard({ booking, onClick }: { booking: Booking; onClick: ()
   );
 }
 
-export const MOBILE_SLOT_MIN = SLOT_MIN;

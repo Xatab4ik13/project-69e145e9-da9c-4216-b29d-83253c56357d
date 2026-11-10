@@ -9,6 +9,8 @@ import { AdminServices } from "@/components/crm/AdminServices";
 import { AdminLoyalty } from "@/components/crm/AdminLoyalty";
 import { AdminClients } from "@/components/crm/AdminClients";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
+import { MobileAdminHeader, MobileAdminNavigation, MobileSchedule } from "@/components/crm/MobileSchedule";
+import { TONE } from "@/components/crm/booking-tone";
 import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
@@ -29,6 +31,7 @@ export function AdminSchedule() {
   const [bookings, setBookings] = useState<Booking[]>(() => MOCK_BOOKINGS.map((b) => autoStart(b, DEMO_TODAY, DEMO_NOW_MIN)));
   const [date, setDate] = useState(DEMO_TODAY);
   const [selectedId, setSelectedId] = useState<string | null>("b3");
+  const [mobileOrderOpen, setMobileOrderOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<"all" | BookingSource>("all");
   const [newOpen, setNewOpen] = useState<NewBookingInitial | null>(null);
@@ -49,10 +52,16 @@ export function AdminSchedule() {
   const selected = bookings.find((b) => b.id === selectedId) ?? null;
   const update = (id: string, fn: (b: Booking) => Booking) =>
     setBookings((list) => list.map((b) => (b.id === id ? fn(b) : b)));
+  const changeSection = (next: AdminSection) => {
+    if (next === "loyalty") setLoyaltyClientId(null);
+    setMobileOrderOpen(false);
+    setSection(next);
+  };
 
   return (
-    <div className="fixed inset-0 flex overflow-hidden bg-background text-sm text-foreground">
-      <Sidebar section={section} onChange={(next) => { if (next === "loyalty") setLoyaltyClientId(null); setSection(next); }} />
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
+      <MobileAdminHeader />
+      <Sidebar section={section} onChange={changeSection} />
       {section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
@@ -63,7 +72,7 @@ export function AdminSchedule() {
             setNewOpen({ box: 1, start: 12 * 60, phone: client.phone, car: car?.name ?? "", carType: car ? carTypeForClass(car.carClass) : "Седан" });
           }}
         />
-      ) : section === "loyalty" ? <AdminLoyalty initialClientId={loyaltyClientId} /> : <main className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-4">
+      ) : section === "loyalty" ? <AdminLoyalty initialClientId={loyaltyClientId} /> : <main className="hidden min-w-0 flex-1 flex-col px-6 pb-4 pt-5 md:flex">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold tracking-tight">Расписание</h1>
           <label className="ml-auto flex w-80 items-center gap-2 rounded-lg border border-border px-3 py-2">
@@ -109,6 +118,20 @@ export function AdminSchedule() {
         />
       </main>}
 
+      {section === "schedule" && (
+        <MobileSchedule
+          date={date}
+          bookings={visible}
+          query={query}
+          onQueryChange={setQuery}
+          onPreviousDay={() => setDate(addDays(date, -1))}
+          onNextDay={() => setDate(addDays(date, 1))}
+          onToday={() => setDate(DEMO_TODAY)}
+          onSelect={(id) => { setSelectedId(id); setMobileOrderOpen(true); }}
+          onFindFree={(box) => setNewOpen({ box, start: 12 * 60 })}
+        />
+      )}
+
       {section === "schedule" && selected && (
         <OrderPanel
           key={selected.id}
@@ -119,6 +142,19 @@ export function AdminSchedule() {
         />
       )}
 
+      {section === "schedule" && selected && mobileOrderOpen && (
+        <OrderPanel
+          key={`mobile-${selected.id}`}
+          mobile
+          b={selected}
+          onClose={() => setMobileOrderOpen(false)}
+          onCancel={() => { update(selected.id, cancelBooking); setMobileOrderOpen(false); }}
+          onUpdate={(fn) => update(selected.id, fn)}
+        />
+      )}
+
+      <MobileAdminNavigation section={section} onChange={changeSection} />
+
       <NewBookingDialog
         open={!!newOpen}
         initial={newOpen}
@@ -128,6 +164,7 @@ export function AdminSchedule() {
         onCreate={(b) => {
           setBookings((l) => [...l, b]);
           setSelectedId(b.id);
+          setMobileOrderOpen(true);
           setNewOpen(null);
         }}
       />
@@ -145,7 +182,7 @@ function Sidebar({ section, onChange }: { section: AdminSection; onChange: (sect
     { label: "Услуги", icon: Wrench, target: "services" },
   ];
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-crm-surface px-3 py-5">
+    <aside className="hidden w-56 shrink-0 flex-col border-r border-border bg-crm-surface px-3 py-5 md:flex">
       <div className="px-2">
         <img src={logo.url} alt="Aquarius" width={160} height={62} className="h-11 w-auto" />
         <p className="mt-3 text-muted-foreground">Управление мойкой</p>
@@ -275,17 +312,6 @@ function Grid({
   );
 }
 
-/** One look-and-feel per booking state: card, status badge and source chip. */
-const TONE: Record<BookingState, { card: string; badge: string; chip: string; Icon: typeof Phone }> = {
-  call: { card: "border-2 border-crm-alert-foreground bg-crm-alert text-crm-alert-foreground", badge: "bg-crm-alert-foreground text-crm-foreground", chip: "bg-crm-alert-foreground/10", Icon: Phone },
-  unconfirmed: { card: "border border-crm-warn-foreground/50 bg-crm-warn text-crm-warn-foreground", badge: "bg-crm-warn-foreground/15 text-crm-warn-foreground", chip: "bg-crm-warn-foreground/10", Icon: Clock },
-  confirmed: { card: "border border-crm/25 bg-crm-soft text-crm", badge: "bg-crm text-crm-foreground", chip: "bg-crm/10", Icon: Check },
-  working: { card: "border-2 border-crm bg-crm text-crm-foreground", badge: "bg-crm-foreground/20 text-crm-foreground", chip: "bg-crm-foreground/20", Icon: Clock },
-  ready: { card: "border border-crm-money-foreground/50 bg-crm-money text-crm-money-foreground", badge: "bg-crm-money-foreground/15 text-crm-money-foreground", chip: "bg-crm-money-foreground/10", Icon: Banknote },
-  awaiting: { card: "border border-crm-money-foreground/50 bg-crm-money text-crm-money-foreground", badge: "bg-crm-money-foreground/15 text-crm-money-foreground", chip: "bg-crm-money-foreground/10", Icon: Smartphone },
-  finished: { card: "border border-border bg-muted text-muted-foreground", badge: "bg-crm-ok text-crm-ok-foreground", chip: "bg-background", Icon: Check },
-};
-
 function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; onClick: () => void }) {
   const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
   const tone = TONE[state];
@@ -343,7 +369,7 @@ function Legend() {
   );
 }
 
-function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: () => void; onCancel: () => void; onUpdate: (fn: (b: Booking) => Booking) => void }) {
+function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Booking; onClose: () => void; onCancel: () => void; onUpdate: (fn: (b: Booking) => Booking) => void; mobile?: boolean }) {
   const [method, setMethod] = useState<PaymentMethod>(b.paymentMethod ?? "terminal");
   const sum = total(b);
   const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
@@ -366,10 +392,12 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
   ];
 
   return (
-    <aside className="flex w-[380px] shrink-0 flex-col border-l border-border">
-      <div className="flex items-center justify-between px-5 pt-5">
+    <aside className={mobile ? "fixed inset-0 z-40 flex flex-col bg-background md:hidden" : "hidden w-[380px] shrink-0 flex-col border-l border-border md:flex"}>
+      <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <h2 className="text-lg font-semibold">Карточка заказа</h2>
-        <button type="button" aria-label="Закрыть карточку" onClick={onClose} className="p-1"><X className="h-5 w-5" /></button>
+        <button type="button" aria-label={mobile ? "Назад к расписанию" : "Закрыть карточку"} onClick={onClose} className="p-1">
+          {mobile ? <ChevronLeft className="h-6 w-6" /> : <X className="h-5 w-5" />}
+        </button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
         <p className="mt-3 text-2xl font-bold">{b.car}</p>
