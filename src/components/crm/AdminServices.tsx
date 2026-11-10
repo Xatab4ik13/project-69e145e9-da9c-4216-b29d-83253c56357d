@@ -77,6 +77,7 @@ export function AdminServices() {
                               type="number"
                               min={0}
                               step={50}
+                              aria-label={`${service.name}, ${ROMAN_CLASS[classId]} класс, цена`}
                               value={cell.price ?? ""}
                               onChange={(event) => edit(service.id, classId, "price", event.target.value)}
                               className="w-24 rounded-md border border-border bg-background px-2 py-1.5 text-right font-semibold outline-none focus:border-crm"
@@ -89,6 +90,7 @@ export function AdminServices() {
                               type="number"
                               min={0}
                               step={5}
+                              aria-label={`${service.name}, ${ROMAN_CLASS[classId]} класс, время в минутах`}
                               value={cell.minutes ?? ""}
                               onChange={(event) => edit(service.id, classId, "minutes", event.target.value)}
                               className="w-16 rounded-md border border-border bg-background px-2 py-1.5 text-right outline-none focus:border-crm"
