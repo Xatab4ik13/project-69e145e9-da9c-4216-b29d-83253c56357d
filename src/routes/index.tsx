@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { BookingModal } from "@/components/BookingModal";
 import { ArrowRight, ArrowUp, ArrowUpRight, Check, Clock, Copy, CornerUpRight, MapPin, Phone, Plus } from "lucide-react";
 import imgMap from "@/assets/parking-map-aquarius.webp.asset.json";
 import imgParkCar from "@/assets/parking-car-4.webp.asset.json";
@@ -267,6 +268,7 @@ function Configurator() {
   const [added, setAdded] = useState<string[]>(["wax", "tire"]);
   const [phase, setPhase] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | Cat>("all");
+  const [booking, setBooking] = useState(false);
 
   const pkg = packages[selected] ?? packages[0]!;
   const chosen = care.filter((c) => added.includes(c.id));
@@ -408,9 +410,17 @@ function Configurator() {
             <p className="font-display text-3xl">от {rub(total)} ₽</p>
             <p className="flex items-center gap-2 text-sm"><Clock className="h-4 w-4" /> {tMin === tMax ? tMin : `${tMin}–${tMax}`} минут</p>
           </div>
-          <button type="button" className="btn-lime inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm">
+          <button type="button" onClick={() => setBooking(true)} className="btn-lime inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm">
             Записаться <ArrowRight className="h-4 w-4" />
           </button>
+          <BookingModal
+            open={booking}
+            onOpenChange={setBooking}
+            pkgName={pkg.name}
+            extras={[...(ph ? [ph.label] : []), ...chosen.map((c) => c.name)]}
+            basePrice={total}
+            time={[tMin, tMax]}
+          />
         </div>
         <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs">
           <p>Точная стоимость после выбора автомобиля. Затем — дата и время.</p>
