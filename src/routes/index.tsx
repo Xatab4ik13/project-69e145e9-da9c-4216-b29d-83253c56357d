@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { BookingModal } from "@/components/BookingModal";
-import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, Check, ChevronRight, Clock, Copy, CornerUpRight, MapPin, Phone, Plus, X } from "lucide-react";
+import { BookingModal, MobileBookingBar, MOBILE_SHEET } from "@/components/BookingModal";
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, Check, Menu, ChevronRight, Clock, Copy, CornerUpRight, MapPin, Phone, Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import imgMap from "@/assets/parking-map-aquarius.webp.asset.json";
 import imgParkCar from "@/assets/parking-car-4.webp.asset.json";
@@ -439,6 +439,7 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
   const [selected, setSelected] = useState<number | null>(null);
   const [added, setAdded] = useState<string[]>([]);
   const [phase, setPhase] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | Cat>("all");
 
   const reset = () => { setStage("pkg"); setSelected(null); setAdded([]); setPhase(null); };
   const close = () => { onOpenChange(false); setTimeout(reset, 300); };
@@ -470,15 +471,16 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
-      <DialogContent className="max-h-[95vh] max-w-4xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden">
-        <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6">
+      <DialogContent className={`max-h-[95vh] max-w-4xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
+        <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
           <X className="h-7 w-7" />
         </button>
-        <div className="flex items-center gap-4">
+        <MobileBookingBar label={steps[cur]!} step={cur + 1} onBack={() => (cur === 1 ? setStage("pkg") : close())} onClose={close} />
+        <div className="flex items-center gap-4 max-md:hidden">
           <img src="/apple-touch-icon.png" alt="" width={64} height={64} className="h-16 w-16" />
           <DialogTitle className="font-display text-4xl uppercase sm:text-5xl">Запись на мойку</DialogTitle>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-6 text-lg">
+        <div className="mt-2 flex flex-wrap items-center gap-6 text-lg max-md:hidden">
           {steps.map((s, i) => (
             <span key={s} className="flex items-center gap-6">
               {i > 0 && <ChevronRight className="mb-2 h-5 w-5" />}
@@ -497,14 +499,16 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
 
         {stage === "pkg" ? (
           <>
-            <h2 className="mt-4 font-display text-4xl uppercase sm:text-5xl">Выберите комплекс</h2>
+            <h2 className="font-display text-3xl uppercase sm:text-5xl md:mt-4">Выберите комплекс</h2>
             <div className="mt-2 grid gap-4 md:grid-cols-3">
               {packages.map((p, i) => (
-                <div key={p.name} className="flex flex-col rounded-xl border border-border p-5 shadow-sm">
-                  <h3 className="font-display text-3xl uppercase">{p.name}</h3>
-                  <p className="font-display text-3xl">от {rub(p.price)} ₽</p>
-                  <p className="mt-2 flex items-center gap-2"><Clock className="h-5 w-5" /> {p.time[0] === p.time[1] ? p.time[0] : `${p.time[0]}–${p.time[1]}`} минут</p>
-                  <ul className="mb-5 mt-3 space-y-1.5">
+                <div key={p.name} className="grid grid-cols-2 gap-x-4 rounded-xl border border-border p-4 shadow-sm md:flex md:flex-col md:p-5">
+                  <div>
+                    <h3 className="font-display text-3xl uppercase">{p.name}</h3>
+                    <p className="font-display text-3xl max-md:text-2xl">от {rub(p.price)} ₽</p>
+                    <p className="mt-2 flex items-center gap-2"><Clock className="h-5 w-5" /> {p.time[0] === p.time[1] ? p.time[0] : `${p.time[0]}–${p.time[1]}`} мин<span className="max-md:hidden">ут</span></p>
+                  </div>
+                  <ul className="mt-3 space-y-1.5 max-md:mt-1 max-md:text-sm md:mb-5">
                     {p.items.map((it) => (
                       <li key={it} className="flex items-center gap-2"><Check className="h-4 w-4" strokeWidth={3} /> {it === "Кузов пеной" ? "Мойка кузова пеной" : it}</li>
                     ))}
@@ -512,7 +516,7 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
                   <button
                     type="button"
                     onClick={() => { setSelected(i); setStage("care"); }}
-                    className="mt-auto flex items-center justify-center gap-2 rounded-lg border border-foreground py-2.5 font-semibold"
+                    className="col-span-2 mt-4 flex items-center justify-center gap-2 rounded-lg border border-foreground py-2.5 font-semibold md:mt-auto"
                   >
                     Выбрать <ArrowRight className="h-5 w-5" />
                   </button>
@@ -520,19 +524,27 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               ))}
             </div>
             <div className="border-t border-border pt-4 text-sm">
-              <p>Сушка включена во время комплекса.</p>
+              <p className="max-md:hidden">Сушка включена во время комплекса.</p>
               <p>Точная стоимость — после выбора автомобиля.</p>
-              <p className="mt-2 text-muted-foreground">Далее можно добавить уход или перейти к выбору автомобиля.</p>
+              <p className="mt-2 text-muted-foreground max-md:hidden">Далее можно добавить уход или перейти к выбору автомобиля.</p>
             </div>
           </>
         ) : (
           <>
-            <div className="mt-4 flex items-baseline justify-between gap-4">
-              <h2 className="font-display text-4xl uppercase sm:text-5xl">Добавьте уход</h2>
-              <p className="text-sm">Комплекс: <b>{pkg.name}</b></p>
+            <div className="flex flex-col gap-3 md:mt-4 md:flex-row md:items-baseline md:justify-between md:gap-4">
+              <h2 className="font-display text-3xl uppercase sm:text-5xl">Добавьте уход</h2>
+              <p className="flex items-center justify-between gap-4 text-sm max-md:rounded-lg max-md:bg-muted max-md:px-3 max-md:py-2">
+                <span>Комплекс: <b>{pkg.name}</b></span>
+                <button type="button" onClick={() => setStage("pkg")} className="underline underline-offset-4 md:hidden">Изменить</button>
+              </p>
             </div>
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-border p-4">
+            <div className="grid grid-cols-3 gap-2 md:hidden">
+              {([["all", "Все"], ["body", "Кузов"], ["salon", "Салон"]] as const).map(([k, l]) => (
+                <button key={k} type="button" onClick={() => setFilter(k)} className={`rounded-md py-1.5 text-sm font-semibold ${filter === k ? "btn-lime" : "border border-foreground"}`}>{l}</button>
+              ))}
+            </div>
+            <div className="mt-2 grid gap-3 sm:grid-cols-2 max-md:mt-0">
+              <div className={`rounded-xl border border-border p-4 ${filter === "salon" ? "max-md:hidden" : ""}`}>
                 <p className="font-semibold">Способ мойки</p>
                 <p className="text-sm text-muted-foreground">Без добавочного времени</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
@@ -549,27 +561,27 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               {care.map((c) => {
                 const on = added.includes(c.id);
                 return (
-                  <div key={c.id} className="flex items-center gap-4 rounded-xl border border-border p-4">
+                  <div key={c.id} className={`flex items-center gap-4 rounded-xl border border-border p-4 max-md:gap-3 max-md:p-3 ${filter !== "all" && filter !== c.cat ? "max-md:hidden" : ""}`}>
                     <img src={c.img.url} alt={c.alt} width={96} height={64} loading="lazy" className="h-16 w-24 object-contain" />
                     <div className="flex-1">
                       <p className="font-semibold">{c.name}</p>
                       <p className="text-sm">от {rub(c.price)} ₽{c.extra > 0 ? ` +${c.extra} минут` : ""}</p>
                     </div>
                     <button type="button" onClick={() => toggle(c.id)} className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold ${on ? "btn-lime" : "border border-foreground"}`}>
-                      {on ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />} {on ? "Добавлено" : "Добавить"}
+                      {on ? <Check className="h-5 w-5 md:h-4 md:w-4" strokeWidth={3} /> : <Plus className="h-5 w-5 md:h-4 md:w-4" />} <span className="max-md:hidden">{on ? "Добавлено" : "Добавить"}</span>
                     </button>
                   </div>
                 );
               })}
             </div>
-            <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between max-md:sticky max-md:-bottom-5 max-md:-mx-5 max-md:gap-3 max-md:bg-background max-md:px-5 max-md:pb-5 max-md:pt-4">
               <div>
-                <div className="flex items-center gap-6">
-                  <p className="font-display text-4xl">{rub(total)} ₽</p>
+                <div className="flex items-center gap-6 max-md:gap-4">
+                  <p className="font-display text-4xl max-md:text-3xl">от {rub(total)} ₽</p>
                   <span className="h-10 border-l border-foreground/30" />
                   <span className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5" /> {tMin === tMax ? tMin : `${tMin}–${tMax}`} минут</span>
                 </div>
-                <button type="button" onClick={() => setStage("pkg")} className="mt-3 flex items-center gap-2">
+                <button type="button" onClick={() => setStage("pkg")} className="mt-3 flex items-center gap-2 max-md:hidden">
                   <ArrowLeft className="h-5 w-5" /> <span className="underline underline-offset-4">Назад</span>
                 </button>
               </div>
@@ -577,7 +589,7 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
                 <button type="button" onClick={() => setStage("rest")} className="btn-lime flex w-full items-center justify-center gap-2 rounded-lg py-3.5 text-lg font-semibold">
                   {chosen.length || ph ? "Продолжить" : "Без ухода, продолжить"} <ArrowRight className="h-5 w-5" />
                 </button>
-                <p className="mt-2 text-sm text-muted-foreground">Далее — автомобиль и время</p>
+                <p className="mt-2 text-sm text-muted-foreground max-md:hidden">Далее — автомобиль и время</p>
               </div>
             </div>
           </>
