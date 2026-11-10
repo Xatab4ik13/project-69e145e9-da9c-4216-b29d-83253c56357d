@@ -197,7 +197,7 @@ function Grid({
               ))}
               {HOURS.filter((m) => m + SLOT_MIN <= CLOSE_MIN && !bookings.some((b) => b.box === box && b.wash !== "cancelled" && b.start < m + SLOT_MIN && m < b.start + b.duration)).map((m) => (
                 <button key={`f${m}`} type="button" onClick={() => onAdd(box, m)}
-                  className="group absolute inset-x-2 flex items-center justify-between rounded-lg border border-dashed border-crm-ok-foreground/40 bg-crm-ok/50 px-3 text-left text-crm-ok-foreground transition-colors hover:border-solid hover:bg-crm-ok"
+                  className="group absolute inset-x-2 flex items-center justify-between rounded-lg border border-dashed border-crm-ok-foreground/60 bg-crm-ok/60 px-3 text-left text-crm-ok-foreground transition-colors hover:border-solid hover:bg-crm-ok"
                   style={{ top: (m - OPEN_MIN) * PX_PER_MIN + 2, height: SLOT_MIN * PX_PER_MIN - 4 }}>
                   <span><span className="block font-semibold">{fmtTime(m)} – {fmtTime(m + SLOT_MIN)}</span><span className="text-xs">Свободно</span></span>
                   <span className="flex items-center gap-1 text-xs font-semibold opacity-60 group-hover:opacity-100"><Plus className="h-4 w-4" />Записать</span>
@@ -293,7 +293,6 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
   const StateIcon = TONE[state].Icon;
   const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : b.confirmed ? "Подтверждена" : "Не подтверждена";
   const payLabel = b.payment === "paid" ? "Оплачено" : b.payment === "awaiting" ? "Ожидает оплаты" : "Не оплачено";
-  const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
   const washTone =
     b.wash === "done" ? "bg-crm-ok text-crm-ok-foreground"
     : b.wash === "in_progress" ? "bg-crm text-crm-foreground"
@@ -326,7 +325,7 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
           <span><span className={`rounded px-2 py-0.5 font-medium ${payTone}`}>{payLabel}</span></span>
         </div>
         {STATE_ACTION[state] && (
-          <p className={`mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${TONE[state].card}`}>{TONE[state].Icon && <TONE[state].Icon className="h-4 w-4" />}{STATE_ACTION[state]}</p>
+          <p className={`mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${TONE[state].card}`}>{StateIcon && <StateIcon className="h-4 w-4" />}{STATE_ACTION[state]}</p>
         )}
 
         <div className="mt-4 space-y-2 border-t border-border pt-4">
