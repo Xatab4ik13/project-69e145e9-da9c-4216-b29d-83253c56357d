@@ -126,3 +126,11 @@ export function fmtPhone(digits: string): string {
   if (d.length > 8) out += "-" + d.slice(8, 10);
   return out;
 }
+
+/** Search a booking by car or phone digits — a booking has no client name. */
+export function bookingMatches(b: Booking, q: string): boolean {
+  const s = q.trim().toLowerCase();
+  if (!s) return true;
+  const digits = phoneDigits(s);
+  return b.car.toLowerCase().includes(s) || (digits.length > 0 && !!b.phone && b.phone.includes(digits));
+}

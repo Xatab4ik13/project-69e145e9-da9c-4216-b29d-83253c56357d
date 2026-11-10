@@ -48,6 +48,22 @@ describe("phone", () => {
   });
 });
 
+import { bookingMatches } from "@/lib/crm/logic";
+describe("booking identity", () => {
+  it("a booking stores no client name", () => {
+    expect("client" in kia).toBe(false);
+    expect(MOCK_BOOKINGS.every((b) => !("client" in b))).toBe(true);
+  });
+  it("search finds a booking by car or phone only", () => {
+    expect(bookingMatches(kia, "rio")).toBe(true);
+    expect(bookingMatches(kia, "960")).toBe(true);
+    expect(bookingMatches(kia, "+7 (960) 123")).toBe(true);
+    expect(bookingMatches(kia, "")).toBe(true);
+    expect(bookingMatches(kia, "Алексей")).toBe(false);
+    expect(bookingMatches(kia, "999")).toBe(false);
+  });
+});
+
 import { autoStart, cancelBooking, confirmBooking, needsCall } from "@/lib/crm/logic";
 describe("confirmation", () => {
   const lada = MOCK_BOOKINGS.find((b) => b.id === "b4")!; // 17:00, unconfirmed
