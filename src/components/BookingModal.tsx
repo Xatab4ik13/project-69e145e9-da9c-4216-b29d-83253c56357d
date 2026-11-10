@@ -24,7 +24,7 @@ const MONTHS = ["январь", "февраль", "март", "апрель", "�
 const MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
 
 export const MOBILE_SHEET =
-  "max-md:inset-0 max-md:left-0 max-md:top-0 max-md:h-[100dvh] max-md:max-h-none max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:content-start max-md:gap-5 max-md:rounded-none max-md:border-0 max-md:p-5";
+  "max-md:inset-0 max-md:left-0 max-md:top-0 max-md:h-[100dvh] max-md:max-h-none max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:content-start max-md:grid-cols-[minmax(0,1fr)] max-md:overflow-x-hidden max-md:gap-5 max-md:rounded-none max-md:border-0 max-md:p-5";
 
 export function MobileBookingBar({ label, step, onBack, onClose }: { label: string; step: number; onBack: () => void; onClose: () => void }) {
   return (
@@ -185,10 +185,10 @@ export function BookingModal({
 
         <div className="rounded-2xl bg-muted px-7 py-6 max-md:px-5 max-md:py-4">
           <div className="flex items-start justify-between">
-            <p className="text-sm uppercase max-md:hidden">{step === 1 ? "Вы выбрали" : "Ваша мойка"}</p>
+            <p className="text-sm uppercase">{step === 1 ? "Вы выбрали" : "Ваша мойка"}</p>
             <button type="button" onClick={onBack ?? close} className="text-sm underline underline-offset-4">Изменить</button>
           </div>
-          <p className="font-display text-3xl max-md:-mt-6 max-md:text-2xl">{pkgName}</p>
+          <p className="font-display text-3xl max-md:text-2xl">{pkgName}</p>
           {extras.length > 0 && (
             <div className="mt-2 flex flex-col gap-y-1 md:flex-row md:flex-wrap md:gap-x-10">
               {extras.map((e) => (
