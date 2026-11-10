@@ -30,7 +30,7 @@
  */
 
 @theme inline {
-  --font-sans: "Manrope", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
   --font-display: "Oswald", "Arial Narrow", sans-serif;
   --color-lime: var(--lime);
   --color-lime-foreground: var(--lime-foreground);
@@ -170,7 +170,7 @@
 .btn-lime {
   background-color: var(--color-lime);
   color: var(--color-lime-foreground);
-  font-weight: 700;
+  font-weight: 600;
   transition: filter 0.15s ease;
 }
 .btn-lime:hover {

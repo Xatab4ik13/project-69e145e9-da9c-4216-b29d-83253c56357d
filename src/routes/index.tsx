@@ -41,7 +41,7 @@ function Index() {
         <a href="/" aria-label="Aquarius — автомойка">
           <img src={logo.url} alt="Логотип автомойки Aquarius" width={160} height={62} className="h-12 w-auto" />
         </a>
-        <nav className="hidden items-center gap-10 text-sm font-medium md:flex">
+        <nav className="hidden items-center gap-10 text-sm font-semibold md:flex">
           {nav.map((n) => (
             <a key={n} href="#" className="transition-colors hover:text-muted-foreground">
               {n}
@@ -145,7 +145,7 @@ function Configurator() {
                   </span>
                 )}
                 <h3 className="font-display text-3xl uppercase">{p.name}</h3>
-                <p className="mt-1 text-2xl font-bold">от {rub(p.price)} ₽</p>
+                <p className="mt-1 font-display text-3xl">от {rub(p.price)} ₽</p>
                 <p className="mt-2 flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4" /> {p.time[0] === p.time[1] ? p.time[0] : `${p.time[0]}–${p.time[1]}`} минут
                 </p>
@@ -159,7 +159,7 @@ function Configurator() {
                 <button
                   type="button"
                   onClick={() => setSelected(i)}
-                  className={`mt-5 rounded-lg py-2.5 text-sm font-medium ${active ? "btn-lime" : "border border-foreground bg-background"}`}
+                  className={`mt-5 rounded-lg py-2.5 text-sm font-semibold ${active ? "btn-lime" : "border border-foreground bg-background"}`}
                 >
                   {active ? "Выбрано" : "Выбрать"}
                 </button>
@@ -179,7 +179,7 @@ function Configurator() {
                 key={k}
                 type="button"
                 onClick={() => setFilter(k)}
-                className={`min-w-20 rounded-md px-5 py-1.5 text-sm ${filter === k ? "btn-lime" : "border border-foreground bg-background"}`}
+                className={`min-w-20 rounded-md px-5 py-1.5 text-sm font-semibold ${filter === k ? "btn-lime" : "border border-foreground bg-background"}`}
               >
                 {l}
               </button>
@@ -224,13 +224,15 @@ function Configurator() {
                   )}
                 </div>
                 <h3 className="mt-3 font-display text-2xl uppercase">{c.name}</h3>
-                <p className="text-lg font-bold">от {rub(c.price)} ₽{c.extra > 0 && <span className="font-medium"> · +{c.extra} минут</span>}</p>
+                <p className="font-display text-xl">от {rub(c.price)} ₽{c.extra > 0 && <span> · +{c.extra} минут</span>}</p>
                 <p className="text-sm">{c.desc}</p>
-                {c.extra === 0 && <p className="mt-2 flex items-center gap-2 text-sm"><Check className="h-4 w-4" /> Без добавочного времени</p>}
+                <p className={`mt-2 mb-3 flex h-5 items-center gap-2 text-sm ${c.extra === 0 ? "" : "invisible"}`} aria-hidden={c.extra !== 0}>
+                  <Check className="h-4 w-4" /> Без добавочного времени
+                </p>
                 <button
                   type="button"
                   onClick={() => toggle(c.id)}
-                  className={`mt-3 flex items-center justify-center gap-2 rounded-lg py-2 text-sm ${on ? "btn-lime" : "border border-foreground bg-background"}`}
+                  className={`mt-auto flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold ${on ? "btn-lime" : "border border-foreground bg-background"}`}
                 >
                   {on ? <><Check className="h-4 w-4" /> Добавлено</> : <><Plus className="h-4 w-4" /> Добавить</>}
                 </button>
@@ -243,7 +245,7 @@ function Configurator() {
           <h3 className="font-display text-3xl uppercase md:border-r md:border-border md:pr-6">Ваша мойка</h3>
           <p className="flex-1 text-sm">{summary}</p>
           <div className="md:border-l md:border-border md:pl-6">
-            <p className="text-2xl font-bold">от {rub(total)} ₽</p>
+            <p className="font-display text-3xl">от {rub(total)} ₽</p>
             <p className="flex items-center gap-2 text-sm"><Clock className="h-4 w-4" /> {tMin === tMax ? tMin : `${tMin}–${tMax}`} минут</p>
           </div>
           <a href="#" className="btn-lime inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm">
