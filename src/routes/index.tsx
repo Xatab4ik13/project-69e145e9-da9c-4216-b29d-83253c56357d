@@ -1,3 +1,4 @@
+import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { BookingModal, MobileBookingBar, MOBILE_SHEET } from "@/components/BookingModal";
@@ -165,8 +166,8 @@ function AppPromo() {
           </div>
           <p className="mt-4 text-xs">1 бонус = 1 ₽. Списание со следующего визита. На комплексы и допы.</p>
           <div className="mt-6 flex flex-wrap items-center gap-4 max-md:mt-4 max-md:grid max-md:grid-cols-2 max-md:gap-3">
-            <a href="#" className="inline-flex flex-col rounded-lg border border-foreground bg-background px-5 py-1.5 font-semibold leading-tight"><span className="text-[10px] font-normal">Загрузите в</span>App Store</a>
-            <a href="#" className="inline-flex flex-col rounded-lg border border-foreground bg-background px-5 py-1.5 font-semibold leading-tight"><span className="text-[10px] font-normal">Доступно в</span>Google Play</a>
+            <AppStoreButton />
+            <GooglePlayButton />
             <ul className="space-y-1 text-sm max-md:hidden sm:border-l sm:border-border sm:pl-4">
               <li>Сохранённые автомобили</li>
               <li>Повтор прошлой мойки</li>
