@@ -40,6 +40,8 @@
   --color-crm-ok-foreground: var(--crm-ok-foreground);
   --color-crm-alert: var(--crm-alert);
   --color-crm-alert-foreground: var(--crm-alert-foreground);
+  --color-crm-money: var(--crm-money);
+  --color-crm-money-foreground: var(--crm-money-foreground);
   --font-sans: "Inter", system-ui, sans-serif;
   --font-display: "Oswald", "Arial Narrow", sans-serif;
   --color-lime: var(--lime);
@@ -99,6 +101,8 @@
   --crm-ok-foreground: oklch(0.4 0.09 150);
   --crm-alert: oklch(0.955 0.035 20);
   --crm-alert-foreground: oklch(0.53 0.2 20);
+  --crm-money: oklch(0.95 0.07 55);
+  --crm-money-foreground: oklch(0.52 0.16 45);
   --lime-foreground: oklch(0.15 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.15 0 0);
