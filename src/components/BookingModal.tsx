@@ -23,6 +23,31 @@ const WD_FULL = ["Воскресенье", "Понедельник", "Вторн
 const MONTHS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
 const MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
 
+export const MOBILE_SHEET =
+  "max-md:inset-0 max-md:left-0 max-md:top-0 max-md:h-[100dvh] max-md:max-h-none max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:content-start max-md:gap-5 max-md:rounded-none max-md:border-0 max-md:p-5";
+
+export function MobileBookingBar({ label, step, onBack, onClose }: { label: string; step: number; onBack: () => void; onClose: () => void }) {
+  return (
+    <div className="md:hidden">
+      <div className="flex items-center justify-between">
+        <button type="button" onClick={onBack} aria-label="Назад"><ArrowLeft className="h-6 w-6" /></button>
+        <div className="flex items-center gap-2">
+          <img src="/apple-touch-icon.png" alt="" width={44} height={44} className="h-11 w-11" />
+          <span className="font-display text-3xl uppercase">Запись</span>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Закрыть"><X className="h-6 w-6" /></button>
+      </div>
+      <div className="mt-4 flex items-baseline justify-between">
+        <p className="text-lg font-semibold">{label}</p>
+        <p className="text-sm">Шаг {step} из 4</p>
+      </div>
+      <div className="mt-2 h-1.5 rounded-full bg-muted">
+        <div className="h-full rounded-full bg-lime" style={{ width: `${(step / 4) * 100}%` }} />
+      </div>
+    </div>
+  );
+}
+
 const rub = (n: number) => n.toLocaleString("ru-RU").replace(/\u00a0/g, " ");
 const addMin = (t: string, m: number) => {
   const [h, mm] = t.split(":").map(Number) as [number, number];
@@ -87,15 +112,15 @@ export function BookingModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
-      <DialogContent className="max-h-[95vh] max-w-3xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden">
-        <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6">
+      <DialogContent className={`max-h-[95vh] max-w-3xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
+        <button type="button" onClick={close} aria-label="Закрыть" className={`absolute right-6 top-6 ${done ? "" : "max-md:hidden"}`}>
           <X className="h-7 w-7" />
         </button>
         {done && car && slot ? (
           <div>
             <div className="flex items-center gap-4">
               <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-lime"><Check className="h-9 w-9" strokeWidth={3} /></span>
-              <DialogTitle className="font-display text-4xl uppercase sm:text-5xl">Вы записаны!</DialogTitle>
+              <DialogTitle className="font-display text-3xl uppercase sm:text-5xl">Вы записаны!</DialogTitle>
             </div>
             <p className="mt-4 text-lg">Спасибо, что выбрали Aquarius! Мы уже ждём вас и вашу машину — подготовим всё к приезду. Если планы изменятся, просто позвоните нам.</p>
             <div className="mt-6 space-y-3 rounded-2xl bg-muted px-7 py-6">
@@ -109,7 +134,7 @@ export function BookingModal({
             <div className="mt-6 rounded-2xl border border-border px-7 py-6">
               <p className="font-display text-2xl uppercase">Aquarius в вашем телефоне</p>
               <p className="mt-2">Ваш автомобиль, любимая мойка и бонусная карта — всегда под рукой.</p>
-              <div className="mt-4 grid grid-cols-3 gap-4">
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
                 {[["5%", "бонусами с оплаченной суммы"], ["200", "приветственных бонусов после первого оплаченного визита"], ["до 20%", "стоимости заказа можно оплатить бонусами"]].map(([v, t]) => (
                   <div key={v} className="border-l-2 border-lime pl-3">
                     <p className="font-display text-3xl">{v}</p>
@@ -126,12 +151,18 @@ export function BookingModal({
             <button type="button" onClick={close} className="btn-lime mt-6 w-full rounded-lg py-3.5 text-lg font-semibold">Отлично</button>
           </div>
         ) : (<>
-        <div className="flex items-center gap-4">
+        <MobileBookingBar
+          label={step === 1 ? "Автомобиль и время" : "Контакты"}
+          step={step === 1 ? 3 : 4}
+          onBack={() => (step === 2 ? setStep(1) : onBack ? onBack() : close())}
+          onClose={close}
+        />
+        <div className="flex items-center gap-4 max-md:hidden">
           <img src="/apple-touch-icon.png" alt="" width={64} height={64} className="h-16 w-16" />
           <DialogTitle className="font-display text-4xl uppercase sm:text-5xl">Запись на мойку</DialogTitle>
         </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-6 text-lg">
+        <div className="mt-2 flex flex-wrap items-center gap-6 text-lg max-md:hidden">
           {onBack && (
             <>
               <button type="button" onClick={onBack} className="flex items-center gap-2 pb-2 text-muted-foreground"><Check className="h-5 w-5 text-lime" strokeWidth={3} /> Комплекс</button>
@@ -152,14 +183,14 @@ export function BookingModal({
           <span className={`pb-2 ${step === 2 ? "border-b-4 border-lime font-semibold" : "text-muted-foreground"}`}>Контакты</span>
         </div>
 
-        <div className="rounded-2xl bg-muted px-7 py-6">
+        <div className="rounded-2xl bg-muted px-7 py-6 max-md:px-5 max-md:py-4">
           <div className="flex items-start justify-between">
-            <p className="text-sm uppercase">{step === 1 ? "Вы выбрали" : "Ваша мойка"}</p>
+            <p className="text-sm uppercase max-md:hidden">{step === 1 ? "Вы выбрали" : "Ваша мойка"}</p>
             <button type="button" onClick={onBack ?? close} className="text-sm underline underline-offset-4">Изменить</button>
           </div>
-          <p className="font-display text-3xl">{pkgName}</p>
+          <p className="font-display text-3xl max-md:-mt-6 max-md:text-2xl">{pkgName}</p>
           {extras.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-x-10 gap-y-1">
+            <div className="mt-2 flex flex-col gap-y-1 md:flex-row md:flex-wrap md:gap-x-10">
               {extras.map((e) => (
                 <span key={e} className="flex items-center gap-2"><Check className="h-5 w-5 text-lime" strokeWidth={3} /> {e}</span>
               ))}
@@ -229,10 +260,10 @@ export function BookingModal({
             <div>
               <p className="font-display text-2xl uppercase">Дата и время</p>
               {!car ? (
-                <div className="mt-3 flex items-center gap-6 rounded-2xl bg-muted px-16 py-7">
+                <div className="mt-3 flex items-center gap-6 rounded-2xl bg-muted px-16 py-7 max-md:flex-col max-md:gap-3 max-md:px-6 max-md:py-12 max-md:text-center">
                   <CalendarClock className="h-12 w-12" strokeWidth={1.5} />
-                  <span className="h-12 border-l border-foreground/30" />
-                  <span className="text-lg">Выберите автомобиль, чтобы увидеть свободное время</span>
+                  <span className="h-12 border-l border-foreground/30 max-md:hidden" />
+                  <span className="text-lg max-md:text-muted-foreground">Выберите автомобиль, чтобы увидеть свободное время</span>
                 </div>
               ) : (
                 <>
@@ -240,7 +271,7 @@ export function BookingModal({
                     <p className="font-display text-2xl capitalize">{MONTHS[day.getMonth()]} {day.getFullYear()}</p>
                     <span className="flex items-center gap-2 text-sm"><CalendarDays className="h-6 w-6" /> <span className="underline underline-offset-4">Календарь</span></span>
                   </div>
-                  <div className="mt-3 grid grid-cols-7 gap-2">
+                  <div className="mt-3 grid grid-cols-7 gap-1.5 md:gap-2">
                     {days.map((d, i) => (
                       <button
                         key={i}
@@ -249,12 +280,12 @@ export function BookingModal({
                         className={`rounded-lg py-2 text-center ${i === dayIdx ? "btn-lime" : "border border-foreground/40"}`}
                       >
                         <span className="block text-sm font-semibold">{WD[d.getDay()]}</span>
-                        <span className="block font-display text-2xl">{d.getDate()}</span>
+                        <span className="block font-display text-xl md:text-2xl">{d.getDate()}</span>
                       </button>
                     ))}
                   </div>
                   <p className="mt-4 font-display text-xl">Свободное время</p>
-                  <div className="mt-2 grid grid-cols-4 gap-2">
+                  <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
                     {SLOTS.map((s) => (
                       <button
                         key={s}
@@ -302,16 +333,16 @@ export function BookingModal({
           </div>
         )}
 
-        <div className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-start sm:justify-between max-md:sticky max-md:-bottom-5 max-md:-mx-5 max-md:mt-auto max-md:gap-3 max-md:bg-background max-md:px-5 max-md:pb-5 max-md:pt-4">
           <div>
-            <div className="flex items-center gap-6">
-              <p className="font-display text-4xl">{rub(price)} ₽</p>
+            <div className="flex items-center gap-6 max-md:gap-4">
+              <p className="font-display text-4xl max-md:text-3xl">{rub(price)} ₽</p>
               <span className="h-10 border-l border-foreground/30" />
               <span className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5" /> {timeLabel} минут</span>
             </div>
             {step === 1 && !car && <p className="mt-2 text-sm text-muted-foreground">Точная цена зависит от автомобиля</p>}
             {step === 2 && (
-              <button type="button" onClick={() => setStep(1)} className="mt-3 flex items-center gap-2">
+              <button type="button" onClick={() => setStep(1)} className="mt-3 flex max-md:hidden items-center gap-2">
                 <ArrowLeft className="h-5 w-5" /> <span className="underline underline-offset-4">Назад</span>
               </button>
             )}
