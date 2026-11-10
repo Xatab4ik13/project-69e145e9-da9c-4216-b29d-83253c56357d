@@ -1,9 +1,9 @@
 import { memo, useCallback, useMemo, useState } from "react";
 import {
-  CalendarPlus, CarFront, ChevronRight, Coins, History, Phone, Repeat2,
+  CalendarPlus, CarFront, ChevronLeft, ChevronRight, Coins, History, Phone, Repeat2,
   Search, Smartphone, UserRoundPlus, Users, WalletCards,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CrmPagination } from "@/components/crm/CrmPagination";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { fmtDateShort, fmtPhone, rub } from "@/lib/crm/logic";
@@ -142,17 +142,30 @@ export function AdminClients({
       <Dialog open={selected !== null} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
         {selected && (
           <DialogContent
-            className="left-0 top-0 h-[100dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none p-0 text-base sm:left-[50%] sm:gap-4 sm:text-sm sm:top-[50%] sm:h-auto sm:max-h-[85vh] sm:max-w-3xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg"
-            closeClassName="fixed right-3 top-3 z-20 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background sm:absolute sm:right-4 sm:top-4 sm:h-8 sm:w-8 sm:border-0 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-4 sm:[&_svg]:w-4"
+            className="left-0 top-0 flex h-[100dvh] max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 text-base sm:left-[50%] sm:top-[50%] sm:grid sm:h-auto sm:max-h-[85vh] sm:max-w-3xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:gap-4 sm:overflow-y-auto sm:rounded-lg sm:text-sm"
+            closeClassName="hidden sm:absolute sm:right-4 sm:top-4 sm:flex sm:h-8 sm:w-8 sm:border-0 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-4 sm:[&_svg]:w-4"
           >
-            <DialogHeader className="border-b border-border bg-background px-5 py-5 pr-16 text-left sm:px-6 sm:pr-12">
+            <DialogHeader className="relative flex shrink-0 flex-row items-center justify-center border-b border-border bg-background px-14 py-3 sm:hidden">
+              <DialogClose aria-label="Вернуться к списку клиентов" className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg active:bg-muted">
+                <ChevronLeft className="h-6 w-6" />
+              </DialogClose>
+              <DialogTitle className="text-lg">Клиент</DialogTitle>
+            </DialogHeader>
+            <DialogHeader className="hidden border-b border-border bg-background px-5 py-5 pr-16 text-left sm:flex sm:px-6 sm:pr-12">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <DialogTitle className="text-xl leading-tight text-crm sm:text-2xl">{fmtPhone(selected.phone)}</DialogTitle>
                 <AccountStatus activated={selected.activated} />
               </div>
               <DialogDescription>Первое обращение: {fmtDateShort(selected.firstContact)}</DialogDescription>
             </DialogHeader>
-            <div className="px-4 pb-6 pt-4 sm:px-6 sm:pt-0">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-0 sm:flex-none sm:overflow-visible sm:px-6">
+              <div className="-mx-4 mb-4 border-b border-border bg-crm-surface px-5 py-4 sm:hidden">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xl font-semibold text-crm">{fmtPhone(selected.phone)}</p>
+                  <AccountStatus activated={selected.activated} />
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">Первое обращение: {fmtDateShort(selected.firstContact)}</p>
+              </div>
               <div className="grid grid-cols-3 gap-3">
                 <Summary label="Визитов" value={String(selected.visits)} />
                 <Summary label="Оплачено" value={rub(selected.totalSpent)} />
