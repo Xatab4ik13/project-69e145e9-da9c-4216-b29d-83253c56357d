@@ -23,16 +23,12 @@ export interface ExpenseItem {
 
 /** Planned monthly costs. The director edits this list on the Финансы screen. */
 export const MONTHLY_EXPENSES: ExpenseItem[] = [
-  { id: "rent", name: "Аренда", monthly: 167955.5, pay: "start" },
+  { id: "rent", name: "Аренда", monthly: 97955.5, pay: "start" },
   { id: "utilities", name: "Коммуналка", monthly: 24851, pay: "end" },
   { id: "employee", name: "Официальный сотрудник", monthly: 27188, pay: "daily" },
   { id: "accounting", name: "Бухгалтерия", monthly: 11000, pay: "daily" },
   { id: "bank", name: "Банковское обслуживание", monthly: 950, pay: "daily" },
   { id: "supplies", name: "Химия и расходники", monthly: 20000, pay: "daily" },
-  /** Sublease income received in cash reduces the real rent cost. */
-  { id: "sublease", name: "Субаренда (доход, наличные)", monthly: -70000, pay: "start" },
-  /** УСН 6% is also due on the sublease income. */
-  { id: "sublease_tax", name: "Налог 6% с субаренды", monthly: 4200, pay: "start" },
 ];
 
 export const monthlyFixedTotal = (items: ExpenseItem[] = MONTHLY_EXPENSES) =>
