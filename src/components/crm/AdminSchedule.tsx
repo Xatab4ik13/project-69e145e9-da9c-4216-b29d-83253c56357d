@@ -289,6 +289,8 @@ function Legend() {
 function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: () => void; onCancel: () => void; onUpdate: (fn: (b: Booking) => Booking) => void }) {
   const [method, setMethod] = useState<PaymentMethod>(b.paymentMethod ?? "terminal");
   const sum = total(b);
+  const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
+  const StateIcon = TONE[state].Icon;
   const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : b.confirmed ? "Подтверждена" : "Не подтверждена";
   const payLabel = b.payment === "paid" ? "Оплачено" : b.payment === "awaiting" ? "Ожидает оплаты" : "Не оплачено";
   const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
