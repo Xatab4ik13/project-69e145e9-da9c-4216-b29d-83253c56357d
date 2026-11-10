@@ -136,7 +136,6 @@ function MoreCare() {
               <p className="mt-1 text-sm">{m.info}</p>
               {m.note && <p className="text-xs text-muted-foreground">{m.note}</p>}
             </div>
-            <ArrowRight className="h-6 w-6 shrink-0 md:hidden" />
           </div>
         ))}
       </div>
