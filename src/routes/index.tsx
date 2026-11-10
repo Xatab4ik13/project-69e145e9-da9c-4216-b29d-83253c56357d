@@ -239,7 +239,6 @@ function scrollToNav(e: { preventDefault: () => void }, name: string) {
 
 function Index() {
   const [headerBooking, setHeaderBooking] = useState(false);
-  const [menu, setMenu] = useState(false);
   return (
     <div className="min-h-screen bg-background">
       <header className="relative mx-auto flex max-w-6xl items-center justify-between gap-6 border-b border-border px-6 py-3 max-md:gap-3 max-md:px-4 max-md:border-b-0">
@@ -257,16 +256,6 @@ function Index() {
           <button type="button" onClick={() => setHeaderBooking(true)} className="btn-lime rounded-lg px-5 py-2.5 text-sm max-md:px-3 max-md:py-2">
             Записаться
           </button>
-          <button type="button" onClick={() => setMenu((m) => !m)} aria-label="Меню" className="md:hidden">
-            {menu ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
-          </button>
-          {menu && (
-            <nav className="absolute inset-x-0 top-full z-20 flex flex-col border-y border-border bg-background px-4 py-2 text-base font-semibold md:hidden">
-              {nav.map((n) => (
-                <a key={n} href="#" onClick={(e) => { setMenu(false); scrollToNav(e, n); }} className="py-2.5">{n}</a>
-              ))}
-            </nav>
-          )}
           <HeaderBooking open={headerBooking} onOpenChange={setHeaderBooking} />
         </div>
       </header>
