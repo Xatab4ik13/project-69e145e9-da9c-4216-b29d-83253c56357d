@@ -28,3 +28,6 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- CRM (/admin) keeps types, mock data and pure state logic in src/lib/crm/, separate from UI in src/components/crm/ — so a real API can replace mocks without rewriting the screen.
