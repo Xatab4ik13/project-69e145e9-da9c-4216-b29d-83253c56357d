@@ -184,7 +184,7 @@ function BillList({ bills, onRemove }: { bills: ExpenseBill[]; onRemove: (id: st
     <div className="mt-2">
       {shown.map((b) => (
         <div key={b.id} className="flex items-center gap-3 border-b border-border py-2 last:border-0">
-          <span className="w-16 shrink-0 tabular-nums text-muted-foreground">{fmtDateShort(b.date)}</span>
+          <span className="w-20 shrink-0 whitespace-nowrap tabular-nums text-muted-foreground">{fmtDateShort(b.date)}</span>
           <span className="min-w-0 flex-1 truncate">{b.name}</span>
           <span className="font-semibold tabular-nums">{money(b.amount)}</span>
           <button type="button" aria-label={`Удалить расход ${b.name}`} onClick={() => onRemove(b.id)} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted">
