@@ -8,7 +8,7 @@ describe("crm logic", () => {
   it("Kia Rio demo order totals 2 500 ₽", () => expect(total(kia)).toBe(2500));
   it("detects overlap in the same box", () => {
     expect(findConflict(MOCK_BOOKINGS, { date: kia.date, box: 1, start: 16 * 60 + 30, duration: 40 })?.id).toBe("b3");
-    expect(findConflict(MOCK_BOOKINGS, { date: kia.date, box: 1, start: 17 * 60 + 0, duration: 20, box: 2 as const })).toBeUndefined();
+    expect(findConflict(MOCK_BOOKINGS, { date: kia.date, box: 2, start: 17 * 60, duration: 20 })).toBeUndefined();
   });
   it("finishing a wash leaves it unpaid", () => {
     const r = finishWash({ ...kia, wash: "in_progress" });
