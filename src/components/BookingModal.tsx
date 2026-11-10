@@ -1,5 +1,5 @@
 import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import logoAsset from "@/assets/aquarius-logo.webp.asset.json";
 import { ArrowUpRight } from "lucide-react";
 import { ArrowLeft, ArrowRight, CalendarDays, CalendarClock, Car, Check, ChevronDown, ChevronRight, Clock, MapPin, Phone, Search, X } from "lucide-react";
@@ -138,7 +138,7 @@ export function BookingModal({
 
   useEffect(() => { onDoneChange?.(done); }, [done, onDoneChange]);
 
-  const Shell = ({ children }: { children: React.ReactNode }) =>
+  const wrap = (children: React.ReactNode) =>
     embedded ? (
       <div className="animate-in fade-in slide-in-from-right-4 duration-300">{children}</div>
     ) : (
@@ -147,8 +147,8 @@ export function BookingModal({
       </Dialog>
     );
 
-  return (
-    <Shell>
+  return wrap(
+    <>
         {!done && (
           <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
             <X className="h-7 w-7" />
@@ -541,6 +541,6 @@ export function BookingModal({
           </div>
         </div>
         </>)}
-    </Shell>
+    </>
   );
 }
