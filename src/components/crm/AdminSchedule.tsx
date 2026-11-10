@@ -51,7 +51,7 @@ export function AdminSchedule() {
 
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-background text-sm text-foreground">
-      <Sidebar section={section} onChange={setSection} />
+      <Sidebar section={section} onChange={(next) => { if (next === "loyalty") setLoyaltyClientId(null); setSection(next); }} />
       {section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
