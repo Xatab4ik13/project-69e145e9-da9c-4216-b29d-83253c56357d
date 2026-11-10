@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MOCK_BOOKINGS, DEMO_TODAY } from "@/lib/crm/mock";
 import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
 import { MOCK_CLIENT_CARS } from "@/lib/crm/clients-mock";
-import { buildClients, CLIENTS_PER_PAGE, clientMetrics, filterClients, isInactiveClient, paginateClients } from "@/lib/crm/clients";
+import { buildClients, CLIENTS_PER_PAGE, clientMetrics, filterClients, isInactiveClient, paginateClients, paginationPageNumbers } from "@/lib/crm/clients";
 
 const clients = buildClients(MOCK_LOYALTY_CLIENTS, MOCK_BOOKINGS, MOCK_CLIENT_CARS, DEMO_TODAY);
 

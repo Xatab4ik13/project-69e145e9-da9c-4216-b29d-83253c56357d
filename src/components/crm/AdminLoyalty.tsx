@@ -1,6 +1,8 @@
 import { memo, useCallback, useMemo, useState } from "react";
 import { Check, ChevronRight, Clock3, Coins, Search, Smartphone, Star, Users, WalletCards } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CrmPagination } from "@/components/crm/CrmPagination";
+import { paginateClients } from "@/lib/crm/clients";
 import { fmtPhone, fmtDateShort, phoneDigits, rub } from "@/lib/crm/logic";
 import { DEMO_TODAY } from "@/lib/crm/mock";
 import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";

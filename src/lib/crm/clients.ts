@@ -132,7 +132,7 @@ export function filterClients(
 
 export const CLIENTS_PER_PAGE = 8;
 
-export function paginateClients(clients: CrmClient[], requestedPage: number) {
+export function paginateClients<T>(clients: T[], requestedPage: number) {
   const pageCount = Math.max(1, Math.ceil(clients.length / CLIENTS_PER_PAGE));
   const currentPage = Math.min(Math.max(1, requestedPage), pageCount);
   const offset = (currentPage - 1) * CLIENTS_PER_PAGE;
@@ -143,6 +143,11 @@ export function paginateClients(clients: CrmClient[], requestedPage: number) {
     start: clients.length === 0 ? 0 : offset + 1,
     end: Math.min(offset + CLIENTS_PER_PAGE, clients.length),
   };
+}
+
+export function paginationPageNumbers(currentPage: number, _pageCount: number): number[] {
+  const firstPage = Math.floor((currentPage - 1) / 5) * 5 + 1;
+  return Array.from({ length: 5 }, (_, index) => firstPage + index);
 }
 
 export function carClassRoman(carClass: CarClass): string {

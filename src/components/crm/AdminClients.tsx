@@ -1,9 +1,10 @@
 import { memo, useCallback, useMemo, useState } from "react";
 import {
-  CalendarPlus, CarFront, ChevronLeft, ChevronRight, Coins, History, Phone, Repeat2,
+  CalendarPlus, CarFront, ChevronRight, Coins, History, Phone, Repeat2,
   Search, Smartphone, UserRoundPlus, Users, WalletCards,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CrmPagination } from "@/components/crm/CrmPagination";
 import { fmtDateShort, fmtPhone, rub } from "@/lib/crm/logic";
 import { DEMO_TODAY, MOCK_BOOKINGS } from "@/lib/crm/mock";
 import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
