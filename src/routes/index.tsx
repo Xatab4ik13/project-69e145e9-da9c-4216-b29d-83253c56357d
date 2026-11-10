@@ -9,6 +9,72 @@ import imgLeather from "@/assets/care-leather.webp.asset.json";
 import imgTrunk from "@/assets/care-trunk-vacuum.webp.asset.json";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import hero from "@/assets/car-wash-hero.webp.asset.json";
+import imgDry from "@/assets/more-dry-clean.webp.asset.json";
+import imgEngine from "@/assets/more-engine.webp.asset.json";
+import imgWheels from "@/assets/more-wheels.webp.asset.json";
+
+const moreCare = [
+  { img: imgDry, alt: "Химчистка тканевого кресла", name: "Химчистка салона", info: "от 17 000 ₽ · 12 часов", note: "Запись до 13:00 предыдущего дня" },
+  { img: imgEngine, alt: "Мойка моторного отсека", name: "Мойка двигателя", info: "2 000 ₽ · 40 минут" },
+  { img: imgWheels, alt: "Чистка диска щёткой", name: "Чистка дисков", info: "500 ₽ за диск · 15 минут" },
+];
+
+function MoreCare() {
+  return (
+    <section className="mx-auto max-w-6xl border-t border-border px-6 pt-8">
+      <h2 className="font-display text-4xl uppercase">Больше ухода</h2>
+      <div className="mt-6 grid gap-6 md:grid-cols-3">
+        {moreCare.map((m, i) => (
+          <div key={m.name} className={`flex items-center gap-4 ${i > 0 ? "md:border-l md:border-border md:pl-6" : ""}`}>
+            <img src={m.img.url} alt={m.alt} width={480} height={320} loading="lazy" decoding="async" className="w-2/5 shrink-0 rounded-xl object-cover" />
+            <div>
+              <h3 className="font-display text-xl uppercase leading-tight">{m.name}</h3>
+              <p className="mt-1 text-sm">{m.info}</p>
+              {m.note && <p className="text-xs text-muted-foreground">{m.note}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AppPromo() {
+  const stats = [
+    { v: "5%", t: "бонусами с оплаченной суммы" },
+    { v: "200", t: "приветственных бонусов после первого оплаченного визита" },
+    { v: "до 20%", t: "стоимости заказа можно оплатить бонусами" },
+  ];
+  return (
+    <section className="mx-auto max-w-6xl px-6 py-10">
+      <div className="grid gap-8 rounded-2xl bg-muted p-8 md:grid-cols-[1.2fr_1fr]">
+        <div>
+          <h2 className="font-display text-4xl uppercase">Aquarius в вашем телефоне</h2>
+          <p className="mt-2">Ваш автомобиль, любимая мойка и бонусная карта — всегда под рукой.</p>
+          <div className="mt-6 grid grid-cols-3 gap-4">
+            {stats.map((s, i) => (
+              <div key={s.v} className={i > 0 ? "border-l border-border pl-4" : ""}>
+                <p className="font-display text-4xl">{s.v}</p>
+                <p className="text-sm">{s.t}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-xs">1 бонус = 1 ₽. Списание со следующего визита. На комплексы и допы.</p>
+          <div className="mt-6 flex flex-wrap items-center gap-4">
+            <a href="#" className="inline-flex flex-col rounded-lg border border-foreground bg-background px-5 py-1.5 font-semibold leading-tight"><span className="text-[10px] font-normal">Загрузите в</span>App Store</a>
+            <a href="#" className="inline-flex flex-col rounded-lg border border-foreground bg-background px-5 py-1.5 font-semibold leading-tight"><span className="text-[10px] font-normal">Доступно в</span>Google Play</a>
+            <ul className="space-y-1 text-sm sm:border-l sm:border-border sm:pl-4">
+              <li>Сохранённые автомобили</li>
+              <li>Повтор прошлой мойки</li>
+              <li>История визитов</li>
+            </ul>
+          </div>
+        </div>
+        <div className="min-h-[320px]" aria-hidden="true" />
+      </div>
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -86,6 +152,8 @@ function Index() {
       </section>
 
       <Configurator />
+      <MoreCare />
+      <AppPromo />
     </div>
   );
 }
