@@ -64,8 +64,8 @@ export function AdminSchedule() {
           </button>
         </div>
 
-        <div className="mt-3 flex items-center gap-3">
-          <span className="text-muted-foreground">Работаем 10:00–22:00</span>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Legend />
           <div className="ml-auto flex rounded-lg bg-muted p-0.5">
             <span className="rounded-md bg-crm px-4 py-1.5 font-medium text-crm-foreground">День</span>
             <span className="cursor-not-allowed px-4 py-1.5 text-muted-foreground" title="Скоро">Неделя</span>
@@ -291,6 +291,16 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
   const sum = total(b);
   const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : b.confirmed ? "Подтверждена" : "Не подтверждена";
   const payLabel = b.payment === "paid" ? "Оплачено" : b.payment === "awaiting" ? "Ожидает оплаты" : "Не оплачено";
+  const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
+  const washTone =
+    b.wash === "done" ? "bg-crm-ok text-crm-ok-foreground"
+    : b.wash === "in_progress" ? "bg-crm text-crm-foreground"
+    : state === "call" ? "bg-crm-alert-foreground text-crm-foreground"
+    : b.confirmed ? "bg-crm-soft text-crm" : "bg-crm-warn text-crm-warn-foreground";
+  const payTone =
+    b.payment === "paid" ? "bg-crm-ok text-crm-ok-foreground"
+    : b.payment === "awaiting" || b.wash === "done" ? "bg-crm-money text-crm-money-foreground"
+    : "bg-muted text-muted-foreground";
   const methods: { id: PaymentMethod; icon: typeof CreditCard }[] = [
     { id: "terminal", icon: CreditCard },
     { id: "cash", icon: Banknote },
