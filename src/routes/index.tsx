@@ -56,7 +56,7 @@ function Contacts() {
         <a href={PHONE_HREF} className="mt-2 flex items-center gap-3 font-display text-2xl"><Phone className="h-5 w-5" /> {PHONE}</a>
         <a href={PHONE_HREF} className="mt-3 flex items-center justify-center gap-2 rounded-lg border border-foreground py-2.5 font-semibold"><Phone className="h-4 w-4" /> Позвонить</a>
         <img src={imgMap.url} alt="Схема заезда в паркинг Aquarius: от улицы Дыбенко к въезду, 4-й уровень" width={1280} height={735} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
-        <a href={YMAPS} target="_blank" rel="noreferrer" className="btn-lime mt-3 flex items-center justify-center gap-2 rounded-lg py-3 text-lg">Маршрут до въезда <ArrowUpRight className="h-5 w-5" /></a>
+        <RouteButton className="btn-lime mt-3 flex items-center justify-center rounded-lg py-3 text-lg" />
         <h3 className="mt-6 border-t border-border pt-4 font-display text-3xl uppercase">Как нас найти</h3>
         <div className="mt-2 space-y-2">
           <p>Со стороны ул. Дыбенко поверните направо у «Вкусно — и точка».</p>
@@ -73,7 +73,7 @@ function Contacts() {
           <p className="mt-3">Заезд с проспекта Большевиков — маршрут показан на схеме.</p>
           <img src={imgMap.url} alt="Схема заезда в паркинг Aquarius: от улицы Дыбенко к въезду, 4-й уровень" width={1280} height={735} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
           <div className="mt-4 flex flex-wrap items-center gap-6">
-            <a href={YMAPS} target="_blank" rel="noreferrer" className="btn-lime inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm">Маршрут до въезда <ArrowUpRight className="h-4 w-4" /></a>
+            <RouteButton className="btn-lime inline-flex items-center rounded-lg px-5 py-2.5 text-sm" />
             <a href={YMAPS} target="_blank" rel="noreferrer" className="text-sm underline underline-offset-4">Открыть в Яндекс Картах</a>
           </div>
           <div className="mt-5 flex flex-col gap-4 rounded-xl sm:flex-row sm:items-center sm:justify-between border border-border p-4">
