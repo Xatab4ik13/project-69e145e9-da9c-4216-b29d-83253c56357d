@@ -538,6 +538,24 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
                   </button>
                 ))}
               </div>
+              <p className="mt-4 text-base font-semibold">Мойщик</p>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {WASHERS.map((w) => (
+                  <button
+                    key={w}
+                    type="button"
+                    onClick={() => setWasher(w)}
+                    aria-pressed={washer === w}
+                    className={`relative rounded-lg border px-1 py-2.5 text-sm font-medium ${washer === w ? "border-2 border-crm bg-crm-soft text-crm" : "border-border"}`}
+                  >
+                    {washer === w && <Check className="absolute right-1 top-1 h-4 w-4 rounded-full bg-crm p-0.5 text-crm-foreground" />}
+                    {w}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                {washer ? `${washer} получит 30% — ${rub(Math.round(sum * WASHER_SHARE))}` : "Выберите мойщика: с его заказа считается 30%."}
+              </p>
               {method === "terminal" && (
                 <>
                   <button type="button" disabled={!washer} onClick={() => onUpdate((x) => applyPayment(x, "terminal", washer ?? undefined))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Подтвердить оплату</button>
