@@ -56,7 +56,7 @@ function Index() {
           <h1 className="font-display text-5xl uppercase leading-[0.95] md:text-6xl">
             Автомойка
             <br />
-            на Большевиков
+            <span className="whitespace-nowrap">на Большевиков</span>
           </h1>
           <p className="mt-4 text-base leading-snug">
             Выберите мойку и нужный уход.
