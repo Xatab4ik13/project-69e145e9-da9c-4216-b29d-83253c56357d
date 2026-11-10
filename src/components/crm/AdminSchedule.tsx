@@ -32,7 +32,7 @@ export function AdminSchedule() {
   const [source, setSource] = useState<"all" | BookingSource>("all");
   const [newOpen, setNewOpen] = useState<NewBookingInitial | null>(null);
   const [section, setSection] = useState<AdminSection>("schedule");
-  const [loyaltyClientId, setLoyaltyClientId] = useState("lc1");
+  const [loyaltyClientId, setLoyaltyClientId] = useState<string | null>(null);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
