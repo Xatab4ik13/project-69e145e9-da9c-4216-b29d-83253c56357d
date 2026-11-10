@@ -47,3 +47,21 @@ describe("phone", () => {
     expect(phoneDigits("904")).toBe("904");
   });
 });
+
+import { autoStart, cancelBooking, confirmBooking, needsCall } from "@/lib/crm/logic";
+describe("confirmation", () => {
+  const lada = MOCK_BOOKINGS.find((b) => b.id === "b4")!; // 17:00, unconfirmed
+  it("unconfirmed booking within 15 min needs a call", () => {
+    expect(needsCall(lada, lada.date, 16 * 60 + 45)).toBe(true);
+    expect(needsCall(lada, lada.date, 16 * 60 + 40)).toBe(false);
+  });
+  it("unconfirmed never auto-starts; confirmed starts at its time", () => {
+    expect(autoStart(lada, lada.date, 17 * 60).wash).toBe("scheduled");
+    expect(confirmBooking(lada, lada.date, 16 * 60 + 50).wash).toBe("scheduled");
+    expect(confirmBooking(lada, lada.date, 17 * 60).wash).toBe("in_progress");
+  });
+  it("cancelled booking frees the slot", () => {
+    const list = MOCK_BOOKINGS.map((b) => (b.id === "b4" ? cancelBooking(b) : b));
+    expect(findConflict(list, { date: lada.date, box: 1, start: 17 * 60, duration: 60 })).toBeUndefined();
+  });
+});

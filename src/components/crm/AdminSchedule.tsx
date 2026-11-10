@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell, Banknote, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
-  Clock, CreditCard, Plus, Search, Smartphone, Star, User, X,
+  Clock, CreditCard, Phone, Plus, Search, Smartphone, Star, User, X,
 } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,14 +10,14 @@ import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
-  fmtTime, rub, startWash, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits,
+  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits,
 } from "@/lib/crm/logic";
 
 const PX_PER_MIN = 2;
 const HOURS = Array.from({ length: (CLOSE_MIN - OPEN_MIN) / 60 + 1 }, (_, i) => OPEN_MIN + i * 60);
 
 export function AdminSchedule() {
-  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
+  const [bookings, setBookings] = useState<Booking[]>(() => MOCK_BOOKINGS.map((b) => autoStart(b, DEMO_TODAY, DEMO_NOW_MIN)));
   const [date, setDate] = useState(DEMO_TODAY);
   const [selectedId, setSelectedId] = useState<string | null>("b3");
   const [query, setQuery] = useState("");
@@ -29,6 +29,7 @@ export function AdminSchedule() {
     return bookings.filter(
       (b) =>
         b.date === date &&
+        b.wash !== "cancelled" &&
         (source === "all" || b.source === source) &&
         (!q || b.client.toLowerCase().includes(q) || b.car.toLowerCase().includes(q)),
     );
@@ -92,6 +93,7 @@ export function AdminSchedule() {
           key={selected.id}
           b={selected}
           onClose={() => setSelectedId(null)}
+          onCancel={() => { update(selected.id, cancelBooking); setSelectedId(null); }}
           onUpdate={(fn) => update(selected.id, fn)}
         />
       )}
@@ -209,7 +211,8 @@ function Grid({
 }
 
 function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; onClick: () => void }) {
-  const status = statusLabel(b);
+  const call = needsCall(b, DEMO_TODAY, DEMO_NOW_MIN);
+  const status = call ? "Позвонить" : statusLabel(b);
   const finished = b.wash === "done" && b.payment === "paid";
   const h = b.duration * PX_PER_MIN;
   const extras = b.services.length - 1;
@@ -218,7 +221,7 @@ function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; 
       type="button"
       onClick={onClick}
       className={`absolute inset-x-2 flex flex-col justify-start overflow-hidden rounded-lg border px-3 py-1 text-left leading-tight transition-colors ${
-        selected ? "z-[5] border-2 border-crm bg-crm-soft" : finished ? "border-border bg-muted" : "border-border bg-background hover:bg-crm-surface"
+        selected ? "z-[5] border-2 border-crm bg-crm-soft" : call ? "border-2 border-crm-warn-foreground bg-crm-warn" : finished ? "border-border bg-muted" : "border-border bg-background hover:bg-crm-surface"
       }`}
       style={{ top: (b.start - OPEN_MIN) * PX_PER_MIN + 1, height: h - 2 }}
     >
@@ -233,8 +236,8 @@ function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; 
           {selected && h > 90 && <span className="mr-auto font-bold">{rub(total(b))}</span>}
           <span className={`rounded bg-muted px-1.5 py-0.5 text-xs ${selected ? "" : "mr-auto"}`}>{SOURCE_LABEL[b.source]}</span>
           {status && !finished && (
-            <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium ${b.wash === "in_progress" ? "bg-crm-soft text-crm" : b.payment === "awaiting" ? "bg-crm-warn text-crm-warn-foreground" : "bg-crm-ok text-crm-ok-foreground"}`}>
-              {b.wash === "done" && b.payment === "unpaid" && <Check className="h-3 w-3" />}{status}
+            <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium ${b.wash === "in_progress" ? "bg-crm-soft text-crm" : call ? "bg-crm-warn-foreground text-crm-foreground" : b.wash === "scheduled" && !b.confirmed ? "bg-crm-warn text-crm-warn-foreground" : b.payment === "awaiting" ? "bg-crm-warn text-crm-warn-foreground" : "bg-crm-ok text-crm-ok-foreground"}`}>
+              {call && <Phone className="h-3 w-3" />}{(b.wash === "done" && b.payment === "unpaid") || (b.wash === "scheduled" && b.confirmed) ? <Check className="h-3 w-3" /> : null}{status}
             </span>
           )}
         </div>
@@ -243,10 +246,10 @@ function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; 
   );
 }
 
-function OrderPanel({ b, onClose, onUpdate }: { b: Booking; onClose: () => void; onUpdate: (fn: (b: Booking) => Booking) => void }) {
+function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: () => void; onCancel: () => void; onUpdate: (fn: (b: Booking) => Booking) => void }) {
   const [method, setMethod] = useState<PaymentMethod>(b.paymentMethod ?? "terminal");
   const sum = total(b);
-  const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : "Ожидает";
+  const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : b.confirmed ? "Подтверждена" : "Не подтверждена";
   const payLabel = b.payment === "paid" ? "Оплачено" : b.payment === "awaiting" ? "Ожидает оплаты" : "Не оплачено";
   const methods: { id: PaymentMethod; icon: typeof CreditCard }[] = [
     { id: "terminal", icon: CreditCard },
@@ -266,7 +269,7 @@ function OrderPanel({ b, onClose, onUpdate }: { b: Booking; onClose: () => void;
         <p className="mt-3 flex items-center gap-2 text-base"><Calendar className="h-5 w-5" /> {fmtDateShort(b.date)} · {fmtTime(b.start)}–{fmtTime(b.start + b.duration)}</p>
         <div className="mt-3 grid grid-cols-[72px_1fr] items-center gap-y-1.5">
           <span className="text-muted-foreground">Мойка:</span>
-          <span><span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 ${b.wash === "done" ? "bg-crm-ok text-crm-ok-foreground" : "bg-crm-soft text-crm"}`}>{b.wash === "done" && <Check className="h-3 w-3" />}{washLabel}</span></span>
+          <span><span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 ${b.wash === "done" || (b.wash === "scheduled" && b.confirmed) ? "bg-crm-ok text-crm-ok-foreground" : b.wash === "scheduled" ? "bg-crm-warn text-crm-warn-foreground" : "bg-crm-soft text-crm"}`}>{b.wash === "done" && <Check className="h-3 w-3" />}{washLabel}</span></span>
           <span className="text-muted-foreground">Оплата:</span>
           <span><span className={`rounded px-2 py-0.5 ${b.payment === "paid" ? "bg-crm-ok text-crm-ok-foreground" : "bg-crm-warn text-crm-warn-foreground"}`}>{payLabel}</span></span>
         </div>
@@ -301,8 +304,20 @@ function OrderPanel({ b, onClose, onUpdate }: { b: Booking; onClose: () => void;
         </div>
 
         <div className="mt-4 border-t border-border pt-4">
+          {b.wash === "scheduled" && !b.confirmed && (
+            <>
+              {needsCall(b, DEMO_TODAY, DEMO_NOW_MIN) && (
+                <p className="mb-3 flex items-center gap-2 rounded-lg bg-crm-warn p-3 text-crm-warn-foreground"><Phone className="h-4 w-4" /> Позвоните клиенту: до начала меньше 15 минут</p>
+              )}
+              <button type="button" onClick={() => onUpdate((x) => confirmBooking(x, DEMO_TODAY, DEMO_NOW_MIN))} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Клиент подтвердил</button>
+              <p className="mt-2 text-center text-xs text-muted-foreground">Мойка начнётся автоматически во время записи.</p>
+            </>
+          )}
+          {b.wash === "scheduled" && b.confirmed && (
+            <p className="rounded-lg bg-crm-ok p-3 text-center text-crm-ok-foreground">Запись подтверждена. Мойка начнётся автоматически в {fmtTime(b.start)}.</p>
+          )}
           {b.wash === "scheduled" && (
-            <button type="button" onClick={() => onUpdate(startWash)} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Начать мойку</button>
+            <button type="button" onClick={onCancel} className="mt-3 w-full rounded-lg border border-destructive py-2.5 font-semibold text-destructive">Отменить бронь</button>
           )}
           {b.wash === "in_progress" && (b.source === "app" ? (
               <>
@@ -397,7 +412,7 @@ function NewBookingDialog({
     onCreate({
       id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: "Седан",
       client: client.trim(), phone, source: "admin", worker: WORKERS[0] ?? "", packageName: pkg.name, services,
-      wash: "scheduled", payment: "unpaid",
+      wash: "scheduled", confirmed: false, payment: "unpaid",
     });
   };
 

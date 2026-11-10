@@ -19,6 +19,7 @@ export function findConflict(
   return list.find(
     (b) =>
       b.id !== ignoreId &&
+      b.wash !== "cancelled" &&
       b.date === slot.date &&
       b.box === slot.box &&
       slot.start < b.start + b.duration &&
@@ -33,8 +34,25 @@ export function finishWash(b: Booking): Booking {
   return b.wash === "in_progress" ? { ...b, wash: "done" } : b;
 }
 
-export function startWash(b: Booking): Booking {
-  return b.wash === "scheduled" ? { ...b, wash: "in_progress" } : b;
+/** Minutes before start when an unconfirmed client must be called. */
+export const CALL_BEFORE_MIN = 15;
+
+/** A confirmed booking starts by itself once its time has come. */
+export function autoStart(b: Booking, today: string, nowMin: number): Booking {
+  return b.wash === "scheduled" && b.confirmed && b.date === today && nowMin >= b.start ? { ...b, wash: "in_progress" } : b;
+}
+
+export function confirmBooking(b: Booking, today: string, nowMin: number): Booking {
+  return b.wash === "scheduled" ? autoStart({ ...b, confirmed: true }, today, nowMin) : b;
+}
+
+export function cancelBooking(b: Booking): Booking {
+  return b.wash === "scheduled" ? { ...b, wash: "cancelled" } : b;
+}
+
+/** Unconfirmed and starts within CALL_BEFORE_MIN (or already late). */
+export function needsCall(b: Booking, today: string, nowMin: number): boolean {
+  return b.wash === "scheduled" && !b.confirmed && b.date === today && b.start - nowMin <= CALL_BEFORE_MIN;
 }
 
 /** Terminal/cash confirm payment; app only issues an invoice (awaiting). */
@@ -49,6 +67,7 @@ export function statusLabel(b: Booking): string | null {
   if (b.wash === "done" && b.payment === "awaiting") return "Ожидает оплаты";
   if (b.wash === "done") return "Готова";
   if (b.wash === "in_progress") return "В работе";
+  if (b.wash === "scheduled") return b.confirmed ? "Подтверждена" : "Не подтверждена";
   return null;
 }
 
