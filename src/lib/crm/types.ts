@@ -18,7 +18,6 @@ export interface Booking {
   duration: number;
   car: string;
   carType: string;
-  client: string;
   /** 10 digits after +7 */
   phone?: string;
   source: BookingSource;
