@@ -67,10 +67,10 @@ describe("summarize", () => {
     expect(s.tax).toBeCloseTo(480, 5);
   });
 
-  it("prorates the fixed plan over the days of the period", () => {
-    expect(s.fixed).toBeCloseTo(186144.5 / 31, 5);
-    expect(s.expenses).toBeCloseTo(186144.5 / 31 + 2400 + 51.2 + 20 + 480, 5);
-    expect(s.profit).toBeCloseTo(8000 - (186144.5 / 31 + 2400 + 51.2 + 20 + 480), 5);
+  it("mid-month day carries only daily-paid articles", () => {
+    const daily = (27188 + 11000 + 950 + 20000) / 31;
+    expect(s.fixed).toBeCloseTo(daily, 5);
+    expect(s.profit).toBeCloseTo(8000 - (daily + 2400 + 51.2 + 20 + 480), 5);
   });
 
   it("splits money by payment method and by washer", () => {
@@ -129,6 +129,11 @@ describe("washer on the booking", () => {
 });
 
 describe("fixedForPeriod", () => {
+  it("rent minus sublease hits on the 1st, utilities on the last day", () => {
+    const daily = (27188 + 11000 + 950 + 20000) / 31;
+    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-01" })).toBeCloseTo(167955.5 - 70000 + 4200 + daily, 2);
+    expect(fixedForPeriod({ from: "2026-10-31", to: "2026-10-31" })).toBeCloseTo(24851 + daily, 2);
+  });
   it("adds up whole months", () => {
     expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-31" })).toBeCloseTo(186144.5, 2);
   });

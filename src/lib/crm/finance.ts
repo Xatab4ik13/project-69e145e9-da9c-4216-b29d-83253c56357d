@@ -17,20 +17,22 @@ export interface ExpenseItem {
   id: string;
   name: string;
   monthly: number;
+  /** When the money leaves: whole sum on the 1st, whole sum on the last day, or spread daily. */
+  pay: "start" | "end" | "daily";
 }
 
 /** Planned monthly costs. The director edits this list on the Финансы screen. */
 export const MONTHLY_EXPENSES: ExpenseItem[] = [
-  { id: "rent", name: "Аренда", monthly: 167955.5 },
-  { id: "utilities", name: "Коммуналка", monthly: 24851 },
-  { id: "employee", name: "Официальный сотрудник", monthly: 27188 },
-  { id: "accounting", name: "Бухгалтерия", monthly: 11000 },
-  { id: "bank", name: "Банковское обслуживание", monthly: 950 },
-  { id: "supplies", name: "Химия и расходники", monthly: 20000 },
+  { id: "rent", name: "Аренда", monthly: 167955.5, pay: "start" },
+  { id: "utilities", name: "Коммуналка", monthly: 24851, pay: "end" },
+  { id: "employee", name: "Официальный сотрудник", monthly: 27188, pay: "daily" },
+  { id: "accounting", name: "Бухгалтерия", monthly: 11000, pay: "daily" },
+  { id: "bank", name: "Банковское обслуживание", monthly: 950, pay: "daily" },
+  { id: "supplies", name: "Химия и расходники", monthly: 20000, pay: "daily" },
   /** Sublease income received in cash reduces the real rent cost. */
-  { id: "sublease", name: "Субаренда (доход, наличные)", monthly: -70000 },
+  { id: "sublease", name: "Субаренда (доход, наличные)", monthly: -70000, pay: "start" },
   /** УСН 6% is also due on the sublease income. */
-  { id: "sublease_tax", name: "Налог 6% с субаренды", monthly: 4200 },
+  { id: "sublease_tax", name: "Налог 6% с субаренды", monthly: 4200, pay: "start" },
 ];
 
 export const monthlyFixedTotal = (items: ExpenseItem[] = MONTHLY_EXPENSES) =>
@@ -52,11 +54,17 @@ export const dateRange = (from: string, to: string): string[] => {
 export const daysInMonth = (iso: string) =>
   new Date(Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)), 0)).getUTCDate();
 
-/** Fixed costs of the period: every day carries 1/days-in-month of that month's plan. */
-export const fixedForPeriod = (p: Period, items: ExpenseItem[] = MONTHLY_EXPENSES) => {
-  const monthly = monthlyFixedTotal(items);
-  return dateRange(p.from, p.to).reduce((s, d) => s + monthly / daysInMonth(d), 0);
+/** What one article costs on a given day, by its payment moment. */
+export const itemOnDay = (i: ExpenseItem, d: string) => {
+  const day = Number(d.slice(8, 10));
+  if (i.pay === "start") return day === 1 ? i.monthly : 0;
+  if (i.pay === "end") return day === daysInMonth(d) ? i.monthly : 0;
+  return i.monthly / daysInMonth(d);
 };
+
+/** Fixed costs actually paid within the period. */
+export const fixedForPeriod = (p: Period, items: ExpenseItem[] = MONTHLY_EXPENSES) =>
+  dateRange(p.from, p.to).reduce((s, d) => s + items.reduce((a, i) => a + itemOnDay(i, d), 0), 0);
 
 /** The same fixed costs split by article, prorated over the period. */
 export function fixedRowsForPeriod(p: Period, items: ExpenseItem[] = MONTHLY_EXPENSES) {
@@ -64,7 +72,7 @@ export function fixedRowsForPeriod(p: Period, items: ExpenseItem[] = MONTHLY_EXP
   return items.map((i) => ({
     id: i.id,
     name: i.name,
-    value: days.reduce((s, d) => s + i.monthly / daysInMonth(d), 0),
+    value: days.reduce((s, d) => s + itemOnDay(i, d), 0),
   }));
 }
 
