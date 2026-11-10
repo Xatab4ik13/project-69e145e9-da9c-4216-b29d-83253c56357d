@@ -173,3 +173,54 @@ export function AdminServices() {
     </main>
   );
 }
+
+function MobileServiceEditor({
+  service,
+  onEdit,
+}: {
+  service: CatalogService;
+  onEdit: (serviceId: string, classId: CarClass, field: ServiceCellField, raw: string) => void;
+}) {
+  return (
+    <article data-service-id={`mobile-${service.id}`} className="border-t border-border p-4">
+      <h3 className="text-base font-semibold">{service.name}</h3>
+      {service.unit && <p className="mt-1 text-xs text-muted-foreground">Цена и время {service.unit}</p>}
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {CAR_CLASSES.map((classId) => {
+          const cell = service.classes[classId];
+          return (
+            <div key={classId} className="rounded-xl bg-crm-surface p-3">
+              <p className="text-sm font-semibold text-crm">{ROMAN_CLASS[classId]} класс</p>
+              <label className="mt-2 block text-xs text-muted-foreground">
+                Цена, ₽
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={50}
+                  aria-label={`${service.name}, ${ROMAN_CLASS[classId]} класс, цена`}
+                  value={cell.price ?? ""}
+                  onChange={(event) => onEdit(service.id, classId, "price", event.target.value)}
+                  className={`${MOBILE_NUMBER_INPUT} font-semibold text-foreground`}
+                />
+              </label>
+              <label className="mt-2 block text-xs text-muted-foreground">
+                Время, мин
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={5}
+                  aria-label={`${service.name}, ${ROMAN_CLASS[classId]} класс, время в минутах`}
+                  value={cell.minutes ?? ""}
+                  onChange={(event) => onEdit(service.id, classId, "minutes", event.target.value)}
+                  className={`${MOBILE_NUMBER_INPUT} text-foreground`}
+                />
+              </label>
+            </div>
+          );
+        })}
+      </div>
+    </article>
+  );
+}
