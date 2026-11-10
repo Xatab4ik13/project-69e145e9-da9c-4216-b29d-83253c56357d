@@ -10,7 +10,7 @@ import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
-  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
+  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches, findConflict,
 } from "@/lib/crm/logic";
 
 const PX_PER_MIN = 2;
