@@ -146,15 +146,6 @@ export function AdminDashboard({ bookings, today }: DashProps) {
           <Card title="Расходы за период">
             <ExpenseRows summary={summary} />
           </Card>
-          <Card title="Как считается результат">
-            <ul className="space-y-2 text-sm">
-              <RuleLine text="Постоянные расходы берутся из плана месяца: каждый день — 1/30 часть." />
-              <RuleLine text="Мойщики — 30% с выручки его заказов, начисляются с оплаты." />
-              <RuleLine text="Налог УСН — 6% со всей выручки, даже если деньги ещё не на счёте." />
-              <RuleLine text="Комиссии: терминал 2,56%, оплата в приложении по СБП 0,4%." />
-              <RuleLine text="Точка безубыточности — выручка, после которой остаётся 64% на покрытие плана." />
-            </ul>
-          </Card>
         </div>
       </div>
     </main>
