@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { BookingModal } from "@/components/BookingModal";
-import { ArrowRight, ArrowUp, ArrowUpRight, Check, Clock, Copy, CornerUpRight, MapPin, Phone, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, Check, ChevronRight, Clock, Copy, CornerUpRight, MapPin, Phone, Plus, X } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import imgMap from "@/assets/parking-map-aquarius.webp.asset.json";
 import imgParkCar from "@/assets/parking-car-4.webp.asset.json";
 
