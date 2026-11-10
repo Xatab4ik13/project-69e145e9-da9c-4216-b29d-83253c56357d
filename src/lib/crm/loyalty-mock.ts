@@ -23,6 +23,7 @@ export const MOCK_LOYALTY_CLIENTS: LoyaltyClient[] = [
     transactions: [
       { id: "lt7", type: "accrual", amount: 100, date: "2026-11-08", description: "5% с денежной части чека · 2 000 ₽", expiresAt: "2027-11-08" },
       { id: "lt8", type: "redemption", amount: -500, date: "2026-11-08", description: "20% чека · выбор клиента" },
+      { id: "lt8a", type: "accrual", amount: 300, date: "2026-10-28", description: "5% с оплаты мойки · 6 000 ₽", expiresAt: "2027-10-28" },
       { id: "lt9", type: "welcome", amount: 200, date: "2026-08-19", description: "Приветственные бонусы за вход по SMS", expiresAt: "2027-08-19" },
     ],
   },

@@ -44,4 +44,8 @@ describe("CRM loyalty rules", () => {
     expect(loyaltyBalance(client, "2026-11-19")).toBe(295);
     expect(loyaltyBalance(client, "2026-11-20")).toBe(95);
   });
+
+  it("keeps every demo bonus balance non-negative", () => {
+    expect(MOCK_LOYALTY_CLIENTS.every((client) => loyaltyBalance(client, "2026-11-11") >= 0)).toBe(true);
+  });
 });
