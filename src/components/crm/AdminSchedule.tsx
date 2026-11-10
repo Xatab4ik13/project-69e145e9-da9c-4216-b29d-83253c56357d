@@ -494,7 +494,7 @@ function NewBookingDialog({
     if (phone.length !== 10) return setError("Введите номер телефона полностью: +7 (___) ___-__-__.");
     if (!picked) return setError("Выберите свободное время.");
     onCreate({
-      id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: "Седан",
+      id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: initial?.carType ?? "Седан",
       phone, source: "admin", worker: WORKERS[0] ?? "", packageName: pkg.name, services,
       wash: "scheduled", confirmed: false, payment: "unpaid",
     });
