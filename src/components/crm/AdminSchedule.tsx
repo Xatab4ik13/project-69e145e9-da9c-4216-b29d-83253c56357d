@@ -319,10 +319,13 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
         <p className="mt-3 flex items-center gap-2 text-base"><Calendar className="h-5 w-5" /> {fmtDateShort(b.date)} · {fmtTime(b.start)}–{fmtTime(b.start + b.duration)}</p>
         <div className="mt-3 grid grid-cols-[72px_1fr] items-center gap-y-1.5">
           <span className="text-muted-foreground">Мойка:</span>
-          <span><span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 ${b.wash === "done" || (b.wash === "scheduled" && b.confirmed) ? "bg-crm-ok text-crm-ok-foreground" : b.wash === "scheduled" ? "bg-crm-warn text-crm-warn-foreground" : "bg-crm-soft text-crm"}`}>{b.wash === "done" && <Check className="h-3 w-3" />}{washLabel}</span></span>
+          <span><span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 font-medium ${washTone}`}>{b.wash === "done" && <Check className="h-3 w-3" />}{washLabel}</span></span>
           <span className="text-muted-foreground">Оплата:</span>
-          <span><span className={`rounded px-2 py-0.5 ${b.payment === "paid" ? "bg-crm-ok text-crm-ok-foreground" : "bg-crm-warn text-crm-warn-foreground"}`}>{payLabel}</span></span>
+          <span><span className={`rounded px-2 py-0.5 font-medium ${payTone}`}>{payLabel}</span></span>
         </div>
+        {STATE_ACTION[state] && (
+          <p className={`mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${TONE[state].card}`}>{TONE[state].Icon && <TONE[state].Icon className="h-4 w-4" />}{STATE_ACTION[state]}</p>
+        )}
 
         <div className="mt-4 space-y-2 border-t border-border pt-4">
           <p><span className="text-muted-foreground">Телефон:</span> {b.phone ? <a href={`tel:+7${b.phone}`} className="text-crm">{fmtPhone(b.phone)}</a> : <span className="text-muted-foreground">не указан</span>}</p>
@@ -357,14 +360,14 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
           {b.wash === "scheduled" && !b.confirmed && (
             <>
               {needsCall(b, DEMO_TODAY, DEMO_NOW_MIN) && (
-                <p className="mb-3 flex items-center gap-2 rounded-lg bg-crm-warn p-3 text-crm-warn-foreground"><Phone className="h-4 w-4" /> Позвоните клиенту: до начала меньше 15 минут</p>
+                <p className="mb-3 flex items-center gap-2 rounded-lg border-2 border-crm-alert-foreground bg-crm-alert p-3 font-medium text-crm-alert-foreground"><Phone className="h-4 w-4" /> Позвоните клиенту: до начала меньше 15 минут</p>
               )}
               <button type="button" onClick={() => onUpdate((x) => confirmBooking(x, DEMO_TODAY, DEMO_NOW_MIN))} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Клиент подтвердил</button>
               <p className="mt-2 text-center text-xs text-muted-foreground">Мойка начнётся автоматически во время записи.</p>
             </>
           )}
           {b.wash === "scheduled" && b.confirmed && (
-            <p className="rounded-lg bg-crm-ok p-3 text-center text-crm-ok-foreground">Запись подтверждена. Мойка начнётся автоматически в {fmtTime(b.start)}.</p>
+            <p className="rounded-lg bg-crm-soft p-3 text-center font-medium text-crm">Запись подтверждена. Мойка начнётся автоматически в {fmtTime(b.start)}.</p>
           )}
           {b.wash === "scheduled" && (
             <button type="button" onClick={onCancel} className="mt-3 w-full rounded-lg border border-destructive py-2.5 font-semibold text-destructive">Отменить бронь</button>
@@ -411,7 +414,7 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
                 <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "cash"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Подтвердить получение наличных</button>
               )}
               {method === "app" && (b.payment === "awaiting" ? (
-                <p className="mt-3 rounded-lg bg-crm-warn p-3 text-center text-crm-warn-foreground">Ожидает оплаты в приложении</p>
+                <p className="mt-3 rounded-lg bg-crm-money p-3 text-center font-medium text-crm-money-foreground">Ожидает оплаты в приложении</p>
               ) : (
                 <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "app"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Выставить счёт</button>
               ))}
