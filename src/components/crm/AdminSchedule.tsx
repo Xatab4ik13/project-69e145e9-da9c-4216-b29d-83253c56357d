@@ -15,7 +15,7 @@ import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES } f
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
   fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
-  bookingState, STATE_LABEL, STATE_ACTION,
+  bookingState, STATE_LABEL, STATE_ACTION, isPastSlot,
 } from "@/lib/crm/logic";
 import type { BookingState } from "@/lib/crm/logic";
 
@@ -479,7 +479,7 @@ function NewBookingDialog({
   const chosenExtras = EXTRAS.filter((e) => extras.includes(e.name));
   const services = [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...chosenExtras.map(({ name, price }) => ({ name, price }))];
   const duration = bookingDuration(SLOT_MIN, chosenExtras.map((e) => e.minutes));
-  const slots = freeSlots(bookings, date, duration);
+  const slots = freeSlots(bookings, date, duration, 60, DEMO_TODAY, DEMO_NOW_MIN);
   const picked = slots.find((s) => s.start === slot);
 
   const submit = () => {
