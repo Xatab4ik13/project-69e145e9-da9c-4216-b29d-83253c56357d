@@ -78,7 +78,7 @@ export function AdminClients({
         <Metric Icon={Smartphone} label="В приложении" value={metrics.activated} />
       </section>
 
-      <div className="mt-5 flex min-h-[560px] gap-4">
+      <div className="mt-5 flex min-h-[560px] flex-col gap-4 min-[1800px]:flex-row">
         <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border">
           <div className="flex items-center gap-3 border-b border-border p-3">
             <label className="flex w-80 items-center gap-2 rounded-lg border border-border px-3 py-2">
