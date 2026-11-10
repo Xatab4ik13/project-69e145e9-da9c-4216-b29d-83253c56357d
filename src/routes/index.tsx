@@ -2,7 +2,7 @@ import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { BookingModal, MobileBookingBar, MOBILE_SHEET } from "@/components/BookingModal";
-import { ArrowLeft, ArrowRight, ArrowUp, Check, Menu, ChevronRight, Clock, Copy, CornerUpRight, MapPin, Phone, Plus, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronRight, Clock, Copy, CornerUpRight, MapPin, Phone, Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import imgMap from "@/assets/parking-map-aquarius.webp.asset.json";
 import imgParkCar from "@/assets/parking-car-4.webp.asset.json";
