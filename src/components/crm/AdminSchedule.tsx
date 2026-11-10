@@ -44,7 +44,7 @@ export function AdminSchedule() {
     setBookings((list) => list.map((b) => (b.id === id ? fn(b) : b)));
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-sm text-foreground">
+    <div className="fixed inset-0 flex overflow-hidden bg-background text-sm text-foreground">
       <Sidebar section={section} onChange={setSection} />
       {section === "services" ? <AdminServices /> : <main className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-4">
         <div className="flex items-center gap-4">
