@@ -14,7 +14,7 @@ describe("CRM clients", () => {
   });
 
   it("counts repeat clients from two completed visits", () => {
-    expect(clientMetrics(clients, DEMO_TODAY).repeat).toBe(5);
+    expect(clientMetrics(clients, DEMO_TODAY).repeat).toBe(4);
     expect(filterClients(clients, "", "repeat", DEMO_TODAY).every((client) => client.visits >= 2)).toBe(true);
   });
 

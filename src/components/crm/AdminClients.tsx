@@ -16,7 +16,7 @@ import {
 import { fmtDateShort, fmtPhone, rub } from "@/lib/crm/logic";
 import { DEMO_TODAY, MOCK_BOOKINGS } from "@/lib/crm/mock";
 import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
-import { MOCK_CLIENT_CARS } from "@/lib/crm/clients-mock";
+import { MOCK_CLIENT_CARS, MOCK_CLIENT_FIRST_CONTACT } from "@/lib/crm/clients-mock";
 import {
   buildClients,
   carClassRoman,

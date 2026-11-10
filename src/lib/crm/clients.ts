@@ -68,6 +68,7 @@ export function buildClients(
   bookings: Booking[],
   carsByClient: Record<string, ClientCar[]>,
   today: string,
+  firstContactByClient: Record<string, string> = {},
 ): CrmClient[] {
   return accounts.map((account) => {
     const history = bookings
