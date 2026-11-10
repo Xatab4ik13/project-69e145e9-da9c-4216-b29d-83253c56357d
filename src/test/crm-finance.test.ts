@@ -36,13 +36,13 @@ describe("owner economics constants", () => {
     expect(ACQUIRING_FEE).toBe(0.0256);
     expect(SBP_FEE).toBe(0.004);
     expect(TAX_RATE).toBe(0.06);
-    expect(monthlyFixedTotal()).toBeCloseTo(186144.5, 2);
+    expect(monthlyFixedTotal()).toBeCloseTo(181944.5, 2);
     expect(WASHERS).toEqual(["Рома", "Малик", "Сергей"]);
   });
 
   it("breaks even once revenue covers the fixed plan", () => {
     // 100% - 6% tax - 30% washers = 64% of every rouble left for the plan.
-    expect(breakevenRevenue(186144.5, 0)).toBeCloseTo(186144.5 / 0.64, 1);
+    expect(breakevenRevenue(181944.5, 0)).toBeCloseTo(181944.5 / 0.64, 1);
   });
 });
 
@@ -129,12 +129,12 @@ describe("washer on the booking", () => {
 });
 
 describe("fixedForPeriod", () => {
-  it("rent minus sublease hits on the 1st, utilities on the last day", () => {
+  it("rent hits on the 1st, utilities on the last day", () => {
     const daily = (27188 + 11000 + 950 + 20000) / 31;
-    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-01" })).toBeCloseTo(167955.5 - 70000 + 4200 + daily, 2);
+    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-01" })).toBeCloseTo(97955.5 + daily, 2);
     expect(fixedForPeriod({ from: "2026-10-31", to: "2026-10-31" })).toBeCloseTo(24851 + daily, 2);
   });
   it("adds up whole months", () => {
-    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-31" })).toBeCloseTo(186144.5, 2);
+    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-31" })).toBeCloseTo(181944.5, 2);
   });
 });
