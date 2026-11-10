@@ -21,13 +21,20 @@ describe("crm logic", () => {
   });
 });
 
-import { bookingDuration, freeSlots, isPastSlot, readyAndInvoice } from "@/lib/crm/logic";
+import { bookingDuration, customServiceDetails, freeSlots, isPastSlot, readyAndInvoice } from "@/lib/crm/logic";
 import { DEMO_NOW_MIN, DEMO_TODAY, SLOT_MIN } from "@/lib/crm/mock";
 
 describe("slots", () => {
   it("base slot is 60 min plus timed add-ons", () => {
     expect(bookingDuration(SLOT_MIN, [])).toBe(60);
     expect(bookingDuration(SLOT_MIN, [20, 10])).toBe(90);
+  });
+  it("custom service uses its own name, price and exact duration", () => {
+    expect(customServiceDetails("  Полная химчистка салона и багажника  ", 4500, 135)).toEqual({
+      packageName: "Свои услуги",
+      services: [{ name: "Полная химчистка салона и багажника", price: 4500 }],
+      duration: 135,
+    });
   });
   it("auto-assigns box 2 when box 1 is busy", () => {
     expect(freeSlots(MOCK_BOOKINGS, kia.date, 60).find((s) => s.start === 18 * 60)?.box).toBe(1);
