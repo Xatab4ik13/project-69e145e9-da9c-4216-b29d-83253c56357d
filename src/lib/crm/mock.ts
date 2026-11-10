@@ -85,15 +85,15 @@ export const HISTORY_BOOKINGS: Booking[] = (() => {
     for (let i = 0; i < count; i++) {
       const box = (r() < 0.5 ? 1 : 2) as 1 | 2;
       const start = OPEN_MIN + Math.floor(r() * ((CLOSE_MIN - OPEN_MIN) / 30)) * 30;
-      const p = PACKAGES[r() < 0.4 ? 0 : r() < 0.6 ? 1 : 2];
+      const p = PACKAGES[r() < 0.4 ? 0 : r() < 0.6 ? 1 : 2]!;
       const services = [pkg(p.name)];
       let duration = 60;
       if (r() < 0.3) {
-        const e = FLAT_EXTRAS[Math.floor(r() * FLAT_EXTRAS.length)];
+        const e = FLAT_EXTRAS[Math.floor(r() * FLAT_EXTRAS.length)]!;
         services.push({ name: e.name, price: e.price });
       }
       if (r() < 0.18) {
-        const e = TIMED_EXTRAS[Math.floor(r() * TIMED_EXTRAS.length)];
+        const e = TIMED_EXTRAS[Math.floor(r() * TIMED_EXTRAS.length)]!;
         services.push({ name: e.name, price: e.price });
         duration += e.minutes;
       }
@@ -104,8 +104,8 @@ export const HISTORY_BOOKINGS: Booking[] = (() => {
       const mr = r();
       const paymentMethod: PaymentMethod =
         source === "app" ? (mr < 0.75 ? "app" : mr < 0.9 ? "terminal" : "cash") : mr < 0.5 ? "terminal" : "cash";
-      const phone = HISTORY_PHONES[Math.floor(Math.pow(r(), 1.6) * HISTORY_PHONES.length)];
-      const [car, carType] = HISTORY_CARS[Number(phone.slice(-3)) % HISTORY_CARS.length];
+      const phone = HISTORY_PHONES[Math.floor(Math.pow(r(), 1.6) * HISTORY_PHONES.length)]!;
+      const [car, carType] = HISTORY_CARS[Number(phone.slice(-3)) % HISTORY_CARS.length]!;
       all.push({
         id: `h-${date}-${i}`,
         date,

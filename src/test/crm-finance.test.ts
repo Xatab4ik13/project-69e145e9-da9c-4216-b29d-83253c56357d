@@ -7,25 +7,31 @@ import { applyPayment, receivePayment } from "@/lib/crm/logic";
 import { HISTORY_BOOKINGS } from "@/lib/crm/mock";
 import type { Booking } from "@/lib/crm/types";
 
-const mk = (over: Partial<Booking>): Booking => ({
+const mk = (over: Partial<Booking>): Booking => {
+  const merged = { ...defaults, ...over } as Record<string, unknown>;
+  // exactOptionalPropertyTypes: an optional field must be absent, not undefined.
+  for (const key of Object.keys(merged)) if (merged[key] === undefined) delete merged[key];
+  return merged as Booking;
+};
+
+const defaults = {
   id: Math.random().toString(36).slice(2),
   date: "2026-10-05",
-  box: 1,
+  box: 1 as const,
   start: 12 * 60,
   duration: 60,
   car: "Kia Rio",
   carType: "Седан",
   phone: "9000000000",
-  source: "site",
+  source: "site" as const,
   packageName: "Стандарт",
   services: [{ name: "Комплекс «Стандарт»", price: 1200 }],
-  wash: "done",
+  wash: "done" as const,
   confirmed: true,
-  payment: "paid",
-  paymentMethod: "cash",
+  payment: "paid" as const,
+  paymentMethod: "cash" as const,
   washer: "Рома",
-  ...over,
-});
+};
 
 const oneDay = { from: "2026-10-05", to: "2026-10-05" };
 
