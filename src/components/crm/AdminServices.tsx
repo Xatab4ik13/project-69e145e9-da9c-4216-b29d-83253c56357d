@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import {
   CAR_CLASSES, DEFAULT_SERVICE_CATALOG, SERVICE_GROUPS, updateServiceCell,
 } from "@/lib/crm/services";
@@ -53,8 +54,13 @@ export function AdminServices() {
 
   return (
     <main className="flex min-w-0 flex-1 flex-col overflow-hidden px-6 pb-4 pt-5">
-      <h1 className="text-3xl font-bold tracking-tight">Услуги</h1>
-      <p className="mt-1 text-muted-foreground">Редактируемый прайс по классам автомобилей</p>
+      <div className="flex items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Услуги</h1>
+          <p className="mt-1 text-muted-foreground">Редактируемый прайс по классам автомобилей</p>
+        </div>
+        <div className="ml-auto"><AdminNotificationIndicator /></div>
+      </div>
 
       <div className="mt-4 shrink-0 rounded-xl border border-crm/20 bg-crm-soft px-4 py-3 text-crm">
         Цены указаны в рублях, время — в минутах. На сайте показывается цена I класса с пометкой «от».
