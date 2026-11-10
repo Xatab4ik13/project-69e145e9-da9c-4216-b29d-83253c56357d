@@ -28,6 +28,24 @@ const MONTHS_GEN = ["января", "февраля", "марта", "апрел�
 export const MOBILE_SHEET =
   "max-md:inset-0 max-md:left-0 max-md:top-0 max-md:h-[100dvh] max-md:max-h-none max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:content-start max-md:grid-cols-[minmax(0,1fr)] max-md:overflow-x-hidden max-md:gap-5 max-md:rounded-none max-md:border-0 max-md:p-5";
 
+// Мини-логотипы магазинов: фирменных знаков Apple / Google Play в lucide нет, рисуем сами.
+function AppleGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
+    </svg>
+  );
+}
+
+function PlayGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <path d="M3 2 L21 12 L3 12 Z" fill="currentColor" />
+      <path d="M3 12 L21 12 L3 22 Z" fill="currentColor" opacity=".55" />
+    </svg>
+  );
+}
+
 export function MobileBookingBar({ label, step, onBack, onClose }: { label: string; step: number; onBack: () => void; onClose: () => void }) {
   return (
     <div className="md:hidden">
@@ -117,6 +135,10 @@ export function BookingModal({
   const canContinue = !!car && !!slot;
   const canConfirm = phone.length === 10 && agree;
 
+  // Строки «Ваша мойка»: комплекс = вся цена без допов, дальше каждый доп со своей ценой.
+  const extrasSum = extraPrices.reduce((a, b) => a + b, 0);
+  const washLines = [[`Комплекс «${pkgName}»`, price - extrasSum] as const, ...extras.map((e, i) => [e, extraPrices[i] ?? 0] as const)];
+
   const close = () => {
     onOpenChange(false);
     if (done) setTimeout(() => { setDone(false); setStep(1); setCar(null); setSlot(null); setPhone(""); setAgree(false); }, 300);
@@ -129,10 +151,12 @@ export function BookingModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
-      <DialogContent className={`max-h-[95vh] max-w-3xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
-        <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
-          <X className="h-7 w-7" />
-        </button>
+      <DialogContent className={`max-h-[95vh] ${done ? "max-w-5xl" : "max-w-3xl"} overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
+        {!done && (
+          <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
+            <X className="h-7 w-7" />
+          </button>
+        )}
         {done && car && slot ? (<>
           <div className="md:hidden">
             <div className="flex items-center justify-between">
@@ -158,7 +182,7 @@ export function BookingModal({
               <p className="text-sm uppercase">Ваша мойка</p>
               <p className="mt-1 flex items-center gap-3 border-b border-foreground/20 pb-3"><Car className="h-6 w-8" strokeWidth={1.5} /> {car.name} · {car.body}</p>
               <div className="space-y-2 border-b border-foreground/20 py-3">
-                {[[`Комплекс «${pkgName}»`, price - extraPrices.reduce((a, b) => a + b, 0)] as const, ...extras.map((e, i) => [e, extraPrices[i] ?? 0] as const)].map(([n, p]) => (
+                {washLines.map(([n, p]) => (
                   <div key={n} className="flex items-center gap-3">
                     <Check className="h-5 w-5 shrink-0 text-lime" strokeWidth={3} />
                     <span className="flex-1">{n}</span>
@@ -203,37 +227,99 @@ export function BookingModal({
             </div>
           </div>
           <div className="max-md:hidden">
-            <div className="flex items-center gap-4">
-              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-lime"><Check className="h-9 w-9" strokeWidth={3} /></span>
-              <DialogTitle className="font-display text-3xl uppercase sm:text-5xl">Вы записаны!</DialogTitle>
+            <div className="flex items-center justify-between">
+              <img src={logoAsset.url} alt="aquarius автомойка" className="h-12 w-auto" />
+              <button type="button" onClick={close} aria-label="Закрыть"><X className="h-7 w-7" /></button>
             </div>
-            <p className="mt-4 text-lg">Спасибо, что выбрали Aquarius! Мы уже ждём вас и вашу машину — подготовим всё к приезду. Если планы изменятся, просто позвоните нам.</p>
-            <div className="mt-6 space-y-3 rounded-2xl bg-muted px-7 py-6">
-              <p className="font-display text-2xl">{pkgName}{extras.length > 0 ? ` + ${extras.join(" + ").toLowerCase()}` : ""}</p>
-              <p className="flex items-center gap-3"><Car className="h-6 w-6" /> {car.name} · {car.body}</p>
-              <p className="flex items-center gap-3"><CalendarDays className="h-6 w-6" /> {WD_FULL[day.getDay()]}, {day.getDate()} {MONTHS_GEN[day.getMonth()]} · {range}</p>
-              <p className="flex items-center gap-3"><MapPin className="h-6 w-6" /> Большевиков, 18к2 · Паркинг, 4-й уровень</p>
-              <p className="flex items-center gap-3"><Phone className="h-6 w-6" /> {fmtPhone(phone)}</p>
-              <p className="font-display text-3xl">{rub(price)} ₽</p>
+
+            <div className="mt-6 flex items-center justify-between gap-10">
+              <div className="flex items-center gap-5">
+                <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-lime"><Check className="h-9 w-9" strokeWidth={3} /></span>
+                <div>
+                  <DialogTitle className="font-display text-4xl uppercase leading-none">Вы записаны!</DialogTitle>
+                  <p className="mt-2 text-lg">Ждём вас в Aquarius.</p>
+                </div>
+              </div>
+              {/* место под иллюстрацию «мойка обмывает автомобиль» — ассета пока нет */}
+              <div className="min-h-[170px] w-[42%] shrink-0" aria-hidden />
             </div>
-            <div className="mt-6 rounded-2xl border border-border px-7 py-6">
-              <p className="font-display text-2xl uppercase">Aquarius в вашем телефоне</p>
-              <p className="mt-2">Ваш автомобиль, любимая мойка и бонусная карта — всегда под рукой.</p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                {[["5%", "бонусами с оплаченной суммы"], ["200", "приветственных бонусов после первого оплаченного визита"], ["до 20%", "стоимости заказа можно оплатить бонусами"]].map(([v, t]) => (
-                  <div key={v} className="border-l-2 border-lime pl-3">
-                    <p className="font-display text-3xl">{v}</p>
-                    <p className="text-sm">{t}</p>
+
+            <div className="mt-7 grid grid-cols-[1.05fr_1fr] gap-9">
+              <div className="rounded-2xl bg-muted px-6 py-5">
+                <p className="text-sm uppercase">Ваша мойка</p>
+                <p className="mt-1 font-display text-3xl">{pkgName}</p>
+                <div className="mt-4 space-y-2 border-b border-foreground/20 pb-4">
+                  {washLines.map(([n, p]) => (
+                    <div key={n} className="flex items-center gap-3">
+                      <Check className="h-5 w-5 shrink-0 text-lime" strokeWidth={3} />
+                      <span className="flex-1">{n}</span>
+                      <span className="font-display">{rub(p)} ₽</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between py-4">
+                  <span className="font-display text-2xl">Итого</span>
+                  <span className="font-display text-4xl">{rub(price)} ₽</span>
+                </div>
+                <div className="flex items-center gap-5 border-t border-foreground/20 pt-4 text-lg">
+                  <span className="flex items-center gap-3"><Clock className="h-6 w-6 shrink-0" strokeWidth={1.5} /> {minutes} минут</span>
+                  <span className="h-6 border-l border-foreground/30" />
+                  <span className="flex items-center gap-3"><Car className="h-6 w-8 shrink-0" strokeWidth={1.5} /> {car.name} · {car.body}</span>
+                </div>
+              </div>
+
+              <div className="border-l border-border pl-9">
+                <div className="flex items-start gap-4">
+                  <CalendarDays className="h-8 w-8 shrink-0" strokeWidth={1.5} />
+                  <div>
+                    <p className="font-display text-xl">{WD_FULL[day.getDay()]}, {day.getDate()} {MONTHS_GEN[day.getMonth()]} {day.getFullYear()}</p>
+                    <p className="font-display text-4xl">{range}</p>
                   </div>
-                ))}
-              </div>
-              <p className="mt-4 text-xs">1 бонус = 1 ₽. Списание со следующего визита. На комплексы и допы.</p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <a href="#" className="inline-flex flex-col rounded-lg border border-foreground bg-background px-5 py-1.5 font-semibold leading-tight"><span className="text-[10px] font-normal">Загрузите в</span>App Store</a>
-                <a href="#" className="inline-flex flex-col rounded-lg border border-foreground bg-background px-5 py-1.5 font-semibold leading-tight"><span className="text-[10px] font-normal">Доступно в</span>Google Play</a>
+                </div>
+                <div className="mt-5 flex items-start gap-4 border-t border-border pt-5">
+                  <MapPin className="h-8 w-8 shrink-0" strokeWidth={1.5} />
+                  <div>
+                    <p>Санкт-Петербург,<br />проспект Большевиков, 18к2</p>
+                    <p className="mt-2 flex items-center gap-3"><span className="rounded border border-foreground/40 bg-background px-2 font-display">P4</span><span className="font-display">Паркинг · 4-й уровень</span></p>
+                  </div>
+                </div>
+                <a href={YMAPS} target="_blank" rel="noreferrer" className="btn-lime mt-6 flex items-center justify-center gap-2 rounded-lg py-3 text-lg">Маршрут до въезда <ArrowUpRight className="h-5 w-5" /></a>
+                <button type="button" onClick={() => downloadIcs(day, slot, minutes ?? 60, pkgName)} className="mt-3 flex w-full items-center justify-center gap-3 rounded-lg border border-foreground py-3 text-lg font-semibold"><CalendarDays className="h-5 w-5" /> Добавить в календарь</button>
+                <p className="mt-4 text-center text-sm"><span className="text-muted-foreground">Вопросы по записи? </span><a href="tel:+79045117396" className="font-display text-base">+7 (904) 511-73-96</a></p>
               </div>
             </div>
-            <button type="button" onClick={close} className="btn-lime mt-6 w-full rounded-lg py-3.5 text-lg font-semibold">Отлично</button>
+
+            <div className="mt-7 rounded-2xl bg-muted px-6 py-5">
+              <div className="flex items-center gap-8">
+                {/* место под иллюстрацию «бонусная карта + телефон» — ассета пока нет */}
+                <div className="min-h-[150px] w-[240px] shrink-0" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-2xl uppercase leading-tight">Aquarius в вашем телефоне</p>
+                  <p className="mt-1">Повторяйте запись и копите бонусы.</p>
+                  <div className="mt-3 flex items-center gap-6">
+                    <div className="flex items-center gap-3">
+                      <p className="font-display text-4xl">5%</p>
+                      <p className="text-sm leading-tight">бонусами<br />с оплаты</p>
+                    </div>
+                    <span className="h-12 border-l border-foreground/30" />
+                    <div className="flex items-center gap-3">
+                      <p className="font-display text-4xl">200</p>
+                      <p className="text-sm leading-tight">бонусов после<br />первого оплаченного<br />визита</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground">Бонусами можно оплатить до 20% следующей мойки.</p>
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    <a href="#" className="flex items-center gap-2 rounded-lg border border-foreground bg-background px-4 py-1.5 font-semibold leading-tight"><AppleGlyph className="h-5 w-5 shrink-0" /><span className="flex flex-col"><span className="text-[10px] font-normal">Скачать в</span>App Store</span></a>
+                    <a href="#" className="flex items-center gap-2 rounded-lg border border-foreground bg-background px-4 py-1.5 font-semibold leading-tight"><PlayGlyph className="h-5 w-5 shrink-0" /><span className="flex flex-col"><span className="text-[10px] font-normal">Скачать в</span>Google Play</span></a>
+                  </div>
+                </div>
+                <div className="flex shrink-0 flex-col items-center gap-2">
+                  {/* место под QR-код со ссылкой на приложение */}
+                  <div className="h-[120px] w-[120px] shrink-0" aria-hidden />
+                  <p className="text-center text-xs leading-tight">Наведите камеру<br />телефона</p>
+                </div>
+              </div>
+            </div>
           </div>
         </>) : (<>
         <MobileBookingBar
