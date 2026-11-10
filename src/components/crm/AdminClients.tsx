@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import {
   CalendarPlus, CarFront, ChevronRight, Coins, History, Phone, Repeat2,
   Search, Smartphone, UserRoundPlus, Users, WalletCards,
@@ -43,8 +43,9 @@ export function AdminClients({
     () => buildClients(MOCK_LOYALTY_CLIENTS, MOCK_BOOKINGS, MOCK_CLIENT_CARS, DEMO_TODAY, MOCK_CLIENT_FIRST_CONTACT),
     [],
   );
-  const metrics = clientMetrics(clients, DEMO_TODAY);
+  const metrics = useMemo(() => clientMetrics(clients, DEMO_TODAY), [clients]);
   const visible = useMemo(() => filterClients(clients, query, filter, DEMO_TODAY), [clients, filter, query]);
+  const openClient = useCallback((id: string) => setSelectedId(id), []);
   const selected = clients.find((client) => client.id === selectedId) ?? null;
 
   return (
@@ -104,33 +105,7 @@ export function AdminClients({
               </tr>
             </thead>
             <tbody>
-              {visible.map((client) => {
-                const primaryCar = client.cars.find((car) => car.primary) ?? client.cars[0];
-                return (
-                  <tr
-                    key={client.id}
-                    tabIndex={0}
-                    onClick={() => setSelectedId(client.id)}
-                    onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedId(client.id); }}
-                    className="cursor-pointer border-b border-border outline-none transition-colors last:border-0 hover:bg-crm-soft/45 focus:bg-crm-soft/45"
-                  >
-                    <td className="px-4 py-4 font-semibold text-crm">{fmtPhone(client.phone)}</td>
-                    <td className="px-4 py-4">
-                      <p className="font-medium">{primaryCar?.name ?? "Не указан"}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {primaryCar ? `${carClassRoman(primaryCar.carClass)} класс` : ""}
-                        {client.cars.length > 1 ? ` · ещё ${client.cars.length - 1}` : ""}
-                      </p>
-                    </td>
-                    <td className="px-4 py-4 font-medium">{client.visits}</td>
-                    <td className="px-4 py-4">{client.lastVisit ? fmtDateShort(client.lastVisit) : "Ещё не был"}</td>
-                    <td className="px-4 py-4 font-medium">{rub(client.totalSpent)}</td>
-                    <td className="px-4 py-4"><AccountStatus activated={client.activated} /></td>
-                    <td className="px-4 py-4 font-semibold">{formatBonuses(client.bonusBalance)}</td>
-                    <td className="pr-3"><ChevronRight className="h-4 w-4 text-muted-foreground" /></td>
-                  </tr>
-                );
-              })}
+              {visible.map((client) => <ClientTableRow key={client.id} client={client} onSelect={openClient} />)}
             </tbody>
           </table>
           {visible.length === 0 && (
@@ -218,6 +193,33 @@ export function AdminClients({
     </main>
   );
 }
+
+const ClientTableRow = memo(function ClientTableRow({ client, onSelect }: { client: CrmClient; onSelect: (id: string) => void }) {
+  const primaryCar = client.cars.find((car) => car.primary) ?? client.cars[0];
+  return (
+    <tr
+      tabIndex={0}
+      onClick={() => onSelect(client.id)}
+      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onSelect(client.id); }}
+      className="cursor-pointer border-b border-border outline-none transition-colors last:border-0 hover:bg-crm-soft/45 focus:bg-crm-soft/45"
+    >
+      <td className="px-4 py-4 font-semibold text-crm">{fmtPhone(client.phone)}</td>
+      <td className="px-4 py-4">
+        <p className="font-medium">{primaryCar?.name ?? "Не указан"}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {primaryCar ? `${carClassRoman(primaryCar.carClass)} класс` : ""}
+          {client.cars.length > 1 ? ` · ещё ${client.cars.length - 1}` : ""}
+        </p>
+      </td>
+      <td className="px-4 py-4 font-medium">{client.visits}</td>
+      <td className="px-4 py-4">{client.lastVisit ? fmtDateShort(client.lastVisit) : "Ещё не был"}</td>
+      <td className="px-4 py-4 font-medium">{rub(client.totalSpent)}</td>
+      <td className="px-4 py-4"><AccountStatus activated={client.activated} /></td>
+      <td className="px-4 py-4 font-semibold">{formatBonuses(client.bonusBalance)}</td>
+      <td className="pr-3"><ChevronRight className="h-4 w-4 text-muted-foreground" /></td>
+    </tr>
+  );
+});
 
 function AccountStatus({ activated }: { activated: boolean }) {
   return (
