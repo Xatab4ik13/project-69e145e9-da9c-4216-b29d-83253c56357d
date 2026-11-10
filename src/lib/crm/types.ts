@@ -43,3 +43,6 @@ export const METHOD_LABEL: Record<PaymentMethod, string> = {
   cash: "Наличные",
   app: "В приложении",
 };
+
+/** Who is looking at the CRM: the manager runs the day, the owner also sees the money. */
+export type CrmRole = "admin" | "owner";

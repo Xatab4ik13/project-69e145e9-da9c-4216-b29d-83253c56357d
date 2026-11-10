@@ -1,24 +1,59 @@
 import { useMemo, useState } from "react";
 import {
-  CalendarDays, ChevronLeft, ChevronRight, Menu, Plus, Search, Star, User,
+  Bell, Building2, CalendarDays, ChevronLeft, ChevronRight, LayoutDashboard, Menu, Plus, Search, Star, User, Wallet, Wrench,
 } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { TONE } from "@/components/crm/booking-tone";
 import { bookingState, fmtDateShort, fmtTime, rub, total } from "@/lib/crm/logic";
 import { DEMO_NOW_MIN, DEMO_TODAY } from "@/lib/crm/mock";
-import { SOURCE_LABEL, type Booking } from "@/lib/crm/types";
+import { SOURCE_LABEL, type Booking, type CrmRole } from "@/lib/crm/types";
 import { STATE_LABEL } from "@/lib/crm/logic";
 
-export type MobileAdminSection = "schedule" | "clients" | "services" | "loyalty";
+export type MobileAdminSection =
+  | "schedule" | "clients" | "services" | "loyalty" | "dashboard" | "finance" | "notifications";
 
-export function MobileAdminHeader() {
+type NavItem = { id: MobileAdminSection | "more"; label: string; Icon: typeof CalendarDays };
+type SheetItem = { id: MobileAdminSection; label: string; Icon: typeof CalendarDays; soon?: boolean };
+
+/** Four buttons fit the phone: the owner gets Дашборд in the bar, the rest goes under «Ещё». */
+const NAV: Record<CrmRole, NavItem[]> = {
+  admin: [
+    { id: "schedule", label: "Расписание", Icon: CalendarDays },
+    { id: "clients", label: "Клиенты", Icon: User },
+    { id: "loyalty", label: "Лояльность", Icon: Star },
+    { id: "more", label: "Ещё", Icon: Menu },
+  ],
+  owner: [
+    { id: "dashboard", label: "Дашборд", Icon: LayoutDashboard },
+    { id: "schedule", label: "Расписание", Icon: CalendarDays },
+    { id: "clients", label: "Клиенты", Icon: User },
+    { id: "more", label: "Ещё", Icon: Menu },
+  ],
+};
+
+const MORE: Record<CrmRole, SheetItem[]> = {
+  admin: [{ id: "services", label: "Услуги", Icon: Wrench }],
+  owner: [
+    { id: "loyalty", label: "Лояльность", Icon: Star },
+    { id: "services", label: "Услуги", Icon: Wrench },
+    { id: "finance", label: "Финансы", Icon: Wallet, soon: true },
+    { id: "notifications", label: "Уведомления", Icon: Bell, soon: true },
+  ],
+};
+
+const ROLE_ITEMS: { id: CrmRole; label: string; Icon: typeof User }[] = [
+  { id: "admin", label: "Управляющий", Icon: User },
+  { id: "owner", label: "Владелец", Icon: Building2 },
+];
+
+export function MobileAdminHeader({ role = "admin" }: { role?: CrmRole }) {
   return (
     <header className="flex shrink-0 items-center gap-3 border-b border-border bg-background px-4 py-3 md:hidden">
       <img src={logo.url} alt="Aquarius" className="h-11 w-auto" />
       <div className="ml-auto flex items-center gap-2">
         <AdminNotificationIndicator />
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-crm font-semibold text-crm-foreground">А</span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-crm font-semibold text-crm-foreground">{role === "owner" ? "В" : "А"}</span>
       </div>
     </header>
   );
@@ -27,31 +62,74 @@ export function MobileAdminHeader() {
 export function MobileAdminNavigation({
   section,
   onChange,
+  role,
+  onRoleChange,
 }: {
   section: MobileAdminSection;
   onChange: (section: MobileAdminSection) => void;
+  role: CrmRole;
+  onRoleChange: (role: CrmRole) => void;
 }) {
-  const items = [
-    { id: "schedule" as const, label: "Расписание", Icon: CalendarDays },
-    { id: "clients" as const, label: "Клиенты", Icon: User },
-    { id: "loyalty" as const, label: "Лояльность", Icon: Star },
-    { id: "services" as const, label: "Ещё", Icon: Menu },
-  ];
+  const [moreOpen, setMoreOpen] = useState(false);
+
   return (
-    <nav aria-label="Разделы CRM" className="grid shrink-0 grid-cols-4 border-t border-border bg-background px-2 py-2 md:hidden">
-      {items.map(({ id, label, Icon }) => (
-        <button
-          key={id}
-          type="button"
-          onClick={() => onChange(id)}
-          aria-current={section === id ? "page" : undefined}
-          className={`flex min-w-0 flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-xs ${section === id ? "bg-crm-soft font-semibold text-crm" : "text-muted-foreground"}`}
-        >
-          <Icon className="h-5 w-5 shrink-0" />
-          <span className="truncate">{label}</span>
-        </button>
-      ))}
-    </nav>
+    <>
+      <nav aria-label="Разделы CRM" className="grid shrink-0 grid-cols-4 border-t border-border bg-background px-2 py-2 md:hidden">
+        {NAV[role].map(({ id, label, Icon }) => {
+          const active = id === "more" ? moreOpen : section === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => (id === "more" ? setMoreOpen((v) => !v) : onChange(id))}
+              aria-current={active ? "page" : undefined}
+              className={`flex min-h-11 min-w-0 flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-xs ${active ? "bg-crm-soft font-semibold text-crm" : "text-muted-foreground"}`}
+            >
+              <Icon className="h-5 w-5 shrink-0" />
+              <span className="truncate">{label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {moreOpen && (
+        <div className="fixed inset-0 z-50 flex items-end bg-foreground/40 md:hidden" onClick={() => setMoreOpen(false)}>
+          <div className="w-full rounded-t-2xl border-t border-border bg-background px-4 pb-6 pt-3" onClick={(e) => e.stopPropagation()}>
+            <span className="mx-auto block h-1 w-10 rounded-full bg-muted" />
+            <p className="mt-3 text-sm font-semibold text-muted-foreground">Разделы</p>
+            <div className="mt-1 space-y-1">
+              {MORE[role].map(({ id, label, Icon, soon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  disabled={soon}
+                  title={soon ? "Скоро" : undefined}
+                  onClick={() => { onChange(id); setMoreOpen(false); }}
+                  className={`flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium disabled:text-muted-foreground ${section === id ? "bg-crm-soft text-crm" : ""}`}
+                >
+                  <Icon className="h-5 w-5 shrink-0" /> {label}
+                  {soon && <span className="ml-auto text-xs font-normal">Скоро</span>}
+                </button>
+              ))}
+            </div>
+            <p className="mt-4 text-sm font-semibold text-muted-foreground">Режим просмотра</p>
+            <div className="mt-1 space-y-1">
+              {ROLE_ITEMS.map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => { onRoleChange(id); setMoreOpen(false); }}
+                  aria-pressed={role === id}
+                  className={`flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium ${role === id ? "bg-crm-soft text-crm" : ""}`}
+                >
+                  <Icon className="h-5 w-5 shrink-0" /> {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

@@ -14,7 +14,7 @@ import { MobileAdminHeader, MobileAdminNavigation, MobileSchedule } from "@/comp
 import { TONE } from "@/components/crm/booking-tone";
 import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
-import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
+import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, MOCK_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
 import { WASHER_SHARE, WASHERS } from "@/lib/crm/finance";
 import {
@@ -186,7 +186,6 @@ export function AdminSchedule() {
 }
 
 type AdminSection = "schedule" | "clients" | "services" | "loyalty" | "dashboard" | "finance" | "notifications";
-type CrmRole = "admin" | "owner";
 
 /** Owner sees everything the manager sees, plus his own screens (Финансы and Уведомления — soon). */
 const SECTION_ITEMS: Record<CrmRole, { label: string; icon: typeof CalendarDays; target?: AdminSection }[]> = {
