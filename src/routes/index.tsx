@@ -511,6 +511,7 @@ function Configurator() {
 }
 
 function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const [done, setDone] = useState(false);
   const [stage, setStage] = useState<"pkg" | "care" | "rest">("pkg");
   const [selected, setSelected] = useState<number | null>(null);
   const [added, setAdded] = useState<string[]>([]);
