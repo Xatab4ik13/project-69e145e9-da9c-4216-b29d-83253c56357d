@@ -23,7 +23,6 @@ export interface ExpenseItem {
 export const MONTHLY_EXPENSES: ExpenseItem[] = [
   { id: "rent", name: "Аренда", monthly: 97955.5 },
   { id: "utilities", name: "Коммуналка", monthly: 24851 },
-  { id: "employee", name: "Официальный сотрудник", monthly: 27188 },
   { id: "accounting", name: "Бухгалтерия", monthly: 11000 },
   { id: "bank", name: "Банковское обслуживание", monthly: 950 },
   { id: "supplies", name: "Химия и расходники", monthly: 20000 },
