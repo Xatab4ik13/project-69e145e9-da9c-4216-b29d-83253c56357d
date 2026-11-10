@@ -12,9 +12,9 @@ const YMAPS = "https://yandex.ru/maps/?text=" + encodeURIComponent(ADDRESS);
 function Contacts() {
   const [copied, setCopied] = useState(false);
   const steps = [
-    { icon: <ArrowUp className="h-7 w-7" />, t: "С проспекта Большевиков", d: "Двигайтесь со стороны улицы Дыбенко. Сверните направо в боковой проезд рядом с «Вкусно — и точка»." },
-    { icon: <CornerUpRight className="h-7 w-7" />, t: "Во въезд паркинга", d: "Проедьте вдоль здания и поверните направо во въезд паркинга." },
-    { icon: <span className="flex h-7 w-7 items-center justify-center rounded-md border-2 border-foreground font-display text-base">P</span>, t: "На 5-й уровень", d: "Поднимитесь на 5-й уровень паркинга. Здесь находится автомойка Aquarius." },
+    { icon: <ArrowUp className="h-8 w-8" strokeWidth={3} />, t: "С проспекта Большевиков", d: "Двигайтесь со стороны улицы Дыбенко. Сверните направо в боковой проезд рядом с «Вкусно — и точка»." },
+    { icon: <CornerUpRight className="h-8 w-8" strokeWidth={3} />, t: "Во въезд паркинга", d: "Проедьте вдоль здания и поверните направо во въезд паркинга." },
+    { icon: <span className="flex h-8 w-8 items-center justify-center rounded-md border-[3px] border-foreground font-display text-lg">P</span>, t: "На 5-й уровень", d: "Поднимитесь на 5-й уровень паркинга. Здесь находится автомойка Aquarius." },
   ];
   return (
     <section id="contacts" className="mx-auto max-w-6xl px-6 py-10">
@@ -41,7 +41,11 @@ function Contacts() {
               </button>
             </div>
           </div>
-          <img src={imgParkCar.url} alt="Автомобиль у метки паркинга, 5 уровень" width={800} height={381} loading="lazy" decoding="async" className="mt-4 w-3/5" />
+          <div className="mt-4 flex items-center gap-4">
+            <img src={imgParkCar.url} alt="Автомобиль у метки паркинга" width={800} height={381} loading="lazy" decoding="async" className="w-3/5" />
+            <span className="flex h-12 w-12 items-center justify-center rounded-lg border-[3px] border-foreground font-display text-3xl">P</span>
+            <span className="btn-lime flex h-12 w-12 items-center justify-center rounded-lg font-display text-3xl">5</span>
+          </div>
         </div>
         <div>
           <p className="font-display text-sm uppercase tracking-[0.3em]">Адрес</p>
