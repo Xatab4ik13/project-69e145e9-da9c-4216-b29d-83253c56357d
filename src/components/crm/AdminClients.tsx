@@ -97,7 +97,7 @@ export function AdminClients({
                   key={item.id}
                   type="button"
                   onClick={() => setFilter(item.id)}
-                  className={`rounded-md px-3 py-1.5 text-sm ${filter === item.id ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
+                  className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm ${filter === item.id ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
                 >
                   {item.label}
                 </button>
