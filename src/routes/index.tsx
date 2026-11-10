@@ -164,7 +164,7 @@ function AppPromo() {
               </div>
             ))}
           </div>
-          <p className="mt-4 text-xs">1 бонус = 1 ₽. Списание со следующего визита. На комплексы и допы.</p>
+          <p className="mt-4 text-xs">1 бонус — 1 ₽. Списание с первого визита.</p>
           <div className="mt-6 flex flex-wrap items-center gap-4 max-md:mt-4 max-md:grid max-md:grid-cols-2 max-md:gap-3">
             <AppStoreButton />
             <GooglePlayButton />
