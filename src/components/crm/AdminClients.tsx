@@ -48,13 +48,6 @@ export function AdminClients({
   const metrics = useMemo(() => clientMetrics(clients, DEMO_TODAY), [clients]);
   const visible = useMemo(() => filterClients(clients, query, filter, DEMO_TODAY), [clients, filter, query]);
   const pagination = useMemo(() => paginateClients(visible, page), [page, visible]);
-  const pageNumbers = useMemo(() => {
-    const firstPage = Math.min(
-      Math.max(1, pagination.currentPage - 2),
-      Math.max(1, pagination.pageCount - 4),
-    );
-    return Array.from({ length: Math.min(5, pagination.pageCount) }, (_, index) => firstPage + index);
-  }, [pagination.currentPage, pagination.pageCount]);
   const openClient = useCallback((id: string) => setSelectedId(id), []);
   const selected = clients.find((client) => client.id === selectedId) ?? null;
 
@@ -132,38 +125,12 @@ export function AdminClients({
               ? `Показано ${pagination.start}–${pagination.end} из ${visible.length}`
               : "Клиентов не найдено"}
           </p>
-          <nav className="flex items-center gap-1" aria-label="Страницы клиентов">
-            <button
-              type="button"
-              aria-label="Предыдущая страница"
-              disabled={pagination.currentPage === 1}
-              onClick={() => setPage(pagination.currentPage - 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            {pageNumbers.map((pageNumber) => (
-              <button
-                key={pageNumber}
-                type="button"
-                aria-label={`Страница ${pageNumber}`}
-                aria-current={pagination.currentPage === pageNumber ? "page" : undefined}
-                onClick={() => setPage(pageNumber)}
-                className={`h-8 min-w-8 rounded-md px-2 text-sm font-medium transition-colors ${pagination.currentPage === pageNumber ? "bg-crm text-crm-foreground" : "border border-border hover:bg-muted"}`}
-              >
-                {pageNumber}
-              </button>
-            ))}
-            <button
-              type="button"
-              aria-label="Следующая страница"
-              disabled={pagination.currentPage === pagination.pageCount}
-              onClick={() => setPage(pagination.currentPage + 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </nav>
+          <CrmPagination
+            currentPage={pagination.currentPage}
+            pageCount={pagination.pageCount}
+            onPageChange={setPage}
+            label="Страницы клиентов"
+          />
         </div>
       </section>
 

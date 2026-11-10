@@ -49,6 +49,13 @@ describe("CRM clients", () => {
     expect(paginateClients(manyClients, 99).currentPage).toBe(3);
   });
 
+  it("shows five page numbers and moves to the next group after page five", () => {
+    expect(paginationPageNumbers(1, 1)).toEqual([1, 2, 3, 4, 5]);
+    expect(paginationPageNumbers(5, 12)).toEqual([1, 2, 3, 4, 5]);
+    expect(paginationPageNumbers(6, 12)).toEqual([6, 7, 8, 9, 10]);
+    expect(paginationPageNumbers(12, 12)).toEqual([11, 12, 13, 14, 15]);
+  });
+
   it("paginates only after searching the complete client list", () => {
     const manyClients = Array.from({ length: 12 }, (_, index) => ({
       ...clients[index % clients.length]!,

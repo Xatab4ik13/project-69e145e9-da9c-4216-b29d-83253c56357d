@@ -19,6 +19,7 @@ const RULES = [
 export function AdminLoyalty({ initialClientId }: { initialClientId?: string | null }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
+  const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(initialClientId ?? null);
   const metrics = useMemo(() => loyaltyMetrics(MOCK_LOYALTY_CLIENTS, DEMO_TODAY), []);
 
@@ -28,6 +29,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
     const matchesFilter = filter === "all" || (filter === "active" ? client.activated : !client.activated);
     return matchesQuery && matchesFilter;
   }), [filter, query]);
+  const pagination = useMemo(() => paginateClients(clients, page), [clients, page]);
 
   const openClient = useCallback((id: string) => setSelectedId(id), []);
   const selected = MOCK_LOYALTY_CLIENTS.find((client) => client.id === selectedId) ?? null;
@@ -67,7 +69,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Номер телефона"
               aria-label="Поиск клиента по номеру телефона"
               className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
@@ -80,7 +82,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
               <button
                 key={value}
                 type="button"
-                onClick={() => setFilter(value)}
+                onClick={() => { setFilter(value); setPage(1); }}
                 className={`rounded-md px-3 py-1.5 font-medium ${filter === value ? "bg-background text-crm shadow-sm" : "text-muted-foreground"}`}
               >
                 {label}
@@ -103,7 +105,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
               </tr>
             </thead>
             <tbody>
-              {clients.map((client) => (
+              {pagination.items.map((client) => (
                 <ClientRow key={client.id} client={client} onSelect={openClient} />
               ))}
             </tbody>
