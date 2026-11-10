@@ -9,7 +9,7 @@ import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
 import {
-  CLOSE_MIN, OPEN_MIN, addDays, applyPayment, findConflict, finishWash, fmtDateLong, fmtDateShort,
+  CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
   fmtTime, rub, startWash, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice,
 } from "@/lib/crm/logic";
 
