@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ACQUIRING_FEE, SBP_FEE, TAX_RATE, WASHERS, WASHER_SHARE,
-  breakevenRevenue, fixedForPeriod, monthlyFixedTotal, repeatVisits, summarize,
+  articleStatus, breakevenRevenue, fixedForPeriod, washerLedger, type FinOp, monthlyFixedTotal, repeatVisits, summarize,
 } from "@/lib/crm/finance";
 import { applyPayment, receivePayment } from "@/lib/crm/logic";
 import { HISTORY_BOOKINGS } from "@/lib/crm/mock";
@@ -67,10 +67,9 @@ describe("summarize", () => {
     expect(s.tax).toBeCloseTo(480, 5);
   });
 
-  it("mid-month day carries only daily-paid articles", () => {
-    const daily = (27188 + 11000 + 950 + 20000) / 31;
-    expect(s.fixed).toBeCloseTo(daily, 5);
-    expect(s.profit).toBeCloseTo(8000 - (daily + 2400 + 51.2 + 20 + 480), 5);
+  it("a mid-month day carries no stable articles", () => {
+    expect(s.fixed).toBe(0);
+    expect(s.profit).toBeCloseTo(8000 - (2400 + 51.2 + 20 + 480), 5);
   });
 
   it("splits money by payment method and by washer", () => {
@@ -129,12 +128,34 @@ describe("washer on the booking", () => {
 });
 
 describe("fixedForPeriod", () => {
-  it("rent hits on the 1st, utilities on the last day", () => {
-    const daily = (27188 + 11000 + 950 + 20000) / 31;
-    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-01" })).toBeCloseTo(97955.5 + daily, 2);
-    expect(fixedForPeriod({ from: "2026-10-31", to: "2026-10-31" })).toBeCloseTo(24851 + daily, 2);
+  it("books the whole month plan on the 1st", () => {
+    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-01" })).toBeCloseTo(181944.5, 2);
+    expect(fixedForPeriod({ from: "2026-10-02", to: "2026-10-31" })).toBe(0);
   });
-  it("adds up whole months", () => {
-    expect(fixedForPeriod({ from: "2026-10-01", to: "2026-10-31" })).toBeCloseTo(181944.5, 2);
+
+  it("uses the owner's plan for the month and a bigger actual bill", () => {
+    const overrides = { "2026-12": { rent: 100000 } };
+    const ops: FinOp[] = [{ id: "u", date: "2026-12-28", kind: "expense", article: "utilities", name: "Коммуналка", amount: 30000 }];
+    expect(fixedForPeriod({ from: "2026-12-01", to: "2026-12-01" }, ops, overrides)).toBeCloseTo(181944.5 - 97955.5 + 100000 - 24851 + 30000, 2);
+  });
+
+  it("one-off expenses land on their own date", () => {
+    const ops: FinOp[] = [{ id: "o", date: "2026-10-15", kind: "expense", article: "other", name: "Ремонт", amount: 5000 }];
+    expect(fixedForPeriod({ from: "2026-10-15", to: "2026-10-15" }, ops)).toBe(5000);
+  });
+
+  it("shows what is paid and what is still due per article", () => {
+    const ops: FinOp[] = [{ id: "r", date: "2026-10-02", kind: "expense", article: "rent", name: "Аренда", amount: 50000 }];
+    const rent = articleStatus("2026-10", ops).find((r) => r.id === "rent")!;
+    expect(rent).toMatchObject({ plan: 97955.5, paid: 50000, left: 47955.5 });
+  });
+});
+
+describe("washerLedger", () => {
+  it("debt = 30% of all his paid orders minus payouts", () => {
+    const list = [mk({ washer: "Рома", services: [{ name: "a", price: 10000 }] })];
+    const ops: FinOp[] = [{ id: "p", date: "2026-10-05", kind: "payout", washer: "Рома", name: "Выплата", amount: 1000 }];
+    const roma = washerLedger(list, ops, oneDay, "2026-10-05").find((r) => r.washer === "Рома")!;
+    expect(roma).toMatchObject({ earned: 3000, paid: 1000, owed: 2000 });
   });
 });

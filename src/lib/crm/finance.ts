@@ -17,18 +17,16 @@ export interface ExpenseItem {
   id: string;
   name: string;
   monthly: number;
-  /** When the money leaves: whole sum on the 1st, whole sum on the last day, or spread daily. */
-  pay: "start" | "end" | "daily";
 }
 
-/** Planned monthly costs. The director edits this list on the Финансы screen. */
+/** Stable monthly articles. Each month's plan is booked in full on the 1st, so the owner sees it up front. */
 export const MONTHLY_EXPENSES: ExpenseItem[] = [
-  { id: "rent", name: "Аренда", monthly: 97955.5, pay: "start" },
-  { id: "utilities", name: "Коммуналка", monthly: 24851, pay: "end" },
-  { id: "employee", name: "Официальный сотрудник", monthly: 27188, pay: "daily" },
-  { id: "accounting", name: "Бухгалтерия", monthly: 11000, pay: "daily" },
-  { id: "bank", name: "Банковское обслуживание", monthly: 950, pay: "daily" },
-  { id: "supplies", name: "Химия и расходники", monthly: 20000, pay: "daily" },
+  { id: "rent", name: "Аренда", monthly: 97955.5 },
+  { id: "utilities", name: "Коммуналка", monthly: 24851 },
+  { id: "employee", name: "Официальный сотрудник", monthly: 27188 },
+  { id: "accounting", name: "Бухгалтерия", monthly: 11000 },
+  { id: "bank", name: "Банковское обслуживание", monthly: 950 },
+  { id: "supplies", name: "Химия и расходники", monthly: 20000 },
 ];
 
 export const monthlyFixedTotal = (items: ExpenseItem[] = MONTHLY_EXPENSES) =>
@@ -50,27 +48,55 @@ export const dateRange = (from: string, to: string): string[] => {
 export const daysInMonth = (iso: string) =>
   new Date(Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)), 0)).getUTCDate();
 
-/** What one article costs on a given day, by its payment moment. */
-export const itemOnDay = (i: ExpenseItem, d: string) => {
-  const day = Number(d.slice(8, 10));
-  if (i.pay === "start") return day === 1 ? i.monthly : 0;
-  if (i.pay === "end") return day === daysInMonth(d) ? i.monthly : 0;
-  return i.monthly / daysInMonth(d);
-};
-
-/** Fixed costs actually paid within the period. */
-export const fixedForPeriod = (p: Period, items: ExpenseItem[] = MONTHLY_EXPENSES) =>
-  dateRange(p.from, p.to).reduce((s, d) => s + items.reduce((a, i) => a + itemOnDay(i, d), 0), 0);
-
-/** The same fixed costs split by article, prorated over the period. */
-export function fixedRowsForPeriod(p: Period, items: ExpenseItem[] = MONTHLY_EXPENSES) {
-  const days = dateRange(p.from, p.to);
-  return items.map((i) => ({
-    id: i.id,
-    name: i.name,
-    value: days.reduce((s, d) => s + itemOnDay(i, d), 0),
-  }));
+/** Money the owner actually paid out: an article bill, another expense, or a washer payout. */
+export interface FinOp {
+  id: string;
+  date: string;
+  kind: "expense" | "payout";
+  /** Article id for stable costs; "other" for one-off costs. */
+  article?: string;
+  washer?: string;
+  name: string;
+  amount: number;
 }
+
+/** Per-month plan changes the owner typed in: { "2026-12": { rent: 100000 } }. */
+export type PlanOverrides = Record<string, Record<string, number>>;
+
+export const planFor = (month: string, overrides: PlanOverrides = {}): ExpenseItem[] =>
+  MONTHLY_EXPENSES.map((i) => ({ ...i, monthly: overrides[month]?.[i.id] ?? i.monthly }));
+
+const monthOf = (d: string) => d.slice(0, 7);
+const opsInMonth = (ops: FinOp[], month: string) => ops.filter((o) => monthOf(o.date) === month);
+
+/** Plan, paid and still due for every stable article of the month. */
+export function articleStatus(month: string, ops: FinOp[] = [], overrides: PlanOverrides = {}) {
+  const mOps = opsInMonth(ops, month);
+  return planFor(month, overrides).map((i) => {
+    const paid = mOps.filter((o) => o.kind === "expense" && o.article === i.id).reduce((s, o) => s + o.amount, 0);
+    return { id: i.id, name: i.name, plan: i.monthly, paid, left: Math.max(0, i.monthly - paid) };
+  });
+}
+
+/** Cost of an article for the month: the plan, or more if more was actually paid. */
+const articleCost = (r: { plan: number; paid: number }) => Math.max(r.plan, r.paid);
+
+/** Stable articles land in full on the 1st; one-off expenses land on their own date. */
+export function fixedRowsForPeriod(p: Period, ops: FinOp[] = [], overrides: PlanOverrides = {}) {
+  const rows = new Map<string, number>();
+  for (const d of dateRange(p.from, p.to)) {
+    if (d.endsWith("-01"))
+      for (const r of articleStatus(monthOf(d), ops, overrides)) rows.set(r.name, (rows.get(r.name) ?? 0) + articleCost(r));
+  }
+  const other = ops
+    .filter((o) => o.kind === "expense" && (!o.article || o.article === "other") && o.date >= p.from && o.date <= p.to)
+    .reduce((s, o) => s + o.amount, 0);
+  if (other) rows.set("Прочие расходы", other);
+  return [...rows].map(([name, value]) => ({ name, value }));
+}
+
+export const fixedForPeriod = (p: Period, ops: FinOp[] = [], overrides: PlanOverrides = {}) =>
+  fixedRowsForPeriod(p, ops, overrides).reduce((s, r) => s + r.value, 0);
 
 export const paidIn = (list: Booking[], p: Period) =>
   list.filter((b) => inPeriod(b, p) && b.payment === "paid");
@@ -162,40 +188,28 @@ export interface FinanceSummary {
   };
 }
 
-/** A cost the owner records as it was invoiced: date, what it is, amount. */
-export interface ExpenseBill {
-  id: string;
-  date: string;
-  name: string;
-  amount: number;
-}
-
-/** Bills implied by the monthly plan: whole sum on the 1st / last day, daily articles per day. */
-export function planBills(p: Period, items: ExpenseItem[] = MONTHLY_EXPENSES): ExpenseBill[] {
-  const out: ExpenseBill[] = [];
-  for (const d of dateRange(p.from, p.to))
-    for (const i of items) {
-      const amount = itemOnDay(i, d);
-      if (amount) out.push({ id: `plan-${i.id}-${d}`, date: d, name: i.name, amount });
-    }
-  return out;
-}
-
-export const billsIn = (bills: ExpenseBill[], p: Period) =>
-  bills.filter((b) => b.date >= p.from && b.date <= p.to);
-
-/** Bills of the period grouped by name, for the expense breakdown. */
-export function billRows(bills: ExpenseBill[], p: Period) {
-  const out = new Map<string, number>();
-  for (const b of billsIn(bills, p)) out.set(b.name, (out.get(b.name) ?? 0) + b.amount);
-  return [...out].map(([name, value]) => ({ name, value }));
+/** Per washer: 30% earned on paid orders vs. payouts entered; debt counts everything up to `upTo`. */
+export function washerLedger(list: Booking[], ops: FinOp[], p: Period, upTo: string) {
+  const all: Period = { from: "0000-01-01", to: upTo };
+  const earnedIn = revenueByWasher(list, p);
+  const earnedAll = revenueByWasher(list, all);
+  const paidSum = (w: string, q: Period) =>
+    ops.filter((o) => o.kind === "payout" && o.washer === w && o.date >= q.from && o.date <= q.to).reduce((s, o) => s + o.amount, 0);
+  return WASHERS.map((w) => ({
+    washer: w,
+    orders: earnedIn[w] ?? 0,
+    earned: (earnedIn[w] ?? 0) * WASHER_SHARE,
+    paid: paidSum(w, p),
+    owed: Math.max(0, (earnedAll[w] ?? 0) * WASHER_SHARE - paidSum(w, all)),
+  }));
 }
 
 export function summarize(
   list: Booking[],
   p: Period,
   today: string,
-  bills: ExpenseBill[] = planBills(p),
+  ops: FinOp[] = [],
+  overrides: PlanOverrides = {},
 ): FinanceSummary {
   const paid = paidIn(list, p);
   const revenue = revenueOf(paid);
@@ -204,7 +218,7 @@ export function summarize(
   const acquiring = methods.terminal * ACQUIRING_FEE;
   const sbp = methods.app * SBP_FEE;
   const tax = revenue * TAX_RATE;
-  const fixed = billsIn(bills, p).reduce((a, b) => a + b.amount, 0);
+  const fixed = fixedForPeriod(p, ops, overrides);
   const expenses = fixed + payroll + acquiring + sbp + tax;
 
   const monthPeriod: Period = { from: `${today.slice(0, 7)}-01`, to: today };
@@ -213,7 +227,7 @@ export function summarize(
   const monthMethods = byMethod(list, monthPeriod);
   const monthFees = monthMethods.terminal * ACQUIRING_FEE + monthMethods.app * SBP_FEE;
   const feeRate = monthRevenue ? monthFees / monthRevenue : 0;
-  const monthFixed = monthlyFixedTotal();
+  const monthFixed = monthlyFixedTotal(planFor(today.slice(0, 7), overrides));
   const target = breakevenRevenue(monthFixed, feeRate);
 
   return {

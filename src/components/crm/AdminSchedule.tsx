@@ -17,7 +17,8 @@ import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, MOCK_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
-import { WASHERS, planBills, type ExpenseBill } from "@/lib/crm/finance";
+import { WASHERS, type FinOp, type PlanOverrides } from "@/lib/crm/finance";
+import { DEMO_OPS } from "@/lib/crm/finance-mock";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
   fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
@@ -42,19 +43,24 @@ export function AdminSchedule() {
   const [role, setRole] = useState<CrmRole>("admin");
   /** Owner screens add up the demo month plus whatever happens in the live schedule. */
   const financeBookings = useMemo(() => [...HISTORY_BOOKINGS, ...bookings], [bookings]);
-  /** Owner's bills; demo months start from the plan, then live in this browser until a real backend exists. */
-  const [bills, setBills] = useState<ExpenseBill[]>(() => planBills({ from: "2026-10-01", to: DEMO_TODAY }));
-  const billsLoaded = useRef(false);
+  /** Owner's payments and plan edits; demo months come from mock data, then live in this browser until a real backend exists. */
+  const [ops, setOps] = useState<FinOp[]>(DEMO_OPS);
+  const [overrides, setOverrides] = useState<PlanOverrides>({});
+  const finLoaded = useRef(false);
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(BILLS_KEY);
-      if (saved) setBills(JSON.parse(saved) as ExpenseBill[]);
-    } catch { /* keep demo bills */ }
-    billsLoaded.current = true;
+      const saved = window.localStorage.getItem(FIN_KEY);
+      if (saved) {
+        const data = JSON.parse(saved) as { ops: FinOp[]; overrides: PlanOverrides };
+        setOps(data.ops);
+        setOverrides(data.overrides);
+      }
+    } catch { /* keep demo data */ }
+    finLoaded.current = true;
   }, []);
   useEffect(() => {
-    if (billsLoaded.current) window.localStorage.setItem(BILLS_KEY, JSON.stringify(bills));
-  }, [bills]);
+    if (finLoaded.current) window.localStorage.setItem(FIN_KEY, JSON.stringify({ ops, overrides }));
+  }, [ops, overrides]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -87,7 +93,7 @@ export function AdminSchedule() {
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
       <MobileAdminHeader role={role} />
       <Sidebar section={section} onChange={changeSection} role={role} onRoleChange={changeRole} />
-      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} bills={bills} today={DEMO_TODAY} /> : section === "finance" ? null : section === "services" ? <AdminServices /> : section === "clients" ? (
+      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={DEMO_TODAY} /> : section === "finance" ? null : section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
           onNewBooking={(client) => {
@@ -157,14 +163,17 @@ export function AdminSchedule() {
         />
       )}
 
-      {section === "dashboard" && <MobileDashboard bookings={financeBookings} bills={bills} today={DEMO_TODAY} />}
+      {section === "dashboard" && <MobileDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={DEMO_TODAY} />}
       {section === "finance" && (
         <AdminFinance
           bookings={financeBookings}
-          bills={bills}
+          ops={ops}
+          overrides={overrides}
           today={DEMO_TODAY}
-          onAddBill={(b) => setBills((l) => [...l, b])}
-          onRemoveBill={(id) => setBills((l) => l.filter((b) => b.id !== id))}
+          onAddOp={(op) => setOps((l) => [...l, op])}
+          onRemoveOp={(id) => setOps((l) => l.filter((o) => o.id !== id))}
+          onPlanChange={(month, article, amount) =>
+            setOverrides((o) => ({ ...o, [month]: { ...o[month], [article]: amount } }))}
         />
       )}
 
@@ -208,7 +217,7 @@ export function AdminSchedule() {
   );
 }
 
-const BILLS_KEY = "aquarius-crm-bills";
+const FIN_KEY = "aquarius-crm-finance";
 
 type AdminSection = "schedule" | "clients" | "services" | "loyalty" | "dashboard" | "finance" | "notifications";
 
