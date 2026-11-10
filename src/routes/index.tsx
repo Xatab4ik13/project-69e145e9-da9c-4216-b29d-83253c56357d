@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowUpRight, Car, MapPin } from "lucide-react";
+import { ArrowUpRight, MapPin } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import hero from "@/assets/car-wash-hero.webp.asset.json";
 
@@ -42,9 +42,6 @@ function Index() {
           ))}
         </nav>
         <div className="flex items-center gap-6">
-          <a href="#" className="hidden items-center gap-2 border-l border-border pl-6 text-sm font-medium lg:flex">
-            <Car className="h-5 w-5" /> Мои автомобили
-          </a>
           <a href="#" className="btn-lime rounded-lg px-5 py-2.5 text-sm">
             Записаться
           </a>
