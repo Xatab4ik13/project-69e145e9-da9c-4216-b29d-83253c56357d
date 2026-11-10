@@ -551,13 +551,16 @@ function NewBookingDialog({
     });
   };
 
-  const field = "w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-crm";
+  const field = "min-h-12 w-full rounded-xl border border-border bg-background px-4 py-3 text-base outline-none focus:border-crm sm:min-h-0 sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm";
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Новая запись · {fmtDateShort(date)}</DialogTitle></DialogHeader>
-        <div className="space-y-3 text-sm">
-          <input type="tel" inputMode="tel" className={field} placeholder="+7 (___) ___-__-__" value={fmtPhone(phone)}
+      <DialogContent
+        className="left-0 top-0 h-[100dvh] max-w-none translate-x-0 translate-y-0 gap-5 overflow-y-auto rounded-none p-5 pt-6 sm:left-[50%] sm:top-[50%] sm:h-auto sm:max-h-[90vh] sm:max-w-md sm:translate-x-[-50%] sm:translate-y-[-50%] sm:gap-4 sm:rounded-lg sm:p-6"
+        closeClassName="right-3 top-3 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background sm:right-4 sm:top-4 sm:h-8 sm:w-8 sm:border-0 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-4 sm:[&_svg]:w-4"
+      >
+        <DialogHeader className="pr-12 text-left sm:pr-0"><DialogTitle className="text-xl leading-tight sm:text-lg">Новая запись · {fmtDateShort(date)}</DialogTitle></DialogHeader>
+        <div className="space-y-4 pb-4 text-base sm:space-y-3 sm:pb-0 sm:text-sm">
+          <input aria-label="Телефон клиента" type="tel" inputMode="tel" className={field} placeholder="+7 (___) ___-__-__" value={fmtPhone(phone)}
             onChange={(e) => {
               const raw = e.target.value;
               // deleting a formatting char (")", " ", "-") should remove the previous digit
