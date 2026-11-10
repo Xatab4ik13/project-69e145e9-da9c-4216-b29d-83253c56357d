@@ -551,29 +551,32 @@ function NewBookingDialog({
     });
   };
 
-  const field = "w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-crm";
+  const field = "min-h-12 w-full rounded-xl border border-border bg-background px-4 py-3 text-base outline-none focus:border-crm sm:min-h-0 sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm";
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Новая запись · {fmtDateShort(date)}</DialogTitle></DialogHeader>
-        <div className="space-y-3 text-sm">
-          <input type="tel" inputMode="tel" className={field} placeholder="+7 (___) ___-__-__" value={fmtPhone(phone)}
+      <DialogContent
+        className="left-0 top-0 h-[100dvh] max-w-none translate-x-0 translate-y-0 gap-5 overflow-y-auto rounded-none p-5 pt-6 sm:left-[50%] sm:top-[50%] sm:h-auto sm:max-h-[90vh] sm:max-w-md sm:translate-x-[-50%] sm:translate-y-[-50%] sm:gap-4 sm:rounded-lg sm:p-6"
+        closeClassName="right-3 top-3 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background sm:right-4 sm:top-4 sm:h-8 sm:w-8 sm:border-0 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-4 sm:[&_svg]:w-4"
+      >
+        <DialogHeader className="pr-12 text-left sm:pr-0"><DialogTitle className="text-xl leading-tight sm:text-lg">Новая запись · {fmtDateShort(date)}</DialogTitle></DialogHeader>
+        <div className="space-y-4 pb-4 text-base sm:space-y-3 sm:pb-0 sm:text-sm">
+          <input aria-label="Телефон клиента" type="tel" inputMode="tel" className={field} placeholder="+7 (___) ___-__-__" value={fmtPhone(phone)}
             onChange={(e) => {
               const raw = e.target.value;
               // deleting a formatting char (")", " ", "-") should remove the previous digit
               const d = raw.length < fmtPhone(phone).length && phoneDigits(raw) === phone ? phone.slice(0, -1) : phoneDigits(raw);
               setPhone(d);
             }} />
-          <input className={field} placeholder="Автомобиль" value={car} onChange={(e) => setCar(e.target.value)} />
-          <select className={field} value={pkgName} onChange={(e) => setPkgName(e.target.value)}>
+          <input aria-label="Автомобиль" className={field} placeholder="Автомобиль" value={car} onChange={(e) => setCar(e.target.value)} />
+          <select aria-label="Комплекс мойки" className={field} value={pkgName} onChange={(e) => setPkgName(e.target.value)}>
             {PACKAGES.map((p) => <option key={p.name} value={p.name}>{p.name} · {rub(p.price)}</option>)}
           </select>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             {EXTRAS.map((e) => {
               const on = extras.includes(e.name);
               return (
                 <button key={e.name} type="button" onClick={() => { setSlot(null); setExtras((l) => on ? l.filter((x) => x !== e.name) : [...l, e.name]); }}
-                  className={`rounded-full border px-3 py-1 text-xs ${on ? "border-crm bg-crm-soft text-crm" : "border-border"}`}>
+                  className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm sm:min-h-0 sm:rounded-full sm:px-3 sm:py-1 sm:text-xs ${on ? "border-crm bg-crm-soft text-crm" : "border-border"}`}>
                   {e.name} · {rub(e.price)}{e.minutes ? ` +${e.minutes} мин` : ""}
                 </button>
               );
@@ -584,10 +587,10 @@ function NewBookingDialog({
             {slots.length === 0 ? (
               <p className="text-muted-foreground">На этот день свободных слотов нет.</p>
             ) : (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {slots.map((s) => (
                   <button key={s.start} type="button" onClick={() => setSlot(s.start)}
-                    className={`rounded-lg border py-2 ${slot === s.start ? "border-crm bg-crm text-crm-foreground" : "border-border"}`}>
+                    className={`min-h-12 rounded-xl border px-2 py-3 text-base font-medium sm:min-h-0 sm:rounded-lg sm:py-2 sm:text-sm sm:font-normal ${slot === s.start ? "border-crm bg-crm text-crm-foreground" : "border-border"}`}>
                     {fmtTime(s.start)}
                   </button>
                 ))}
@@ -597,7 +600,7 @@ function NewBookingDialog({
           </div>
           <p className="text-muted-foreground">Итого: <b className="text-foreground">{rub(services.reduce((s, x) => s + x.price, 0))}</b></p>
           {error && <p className="text-destructive">{error}</p>}
-          <button type="button" onClick={submit} className="w-full rounded-lg bg-crm py-2.5 font-semibold text-crm-foreground">Создать запись</button>
+          <button type="button" onClick={submit} className="min-h-14 w-full rounded-xl bg-crm px-4 py-4 text-base font-semibold text-crm-foreground sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm">Создать запись</button>
         </div>
       </DialogContent>
     </Dialog>
