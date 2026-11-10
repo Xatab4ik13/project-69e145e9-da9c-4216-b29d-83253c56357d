@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, useState } from "react";
 import {
-  CalendarPlus, CarFront, ChevronRight, Coins, History, Phone, Repeat2,
+  CalendarPlus, CarFront, ChevronLeft, ChevronRight, Coins, History, Phone, Repeat2,
   Search, Smartphone, UserRoundPlus, Users, WalletCards,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,7 +9,7 @@ import { DEMO_TODAY, MOCK_BOOKINGS } from "@/lib/crm/mock";
 import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
 import { MOCK_CLIENT_CARS, MOCK_CLIENT_FIRST_CONTACT } from "@/lib/crm/clients-mock";
 import {
-  buildClients, carClassRoman, clientMetrics, filterClients,
+  buildClients, carClassRoman, clientMetrics, filterClients, paginateClients,
   type ClientFilter, type ClientVisitStatus, type CrmClient,
 } from "@/lib/crm/clients";
 import { formatBonuses } from "@/lib/crm/loyalty";
@@ -38,6 +38,7 @@ export function AdminClients({
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ClientFilter>("all");
+  const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const clients = useMemo(
     () => buildClients(MOCK_LOYALTY_CLIENTS, MOCK_BOOKINGS, MOCK_CLIENT_CARS, DEMO_TODAY, MOCK_CLIENT_FIRST_CONTACT),
@@ -45,6 +46,14 @@ export function AdminClients({
   );
   const metrics = useMemo(() => clientMetrics(clients, DEMO_TODAY), [clients]);
   const visible = useMemo(() => filterClients(clients, query, filter, DEMO_TODAY), [clients, filter, query]);
+  const pagination = useMemo(() => paginateClients(visible, page), [page, visible]);
+  const pageNumbers = useMemo(() => {
+    const firstPage = Math.min(
+      Math.max(1, pagination.currentPage - 2),
+      Math.max(1, pagination.pageCount - 4),
+    );
+    return Array.from({ length: Math.min(5, pagination.pageCount) }, (_, index) => firstPage + index);
+  }, [pagination.currentPage, pagination.pageCount]);
   const openClient = useCallback((id: string) => setSelectedId(id), []);
   const selected = clients.find((client) => client.id === selectedId) ?? null;
 
@@ -71,7 +80,7 @@ export function AdminClients({
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Телефон или автомобиль"
               aria-label="Поиск клиента по телефону или автомобилю"
               className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
@@ -82,7 +91,7 @@ export function AdminClients({
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setFilter(item.id)}
+                onClick={() => { setFilter(item.id); setPage(1); }}
                 className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm ${filter === item.id ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
               >
                 {item.label}
@@ -105,7 +114,7 @@ export function AdminClients({
               </tr>
             </thead>
             <tbody>
-              {visible.map((client) => <ClientTableRow key={client.id} client={client} onSelect={openClient} />)}
+              {pagination.items.map((client) => <ClientTableRow key={client.id} client={client} onSelect={openClient} />)}
             </tbody>
           </table>
           {visible.length === 0 && (
@@ -115,6 +124,45 @@ export function AdminClients({
               <p className="mt-1 text-sm text-muted-foreground">Измените запрос или выберите другой фильтр.</p>
             </div>
           )}
+        </div>
+        <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+          <p className="text-sm text-muted-foreground" aria-live="polite">
+            {visible.length > 0
+              ? `Показано ${pagination.start}–${pagination.end} из ${visible.length}`
+              : "Клиентов не найдено"}
+          </p>
+          <nav className="flex items-center gap-1" aria-label="Страницы клиентов">
+            <button
+              type="button"
+              aria-label="Предыдущая страница"
+              disabled={pagination.currentPage === 1}
+              onClick={() => setPage(pagination.currentPage - 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            {pageNumbers.map((pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                aria-label={`Страница ${pageNumber}`}
+                aria-current={pagination.currentPage === pageNumber ? "page" : undefined}
+                onClick={() => setPage(pageNumber)}
+                className={`h-8 min-w-8 rounded-md px-2 text-sm font-medium transition-colors ${pagination.currentPage === pageNumber ? "bg-crm text-crm-foreground" : "border border-border hover:bg-muted"}`}
+              >
+                {pageNumber}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-label="Следующая страница"
+              disabled={pagination.currentPage === pagination.pageCount}
+              onClick={() => setPage(pagination.currentPage + 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-muted disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </nav>
         </div>
       </section>
 

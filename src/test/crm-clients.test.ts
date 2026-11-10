@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MOCK_BOOKINGS, DEMO_TODAY } from "@/lib/crm/mock";
 import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
 import { MOCK_CLIENT_CARS } from "@/lib/crm/clients-mock";
-import { buildClients, clientMetrics, filterClients, isInactiveClient } from "@/lib/crm/clients";
+import { buildClients, CLIENTS_PER_PAGE, clientMetrics, filterClients, isInactiveClient, paginateClients } from "@/lib/crm/clients";
 
 const clients = buildClients(MOCK_LOYALTY_CLIENTS, MOCK_BOOKINGS, MOCK_CLIENT_CARS, DEMO_TODAY);
 
@@ -32,5 +32,32 @@ describe("CRM clients", () => {
   it("searches by phone digits and by any car in the garage", () => {
     expect(filterClients(clients, "921 345", "all", DEMO_TODAY).map((client) => client.id)).toEqual(["lc1"]);
     expect(filterClients(clients, "multivan", "all", DEMO_TODAY).map((client) => client.id)).toEqual(["lc6"]);
+  });
+
+  it("shows no more than eight clients per page and keeps the requested page in range", () => {
+    expect(CLIENTS_PER_PAGE).toBe(8);
+    const manyClients = Array.from({ length: 19 }, (_, index) => ({
+      ...clients[index % clients.length]!,
+      id: `client-${index + 1}`,
+    }));
+    const firstPage = paginateClients(manyClients, 1);
+    expect(firstPage.items).toHaveLength(8);
+    expect(firstPage.pageCount).toBe(3);
+    expect(firstPage.start).toBe(1);
+    expect(firstPage.end).toBe(8);
+    expect(paginateClients(manyClients, 3).items).toHaveLength(3);
+    expect(paginateClients(manyClients, 99).currentPage).toBe(3);
+  });
+
+  it("paginates only after searching the complete client list", () => {
+    const manyClients = Array.from({ length: 12 }, (_, index) => ({
+      ...clients[index % clients.length]!,
+      id: `client-${index + 1}`,
+    }));
+    const found = filterClients(manyClients, "multivan", "all", DEMO_TODAY);
+    const result = paginateClients(found, 4);
+    expect(found.length).toBeGreaterThan(0);
+    expect(result.currentPage).toBe(1);
+    expect(result.items.every((client) => client.cars.some((car) => car.name === "Volkswagen Multivan"))).toBe(true);
   });
 });
