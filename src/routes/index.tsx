@@ -145,8 +145,8 @@ import imgWheels from "@/assets/more-wheels.webp.asset.json";
 
 const moreCare = [
   { img: imgDry, alt: "Химчистка тканевого кресла", name: "Химчистка салона", info: "от 17 000 ₽ · 12 часов", note: "Запись до 13:00 предыдущего дня" },
-  { img: imgEngine, alt: "Мойка моторного отсека", name: "Мойка двигателя", info: "2 000 ₽ · 40 минут" },
-  { img: imgWheels, alt: "Чистка диска щёткой", name: "Чистка дисков", info: "500 ₽ за диск · 15 минут" },
+  { img: imgEngine, alt: "Мойка моторного отсека", name: "Мойка двигателя", info: "от 2 000 ₽ · 40 минут" },
+  { img: imgWheels, alt: "Чистка диска щёткой", name: "Чистка дисков", info: "от 500 ₽ за диск · 15 минут" },
 ];
 
 function MoreCare() {
