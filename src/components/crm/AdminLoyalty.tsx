@@ -207,15 +207,31 @@ function ClientDetails({ client }: { client: LoyaltyClient }) {
   const balance = loyaltyBalance(client, DEMO_TODAY);
   const transactions = [...client.transactions].sort((a, b) => b.date.localeCompare(a.date));
   return (
-    <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto p-0">
-      <DialogHeader className="border-b border-border px-6 py-5 pr-12">
+    <DialogContent
+      className="left-0 top-0 flex h-[100dvh] max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 text-base sm:left-[50%] sm:top-[50%] sm:grid sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:gap-4 sm:overflow-y-auto sm:rounded-lg sm:text-sm"
+      closeClassName="hidden sm:absolute sm:right-4 sm:top-4 sm:flex sm:h-8 sm:w-8 sm:border-0 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-4 sm:[&_svg]:w-4"
+    >
+      <DialogHeader className="relative flex shrink-0 flex-row items-center justify-center border-b border-border bg-background px-14 py-3 sm:hidden">
+        <DialogClose aria-label="Вернуться к списку лояльности" className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg active:bg-muted">
+          <ChevronLeft className="h-6 w-6" />
+        </DialogClose>
+        <DialogTitle className="text-lg">Бонусы клиента</DialogTitle>
+      </DialogHeader>
+      <DialogHeader className="hidden border-b border-border px-6 py-5 pr-12 sm:flex">
         <DialogDescription>Бонусный счёт клиента</DialogDescription>
         <div className="flex items-center gap-3">
           <DialogTitle className="text-2xl">{fmtPhone(client.phone)}</DialogTitle>
           <AccountStatus activated={client.activated} />
         </div>
       </DialogHeader>
-      <div className="px-6 pb-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-0 sm:flex-none sm:overflow-visible sm:px-6">
+        <div className="-mx-4 mb-4 border-b border-border bg-crm-surface px-5 py-4 sm:hidden">
+          <p className="text-sm text-muted-foreground">Бонусный счёт клиента</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <p className="text-xl font-semibold text-crm">{fmtPhone(client.phone)}</p>
+            <AccountStatus activated={client.activated} />
+          </div>
+        </div>
         <div className="rounded-xl bg-crm-soft p-5 text-crm">
           <p className="text-sm">Доступно бонусов</p>
           <p className="mt-1 text-4xl font-bold tabular-nums">{formatBonuses(balance)}</p>
