@@ -340,6 +340,7 @@ function Configurator() {
   const [added, setAdded] = useState<string[]>(["wax", "tire"]);
   const [phase, setPhase] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | Cat>("all");
+  const [done, setDone] = useState(false);
   const [booking, setBooking] = useState(false);
 
   const pkg = packages[selected] ?? packages[0]!;
@@ -510,6 +511,7 @@ function Configurator() {
 }
 
 function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const [done, setDone] = useState(false);
   const [stage, setStage] = useState<"pkg" | "care" | "rest">("pkg");
   const [selected, setSelected] = useState<number | null>(null);
   const [added, setAdded] = useState<string[]>([]);
@@ -527,9 +529,10 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
   const [tMin, tMax] = [pkg.time[0] + extra, pkg.time[1] + extra];
   const toggle = (id: string) => setAdded((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
 
-  if (stage === "rest") {
-    return (
+  const restModal = stage === "rest" && (
       <BookingModal
+        embedded
+        onDoneChange={setDone}
         open={open}
         onOpenChange={(o) => (o ? onOpenChange(o) : close())}
         onBack={() => setStage("care")}
@@ -539,15 +542,16 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         basePrice={total}
         time={[tMin, tMax]}
       />
-    );
-  }
+  );
 
   const steps = ["Комплекс", "Уход", "Автомобиль и время", "Контакты"];
   const cur = stage === "pkg" ? 0 : 1;
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
-      <DialogContent className={`max-h-[95vh] max-w-4xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
+      <DialogContent className={`max-h-[95vh] ${stage === "rest" ? (done ? "max-w-5xl" : "max-w-3xl") : "max-w-4xl"} overflow-y-auto rounded-3xl p-8 transition-[max-width] duration-300 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
+        {restModal || (
+        <div key={stage} className="animate-in fade-in slide-in-from-right-4 duration-300">
         <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
           <X className="h-7 w-7" />
         </button>
@@ -669,6 +673,8 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               </div>
             </div>
           </>
+        )}
+        </div>
         )}
       </DialogContent>
     </Dialog>

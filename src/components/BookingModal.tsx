@@ -1,5 +1,5 @@
 import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import logoAsset from "@/assets/aquarius-logo.webp.asset.json";
 import { ArrowUpRight } from "lucide-react";
 import { ArrowLeft, ArrowRight, CalendarDays, CalendarClock, Car, Check, ChevronDown, ChevronRight, Clock, MapPin, Phone, Search, X } from "lucide-react";
@@ -84,7 +84,11 @@ export function BookingModal({
   time,
   onBack,
   extraPrices = [],
+  embedded = false,
+  onDoneChange,
 }: {
+  embedded?: boolean;
+  onDoneChange?: (d: boolean) => void;
   onBack?: () => void;
   extraPrices?: number[];
   open: boolean;
@@ -132,9 +136,19 @@ export function BookingModal({
     setListOpen(false);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
-      <DialogContent className={`max-h-[95vh] ${done ? "max-w-5xl" : "max-w-3xl"} overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
+  useEffect(() => { onDoneChange?.(done); }, [done, onDoneChange]);
+
+  const wrap = (children: React.ReactNode) =>
+    embedded ? (
+      <div className="animate-in fade-in slide-in-from-right-4 duration-300">{children}</div>
+    ) : (
+      <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
+        <DialogContent className={`max-h-[95vh] ${done ? "max-w-5xl" : "max-w-3xl"} overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>{children}</DialogContent>
+      </Dialog>
+    );
+
+  return wrap(
+    <>
         {!done && (
           <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
             <X className="h-7 w-7" />
@@ -527,7 +541,6 @@ export function BookingModal({
           </div>
         </div>
         </>)}
-      </DialogContent>
-    </Dialog>
+    </>
   );
 }
