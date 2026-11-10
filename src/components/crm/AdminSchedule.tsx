@@ -6,6 +6,7 @@ import {
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminServices } from "@/components/crm/AdminServices";
+import { AdminLoyalty } from "@/components/crm/AdminLoyalty";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
@@ -46,7 +47,7 @@ export function AdminSchedule() {
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-background text-sm text-foreground">
       <Sidebar section={section} onChange={setSection} />
-      {section === "services" ? <AdminServices /> : <main className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-4">
+      {section === "services" ? <AdminServices /> : section === "loyalty" ? <AdminLoyalty /> : <main className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-4">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold tracking-tight">Расписание</h1>
           <label className="ml-auto flex w-80 items-center gap-2 rounded-lg border border-border px-3 py-2">
@@ -118,13 +119,13 @@ export function AdminSchedule() {
   );
 }
 
-type AdminSection = "schedule" | "services";
+type AdminSection = "schedule" | "services" | "loyalty";
 
 function Sidebar({ section, onChange }: { section: AdminSection; onChange: (section: AdminSection) => void }) {
   const items: { label: string; icon: typeof CalendarDays; target?: AdminSection }[] = [
     { label: "Расписание", icon: CalendarDays, target: "schedule" },
     { label: "Клиенты", icon: User },
-    { label: "Лояльность", icon: Star },
+    { label: "Лояльность", icon: Star, target: "loyalty" },
     { label: "Уведомления", icon: Bell },
     { label: "Услуги", icon: Wrench, target: "services" },
   ];
