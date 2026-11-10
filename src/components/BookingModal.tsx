@@ -117,6 +117,10 @@ export function BookingModal({
   const canContinue = !!car && !!slot;
   const canConfirm = phone.length === 10 && agree;
 
+  // Строки «Ваша мойка»: комплекс = вся цена без допов, дальше каждый доп со своей ценой.
+  const extrasSum = extraPrices.reduce((a, b) => a + b, 0);
+  const washLines = [[`Комплекс «${pkgName}»`, price - extrasSum] as const, ...extras.map((e, i) => [e, extraPrices[i] ?? 0] as const)];
+
   const close = () => {
     onOpenChange(false);
     if (done) setTimeout(() => { setDone(false); setStep(1); setCar(null); setSlot(null); setPhone(""); setAgree(false); }, 300);
@@ -129,10 +133,12 @@ export function BookingModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
-      <DialogContent className={`max-h-[95vh] max-w-3xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
-        <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
-          <X className="h-7 w-7" />
-        </button>
+      <DialogContent className={`max-h-[95vh] ${done ? "max-w-5xl" : "max-w-3xl"} overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
+        {!done && (
+          <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
+            <X className="h-7 w-7" />
+          </button>
+        )}
         {done && car && slot ? (<>
           <div className="md:hidden">
             <div className="flex items-center justify-between">
@@ -158,7 +164,7 @@ export function BookingModal({
               <p className="text-sm uppercase">Ваша мойка</p>
               <p className="mt-1 flex items-center gap-3 border-b border-foreground/20 pb-3"><Car className="h-6 w-8" strokeWidth={1.5} /> {car.name} · {car.body}</p>
               <div className="space-y-2 border-b border-foreground/20 py-3">
-                {[[`Комплекс «${pkgName}»`, price - extraPrices.reduce((a, b) => a + b, 0)] as const, ...extras.map((e, i) => [e, extraPrices[i] ?? 0] as const)].map(([n, p]) => (
+                {washLines.map(([n, p]) => (
                   <div key={n} className="flex items-center gap-3">
                     <Check className="h-5 w-5 shrink-0 text-lime" strokeWidth={3} />
                     <span className="flex-1">{n}</span>
