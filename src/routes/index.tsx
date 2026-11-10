@@ -187,7 +187,7 @@ function Configurator() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-x-4 gap-y-8 sm:grid-cols-2 md:grid-cols-3">
+        <div className="mt-12 grid gap-x-4 gap-y-8 sm:grid-cols-2 md:grid-cols-3">
           {show("body") && (
             <div className="flex flex-col">
               <img src={imgFoam.url} alt="Ручная мойка кузова в пене" width={720} height={405} loading="lazy" decoding="async" className="aspect-[3/2] w-full rounded-xl object-cover" />
