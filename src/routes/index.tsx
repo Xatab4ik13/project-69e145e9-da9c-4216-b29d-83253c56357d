@@ -680,7 +680,7 @@ function MobileCareList({ phase, setPhase, added, toggle, show }: { phase: strin
             <img src={c.img.url} alt={c.alt} width={720} height={480} loading="lazy" decoding="async" className="aspect-[3/2] w-1/3 shrink-0 rounded-lg object-cover" />
             <div className="min-w-0 flex-1">
               <h3 className="font-display text-xl leading-tight">{c.name}</h3>
-              <p className="text-sm"><b className="font-display text-base">от {rub(c.price)} ₽</b>{c.extra > 0 && ` · +${c.extra} мин`}</p>
+              <p className="text-sm"><b className="font-display text-base">от {rub(c.price)} ₽</b>{c.extra > 0 && ` +${c.extra} мин`}</p>
               {c.extra === 0 && <p className="text-xs">Без доп. времени</p>}
             </div>
             <button type="button" onClick={() => toggle(c.id)} aria-label={on ? `Убрать: ${c.name}` : `Добавить: ${c.name}`} className={iconBtn(on)}>
