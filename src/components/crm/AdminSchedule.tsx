@@ -19,6 +19,8 @@ import {
 } from "@/lib/crm/logic";
 import type { BookingState } from "@/lib/crm/logic";
 
+type NewBookingInitial = { box: 1 | 2; start: number; phone?: string; car?: string; carType?: string };
+
 const PX_PER_MIN = 2;
 const HOURS = Array.from({ length: (CLOSE_MIN - OPEN_MIN) / 60 + 1 }, (_, i) => OPEN_MIN + i * 60);
 
