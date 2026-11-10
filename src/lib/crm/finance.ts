@@ -54,6 +54,16 @@ export const fixedForPeriod = (p: Period, items: ExpenseItem[] = MONTHLY_EXPENSE
   return dateRange(p.from, p.to).reduce((s, d) => s + monthly / daysInMonth(d), 0);
 };
 
+/** The same fixed costs split by article, prorated over the period. */
+export function fixedRowsForPeriod(p: Period, items: ExpenseItem[] = MONTHLY_EXPENSES) {
+  const days = dateRange(p.from, p.to);
+  return items.map((i) => ({
+    id: i.id,
+    name: i.name,
+    value: days.reduce((s, d) => s + i.monthly / daysInMonth(d), 0),
+  }));
+}
+
 export const paidIn = (list: Booking[], p: Period) =>
   list.filter((b) => inPeriod(b, p) && b.payment === "paid");
 
