@@ -185,3 +185,14 @@
 .btn-lime:hover {
   filter: brightness(0.95);
 }
+
+/* Скрываем полосы прокрутки на всём сайте, прокрутка работает */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
