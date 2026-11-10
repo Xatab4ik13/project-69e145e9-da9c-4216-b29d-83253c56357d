@@ -162,7 +162,41 @@ export interface FinanceSummary {
   };
 }
 
-export function summarize(list: Booking[], p: Period, today: string): FinanceSummary {
+/** A cost the owner records as it was invoiced: date, what it is, amount. */
+export interface ExpenseBill {
+  id: string;
+  date: string;
+  name: string;
+  amount: number;
+}
+
+/** Bills implied by the monthly plan: whole sum on the 1st / last day, daily articles per day. */
+export function planBills(p: Period, items: ExpenseItem[] = MONTHLY_EXPENSES): ExpenseBill[] {
+  const out: ExpenseBill[] = [];
+  for (const d of dateRange(p.from, p.to))
+    for (const i of items) {
+      const amount = itemOnDay(i, d);
+      if (amount) out.push({ id: `plan-${i.id}-${d}`, date: d, name: i.name, amount });
+    }
+  return out;
+}
+
+export const billsIn = (bills: ExpenseBill[], p: Period) =>
+  bills.filter((b) => b.date >= p.from && b.date <= p.to);
+
+/** Bills of the period grouped by name, for the expense breakdown. */
+export function billRows(bills: ExpenseBill[], p: Period) {
+  const out = new Map<string, number>();
+  for (const b of billsIn(bills, p)) out.set(b.name, (out.get(b.name) ?? 0) + b.amount);
+  return [...out].map(([name, value]) => ({ name, value }));
+}
+
+export function summarize(
+  list: Booking[],
+  p: Period,
+  today: string,
+  bills: ExpenseBill[] = planBills(p),
+): FinanceSummary {
   const paid = paidIn(list, p);
   const revenue = revenueOf(paid);
   const methods = byMethod(list, p);
@@ -170,7 +204,7 @@ export function summarize(list: Booking[], p: Period, today: string): FinanceSum
   const acquiring = methods.terminal * ACQUIRING_FEE;
   const sbp = methods.app * SBP_FEE;
   const tax = revenue * TAX_RATE;
-  const fixed = fixedForPeriod(p);
+  const fixed = billsIn(bills, p).reduce((a, b) => a + b.amount, 0);
   const expenses = fixed + payroll + acquiring + sbp + tax;
 
   const monthPeriod: Period = { from: `${today.slice(0, 7)}-01`, to: today };
