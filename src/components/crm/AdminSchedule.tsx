@@ -38,6 +38,9 @@ export function AdminSchedule() {
   const [newOpen, setNewOpen] = useState<NewBookingInitial | null>(null);
   const [section, setSection] = useState<AdminSection>("schedule");
   const [loyaltyClientId, setLoyaltyClientId] = useState<string | null>(null);
+  const [role, setRole] = useState<CrmRole>("admin");
+  /** Owner screens add up the demo month plus whatever happens in the live schedule. */
+  const financeBookings = useMemo(() => [...HISTORY_BOOKINGS, ...bookings], [bookings]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -59,11 +62,18 @@ export function AdminSchedule() {
     setSection(next);
   };
 
+  const changeRole = (next: CrmRole) => {
+    setRole(next);
+    setMobileOrderOpen(false);
+    setLoyaltyClientId(null);
+    setSection(next === "owner" ? "dashboard" : "schedule");
+  };
+
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
-      <MobileAdminHeader />
-      <Sidebar section={section} onChange={changeSection} />
-      {section === "services" ? <AdminServices /> : section === "clients" ? (
+      <MobileAdminHeader role={role} />
+      <Sidebar section={section} onChange={changeSection} role={role} onRoleChange={changeRole} />
+      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} today={DEMO_TODAY} /> : section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
           onNewBooking={(client) => {
@@ -154,7 +164,7 @@ export function AdminSchedule() {
         />
       )}
 
-      <MobileAdminNavigation section={section} onChange={changeSection} />
+      <MobileAdminNavigation section={section} onChange={changeSection} role={role} onRoleChange={changeRole} />
 
       <NewBookingDialog
         open={!!newOpen}
