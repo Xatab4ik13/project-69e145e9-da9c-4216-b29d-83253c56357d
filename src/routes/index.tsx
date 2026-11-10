@@ -283,9 +283,9 @@ function Index() {
             <br />
             Стоимость и время — до записи.
           </p>
-          <a href="#" className="btn-lime order-3 inline-flex items-center justify-center gap-3 rounded-lg px-7 py-3 text-base max-md:py-3.5 max-md:text-xl md:mt-6">
+          <button type="button" onClick={() => setHeaderBooking(true)} className="btn-lime order-3 inline-flex items-center justify-center gap-3 rounded-lg px-7 py-3 text-base max-md:py-3.5 max-md:text-xl md:mt-6">
             Записаться
-          </a>
+          </button>
           <p className="order-3 mt-6 flex items-center gap-2 text-sm max-md:hidden">
             <MapPin className="h-4 w-4" /> Большевиков, 18к2 · Ежедневно <b>10:00–22:00</b>
           </p>
