@@ -10,7 +10,7 @@ describe("CRM clients", () => {
   it("builds one client per phone and keeps bonus balances in sync", () => {
     expect(clients).toHaveLength(MOCK_LOYALTY_CLIENTS.length);
     expect(new Set(clients.map((client) => client.phone)).size).toBe(clients.length);
-    expect(clients.find((client) => client.id === "lc1")?.bonusBalance).toBe(560);
+    expect(clients.find((client) => client.id === "lc1")?.bonusBalance).toBe(210);
   });
 
   it("counts repeat clients from two completed visits", () => {

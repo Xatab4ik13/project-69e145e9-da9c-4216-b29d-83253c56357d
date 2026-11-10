@@ -45,4 +45,8 @@ export const MOCK_LOYALTY_CLIENTS: LoyaltyClient[] = [
       { id: "lt13", type: "welcome", amount: 200, date: "2025-11-20", description: "Приветственные бонусы за вход по SMS", expiresAt: "2026-11-20" },
     ],
   },
+  {
+    id: "lc7", phone: "9501112233", activated: false, visits: 0, totalSpent: 0, lastVisit: null,
+    transactions: [],
+  },
 ];

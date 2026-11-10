@@ -59,7 +59,7 @@ export function AdminSchedule() {
             const car = client.cars.find((item) => item.primary) ?? client.cars[0];
             setSelectedId(null);
             setSection("schedule");
-            setNewOpen({ box: 1, start: 12 * 60, phone: client.phone, car: car?.name, carType: car ? carTypeForClass(car.carClass) : undefined });
+            setNewOpen({ box: 1, start: 12 * 60, phone: client.phone, car: car?.name ?? "", carType: car ? carTypeForClass(car.carClass) : "Седан" });
           }}
         />
       ) : section === "loyalty" ? <AdminLoyalty initialClientId={loyaltyClientId} /> : <main className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-4">
