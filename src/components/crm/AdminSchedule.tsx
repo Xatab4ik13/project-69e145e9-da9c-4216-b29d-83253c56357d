@@ -10,7 +10,7 @@ import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
-  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits,
+  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
 } from "@/lib/crm/logic";
 
 const PX_PER_MIN = 2;
@@ -31,7 +31,7 @@ export function AdminSchedule() {
         b.date === date &&
         b.wash !== "cancelled" &&
         (source === "all" || b.source === source) &&
-        (!q || b.client.toLowerCase().includes(q) || b.car.toLowerCase().includes(q)),
+        (!q || bookingMatches(b, q)),
     );
   }, [bookings, date, query, source]);
 
@@ -47,7 +47,7 @@ export function AdminSchedule() {
           <h1 className="text-3xl font-bold tracking-tight">Расписание</h1>
           <label className="ml-auto flex w-80 items-center gap-2 rounded-lg border border-border px-3 py-2">
             <Search className="h-4 w-4 text-muted-foreground" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Клиент или автомобиль" className="w-full bg-transparent outline-none placeholder:text-muted-foreground" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Телефон или автомобиль" className="w-full bg-transparent outline-none placeholder:text-muted-foreground" />
           </label>
           <button type="button" aria-label="Уведомления" className="p-2"><Bell className="h-5 w-5" /></button>
         </div>
