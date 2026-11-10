@@ -281,6 +281,7 @@ function Index() {
           <div className="order-3 space-y-2 border-b border-border pb-2 text-base md:hidden">
             <p className="flex items-center gap-3"><MapPin className="h-5 w-5" /> Большевиков, 18к2 · 4-й уровень</p>
             <p className="flex items-center gap-3"><Clock className="h-5 w-5" /> Ежедневно 10:00–22:00</p>
+            <a href={PHONE_HREF} className="block pt-1 font-display text-3xl">{PHONE}</a>
           </div>
         </div>
         <img
