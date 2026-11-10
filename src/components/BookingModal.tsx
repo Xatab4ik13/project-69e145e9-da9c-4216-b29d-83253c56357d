@@ -256,7 +256,7 @@ export function BookingModal({
         <div className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex items-center gap-6">
-              <p className="font-display text-4xl">{car ? "" : "от "}{rub(price)} ₽</p>
+              <p className="font-display text-4xl">{rub(price)} ₽</p>
               <span className="h-10 border-l border-foreground/30" />
               <span className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5" /> {timeLabel} минут</span>
             </div>
