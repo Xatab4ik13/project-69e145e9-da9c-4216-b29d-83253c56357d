@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowRight, Bell, Banknote, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
+  ArrowRight, Banknote, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
   Clock, CreditCard, Phone, Plus, Search, Smartphone, Star, User, Wrench, X,
 } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AdminServices } from "@/components/crm/AdminServices";
 import { AdminLoyalty } from "@/components/crm/AdminLoyalty";
 import { AdminClients } from "@/components/crm/AdminClients";
+import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
@@ -69,7 +70,7 @@ export function AdminSchedule() {
             <Search className="h-4 w-4 text-muted-foreground" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Телефон или автомобиль" className="w-full bg-transparent outline-none placeholder:text-muted-foreground" />
           </label>
-          <button type="button" aria-label="Уведомления" className="p-2"><Bell className="h-5 w-5" /></button>
+          <AdminNotificationIndicator />
         </div>
 
         <div className="mt-4 flex items-center gap-3">
@@ -141,7 +142,6 @@ function Sidebar({ section, onChange }: { section: AdminSection; onChange: (sect
     { label: "Расписание", icon: CalendarDays, target: "schedule" },
     { label: "Клиенты", icon: User, target: "clients" },
     { label: "Лояльность", icon: Star, target: "loyalty" },
-    { label: "Уведомления", icon: Bell },
     { label: "Услуги", icon: Wrench, target: "services" },
   ];
   return (

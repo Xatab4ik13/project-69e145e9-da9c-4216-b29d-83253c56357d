@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CrmPagination } from "@/components/crm/CrmPagination";
+import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { fmtDateShort, fmtPhone, rub } from "@/lib/crm/logic";
 import { DEMO_TODAY, MOCK_BOOKINGS } from "@/lib/crm/mock";
 import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
@@ -59,6 +60,7 @@ export function AdminClients({
           <p className="mt-1 text-muted-foreground">Телефоны, автомобили и история посещений</p>
         </div>
         <span className="ml-auto rounded-lg bg-crm-soft px-3 py-2 text-crm">Один клиент — один номер телефона</span>
+        <AdminNotificationIndicator />
       </div>
 
       <section aria-label="Показатели клиентов" className="mt-5 grid grid-cols-4 gap-3">
