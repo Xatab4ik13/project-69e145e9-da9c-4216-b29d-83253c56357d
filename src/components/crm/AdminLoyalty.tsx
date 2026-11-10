@@ -27,6 +27,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
     return matchesQuery && matchesFilter;
   }), [filter, query]);
 
+  const openClient = useCallback((id: string) => setSelectedId(id), []);
   const selected = MOCK_LOYALTY_CLIENTS.find((client) => client.id === selectedId) ?? null;
 
   return (
