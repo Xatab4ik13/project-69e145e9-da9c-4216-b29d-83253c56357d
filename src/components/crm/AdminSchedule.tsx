@@ -217,7 +217,7 @@ function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; 
     <button
       type="button"
       onClick={onClick}
-      className={`absolute inset-x-2 overflow-hidden rounded-lg border px-3 py-1.5 text-left transition-colors ${
+      className={`absolute inset-x-2 flex flex-col justify-start overflow-hidden rounded-lg border px-3 py-1 text-left leading-tight transition-colors ${
         selected ? "z-[5] border-2 border-crm bg-crm-soft" : finished ? "border-border bg-muted" : "border-border bg-background hover:bg-crm-surface"
       }`}
       style={{ top: (b.start - OPEN_MIN) * PX_PER_MIN + 1, height: h - 2 }}
@@ -228,8 +228,8 @@ function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; 
       </div>
       <p className="truncate font-semibold">{b.car}</p>
       {h > 60 && <p className="truncate text-xs">{b.packageName}{extras > 0 ? ` + ${extras} доп${extras > 1 && extras < 5 ? "а" : extras >= 5 ? "ов" : ""}` : ""}</p>}
-      {h > 75 && (
-        <div className="mt-1 flex items-center gap-1.5">
+      {h > 70 && (
+        <div className="mt-auto flex w-full items-center gap-1.5 pb-0.5">
           {selected && h > 90 && <span className="mr-auto font-bold">{rub(total(b))}</span>}
           <span className={`rounded bg-muted px-1.5 py-0.5 text-xs ${selected ? "" : "mr-auto"}`}>{SOURCE_LABEL[b.source]}</span>
           {status && !finished && (
