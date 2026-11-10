@@ -11,6 +11,29 @@ const ADDRESS = "Санкт-Петербург, проспект Большев�
 const PHONE = "+7 (904) 511-73-96";
 const PHONE_HREF = "tel:+79045117396";
 const YMAPS = "https://yandex.ru/maps/?text=" + encodeURIComponent(ADDRESS);
+const LAT = 59.908627;
+const LON = 30.48341;
+const NAVI = `yandexnavi://build_route_on_map?lat_to=${LAT}&lon_to=${LON}`;
+const MAPS_ROUTE = `https://yandex.ru/maps/?rtext=~${LAT},${LON}&rtt=auto`;
+
+function openNavigator() {
+  let opened = false;
+  const onVis = () => { if (document.hidden) opened = true; };
+  document.addEventListener("visibilitychange", onVis);
+  window.location.href = NAVI;
+  window.setTimeout(() => {
+    document.removeEventListener("visibilitychange", onVis);
+    if (!opened && !document.hidden) window.location.href = MAPS_ROUTE;
+  }, 1200);
+}
+
+function RouteButton({ className }: { className: string }) {
+  return (
+    <button type="button" onClick={openNavigator} className={className}>
+      Построить маршрут
+    </button>
+  );
+}
 
 function Contacts() {
   const [copied, setCopied] = useState(false);
