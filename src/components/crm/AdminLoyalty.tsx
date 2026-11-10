@@ -18,7 +18,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [selectedId, setSelectedId] = useState<string | null>(initialClientId ?? null);
-  const metrics = loyaltyMetrics(MOCK_LOYALTY_CLIENTS, DEMO_TODAY);
+  const metrics = useMemo(() => loyaltyMetrics(MOCK_LOYALTY_CLIENTS, DEMO_TODAY), []);
 
   const clients = useMemo(() => MOCK_LOYALTY_CLIENTS.filter((client) => {
     const digits = phoneDigits(query);

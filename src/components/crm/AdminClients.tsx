@@ -43,8 +43,9 @@ export function AdminClients({
     () => buildClients(MOCK_LOYALTY_CLIENTS, MOCK_BOOKINGS, MOCK_CLIENT_CARS, DEMO_TODAY, MOCK_CLIENT_FIRST_CONTACT),
     [],
   );
-  const metrics = clientMetrics(clients, DEMO_TODAY);
+  const metrics = useMemo(() => clientMetrics(clients, DEMO_TODAY), [clients]);
   const visible = useMemo(() => filterClients(clients, query, filter, DEMO_TODAY), [clients, filter, query]);
+  const openClient = useCallback((id: string) => setSelectedId(id), []);
   const selected = clients.find((client) => client.id === selectedId) ?? null;
 
   return (
