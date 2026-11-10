@@ -37,3 +37,13 @@ describe("slots", () => {
     expect(readyAndInvoice({ ...kia, wash: "in_progress" })).toMatchObject({ wash: "done", payment: "awaiting", paymentMethod: "app" });
   });
 });
+
+import { fmtPhone, phoneDigits } from "@/lib/crm/logic";
+describe("phone", () => {
+  it("formats like the site", () => expect(fmtPhone("9045117396")).toBe("+7 (904) 511-73-96"));
+  it("accepts 8… and +7… input", () => {
+    expect(phoneDigits("89045117396")).toBe("9045117396");
+    expect(phoneDigits("+7 (904) 511-73-96")).toBe("9045117396");
+    expect(phoneDigits("904")).toBe("904");
+  });
+});

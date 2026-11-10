@@ -10,7 +10,7 @@ import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
-  fmtTime, rub, startWash, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice,
+  fmtTime, rub, startWash, statusLabel, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits,
 } from "@/lib/crm/logic";
 
 const PX_PER_MIN = 2;
@@ -272,7 +272,7 @@ function OrderPanel({ b, onClose, onUpdate }: { b: Booking; onClose: () => void;
         </div>
 
         <div className="mt-4 space-y-2 border-t border-border pt-4">
-          <p><span className="text-muted-foreground">Клиент:</span> <b className="text-base">{b.client}</b></p>
+          <p><span className="text-muted-foreground">Клиент:</span> <b className="text-base">{b.client}</b>{b.phone && <a href={`tel:+7${b.phone}`} className="ml-2 text-crm">{fmtPhone(b.phone)}</a>}</p>
           <p><span className="text-muted-foreground">Источник:</span> {SOURCE_LABEL[b.source].toLowerCase()}</p>
           <label className="flex items-center gap-2">
             <span className="text-muted-foreground">Исполнитель:</span>
@@ -369,6 +369,7 @@ function NewBookingDialog({
   onCreate: (b: Booking) => void;
 }) {
   const [client, setClient] = useState("");
+  const [phone, setPhone] = useState("");
   const [car, setCar] = useState("");
   const [pkgName, setPkgName] = useState("Комфорт");
   const [extras, setExtras] = useState<string[]>([]);
@@ -378,7 +379,7 @@ function NewBookingDialog({
   useEffect(() => {
     if (open) {
       setSlot(null);
-      setClient(""); setCar(""); setPkgName("Комфорт"); setExtras([]); setError("");
+      setClient(""); setPhone(""); setCar(""); setPkgName("Комфорт"); setExtras([]); setError("");
     }
   }, [open, initial]);
 
@@ -391,10 +392,11 @@ function NewBookingDialog({
 
   const submit = () => {
     if (!client.trim() || !car.trim()) return setError("Укажите клиента и автомобиль.");
+    if (phone.length !== 10) return setError("Введите номер телефона полностью: +7 (___) ___-__-__.");
     if (!picked) return setError("Выберите свободное время.");
     onCreate({
       id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: "Седан",
-      client: client.trim(), source: "admin", worker: WORKERS[0] ?? "", packageName: pkg.name, services,
+      client: client.trim(), phone, source: "admin", worker: WORKERS[0] ?? "", packageName: pkg.name, services,
       wash: "scheduled", payment: "unpaid",
     });
   };
@@ -406,6 +408,13 @@ function NewBookingDialog({
         <DialogHeader><DialogTitle>Новая запись · {fmtDateShort(date)}</DialogTitle></DialogHeader>
         <div className="space-y-3 text-sm">
           <input className={field} placeholder="Клиент" value={client} onChange={(e) => setClient(e.target.value)} />
+          <input type="tel" inputMode="tel" className={field} placeholder="+7 (___) ___-__-__" value={fmtPhone(phone)}
+            onChange={(e) => {
+              const raw = e.target.value;
+              // deleting a formatting char (")", " ", "-") should remove the previous digit
+              const d = raw.length < fmtPhone(phone).length && phoneDigits(raw) === phone ? phone.slice(0, -1) : phoneDigits(raw);
+              setPhone(d);
+            }} />
           <input className={field} placeholder="Автомобиль" value={car} onChange={(e) => setCar(e.target.value)} />
           <select className={field} value={pkgName} onChange={(e) => setPkgName(e.target.value)}>
             {PACKAGES.map((p) => <option key={p.name} value={p.name}>{p.name} · {rub(p.price)}</option>)}

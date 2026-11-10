@@ -87,3 +87,23 @@ export function readyAndInvoice(b: Booking): Booking {
   if (b.wash !== "in_progress") return b;
   return { ...b, wash: "done", payment: "awaiting", paymentMethod: "app" };
 }
+
+/** Extracts up to 10 digits after +7 from any typed/pasted value. */
+export function phoneDigits(raw: string): string {
+  let d = raw.replace(/\D/g, "");
+  if (d.length > 10 && (d.startsWith("7") || d.startsWith("8"))) d = d.slice(1);
+  else if (d.length <= 10 && raw.trim().startsWith("+7")) d = d.slice(1);
+  return d.slice(0, 10);
+}
+
+/** Same format as on the site: +7 (904) 511-73-96 */
+export function fmtPhone(digits: string): string {
+  if (!digits) return "";
+  const d = digits;
+  let out = "+7 (" + d.slice(0, 3);
+  if (d.length >= 3) out += ")";
+  if (d.length > 3) out += " " + d.slice(3, 6);
+  if (d.length > 6) out += "-" + d.slice(6, 8);
+  if (d.length > 8) out += "-" + d.slice(8, 10);
+  return out;
+}
