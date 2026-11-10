@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowUpRight, MapPin } from "lucide-react";
+import { useState } from "react";
+import { ArrowUpRight, Check, Clock, MapPin } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import hero from "@/assets/car-wash-hero.webp.asset.json";
 
@@ -77,6 +78,60 @@ function Index() {
           className="h-auto w-full"
         />
       </section>
+
+      <Packages />
     </div>
+  );
+}
+
+const packages = [
+  { name: "Стандарт", price: "1 200", time: "40–60 минут", items: ["Кузов пеной", "Сушка", "Мойка ковров"] },
+  { name: "Комфорт", price: "1 600", time: "50–60 минут", items: ["Всё из «Стандарта»", "Пылесос салона"] },
+  { name: "Люкс", price: "1 900", time: "80 минут", items: ["Всё из «Комфорта»", "Очистка стёкол", "Очистка пластика"] },
+];
+
+function Packages() {
+  const [selected, setSelected] = useState(1);
+  return (
+    <section className="mx-auto max-w-6xl px-6 py-10">
+      <h2 className="font-display text-4xl uppercase md:text-5xl">Выберите комплекс</h2>
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        {packages.map((p, i) => {
+          const active = i === selected;
+          return (
+            <div
+              key={p.name}
+              className={`relative flex flex-col rounded-xl p-6 ${active ? "bg-muted" : ""} ${i > 0 && !active && selected !== i - 1 ? "md:border-l md:border-border" : ""}`}
+            >
+              {active && (
+                <span className="btn-lime absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full">
+                  <Check className="h-4 w-4" />
+                </span>
+              )}
+              <h3 className="font-display text-3xl uppercase">{p.name}</h3>
+              <p className="mt-1 text-2xl font-bold">от {p.price} ₽</p>
+              <p className="mt-2 flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4" /> {p.time}
+              </p>
+              <ul className="mt-3 flex-1 space-y-1 text-sm">
+                {p.items.map((it) => (
+                  <li key={it} className="flex items-center gap-2">
+                    <Check className="h-4 w-4" /> {it}
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={() => setSelected(i)}
+                className={`mt-5 rounded-lg py-2.5 text-sm font-medium ${active ? "btn-lime" : "border border-foreground bg-background"}`}
+              >
+                {active ? "Выбрано" : "Выбрать"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-xs">Сушка включена во время комплекса.</p>
+    </section>
   );
 }
