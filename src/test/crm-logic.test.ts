@@ -80,3 +80,19 @@ import { autoStart, cancelBooking, confirmBooking, needsCall } from "@/lib/crm/l
     expect(findConflict(list, { date: lada.date, box: 1, start: 17 * 60, duration: 60 })).toBeUndefined();
   });
 });
+
+import { bookingState, STATE_LABEL } from "@/lib/crm/logic";
+describe("booking colors", () => {
+  const camry = MOCK_BOOKINGS.find((b) => b.id === "b6")!; // 16:00, in progress
+  it("unconfirmed within 15 min reads as a red call", () => {
+    expect(bookingState(lada, lada.date, 16 * 60 + 50)).toBe("call");
+    expect(STATE_LABEL.call).toBe("Позвонить");
+    expect(bookingState(lada, lada.date, 16 * 60 + 30)).toBe("unconfirmed");
+  });
+  it("money still owed is its own state, not the call one", () => {
+    expect(bookingState(kia, kia.date, 17 * 60)).toBe("ready");
+    expect(bookingState({ ...kia, payment: "awaiting" }, kia.date, 17 * 60)).toBe("awaiting");
+    expect(bookingState({ ...kia, payment: "paid" }, kia.date, 17 * 60)).toBe("finished");
+  });
+  it("a wash under way is working", () => expect(bookingState(camry, camry.date, 16 * 60 + 55)).toBe("working"));
+});
