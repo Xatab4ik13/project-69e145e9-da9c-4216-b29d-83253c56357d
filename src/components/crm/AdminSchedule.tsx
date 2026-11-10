@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell, Banknote, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
-  Clock, CreditCard, Phone, Plus, Search, Smartphone, Star, User, X,
+  Clock, CreditCard, Phone, Plus, Search, Smartphone, Star, User, Wrench, X,
 } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AdminServices } from "@/components/crm/AdminServices";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES, WORKERS } from "@/lib/crm/mock";
@@ -25,6 +26,7 @@ export function AdminSchedule() {
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<"all" | BookingSource>("all");
   const [newOpen, setNewOpen] = useState<null | { box: 1 | 2; start: number }>(null);
+  const [section, setSection] = useState<AdminSection>("schedule");
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -43,8 +45,8 @@ export function AdminSchedule() {
 
   return (
     <div className="flex h-screen bg-background text-sm text-foreground">
-      <Sidebar />
-      <main className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-4">
+      <Sidebar section={section} onChange={setSection} />
+      {section === "services" ? <AdminServices /> : <main className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-4">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold tracking-tight">Расписание</h1>
           <label className="ml-auto flex w-80 items-center gap-2 rounded-lg border border-border px-3 py-2">
@@ -88,9 +90,9 @@ export function AdminSchedule() {
           onSelect={setSelectedId}
           onAdd={(box, start) => setNewOpen({ box, start })}
         />
-      </main>
+      </main>}
 
-      {selected && (
+      {section === "schedule" && selected && (
         <OrderPanel
           key={selected.id}
           b={selected}
@@ -116,12 +118,15 @@ export function AdminSchedule() {
   );
 }
 
-function Sidebar() {
-  const items = [
-    { label: "Расписание", icon: CalendarDays, active: true },
+type AdminSection = "schedule" | "services";
+
+function Sidebar({ section, onChange }: { section: AdminSection; onChange: (section: AdminSection) => void }) {
+  const items: { label: string; icon: typeof CalendarDays; target?: AdminSection }[] = [
+    { label: "Расписание", icon: CalendarDays, target: "schedule" },
     { label: "Клиенты", icon: User },
     { label: "Лояльность", icon: Star },
     { label: "Уведомления", icon: Bell },
+    { label: "Услуги", icon: Wrench, target: "services" },
   ];
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-crm-surface px-3 py-5">
@@ -130,11 +135,21 @@ function Sidebar() {
         <p className="mt-3 text-muted-foreground">Управление мойкой</p>
       </div>
       <nav className="mt-6 space-y-1">
-        {items.map(({ label, icon: Icon, active }) => (
-          <span key={label} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium ${active ? "bg-crm-soft text-crm" : "text-foreground"}`}>
-            <Icon className="h-5 w-5" /> {label}
-          </span>
-        ))}
+        {items.map(({ label, icon: Icon, target }) => {
+          const active = target === section;
+          return (
+            <button
+              key={label}
+              type="button"
+              disabled={!target}
+              onClick={() => target && onChange(target)}
+              aria-current={active ? "page" : undefined}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left font-medium disabled:cursor-default ${active ? "bg-crm-soft text-crm" : "text-foreground"}`}
+            >
+              <Icon className="h-5 w-5" /> {label}
+            </button>
+          );
+        })}
       </nav>
       <div className="mt-auto space-y-4">
         <span className="flex items-center gap-3 px-3"><CircleHelp className="h-5 w-5" /> Помощь</span>
