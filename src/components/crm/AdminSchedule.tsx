@@ -426,7 +426,7 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
           <p className="text-base font-semibold">Услуги</p>
           <ul className="mt-2 space-y-1.5">
             {b.services.map((s) => (
-              <li key={s.name} className="flex justify-between"><span>{s.name}</span><span>{rub(s.price)}</span></li>
+              <li key={s.name} className="flex items-start justify-between gap-3"><span className="min-w-0 break-words">{s.name}</span><span className="shrink-0 whitespace-nowrap">{rub(s.price)}</span></li>
             ))}
           </ul>
           <p className="mt-3 flex items-center gap-2"><Clock className="h-4 w-4" /> {b.duration} минут</p>
