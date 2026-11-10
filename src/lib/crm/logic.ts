@@ -131,6 +131,6 @@ export function fmtPhone(digits: string): string {
 export function bookingMatches(b: Booking, q: string): boolean {
   const s = q.trim().toLowerCase();
   if (!s) return true;
-  const digits = s.replace(/\D/g, "");
+  const digits = phoneDigits(s);
   return b.car.toLowerCase().includes(s) || (digits.length > 0 && !!b.phone && b.phone.includes(digits));
 }
