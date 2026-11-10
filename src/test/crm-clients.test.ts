@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MOCK_BOOKINGS, DEMO_TODAY } from "@/lib/crm/mock";
 import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
 import { MOCK_CLIENT_CARS } from "@/lib/crm/clients-mock";
-import { buildClients, CLIENTS_PER_PAGE, clientMetrics, filterClients, isInactiveClient, paginateClients } from "@/lib/crm/clients";
+import { buildClients, CLIENTS_PER_PAGE, clientMetrics, filterClients, isInactiveClient, paginateClients, paginationPageNumbers } from "@/lib/crm/clients";
 
 const clients = buildClients(MOCK_LOYALTY_CLIENTS, MOCK_BOOKINGS, MOCK_CLIENT_CARS, DEMO_TODAY);
 
@@ -47,6 +47,13 @@ describe("CRM clients", () => {
     expect(firstPage.end).toBe(8);
     expect(paginateClients(manyClients, 3).items).toHaveLength(3);
     expect(paginateClients(manyClients, 99).currentPage).toBe(3);
+  });
+
+  it("shows five page numbers and moves to the next group after page five", () => {
+    expect(paginationPageNumbers(1, 1)).toEqual([1, 2, 3, 4, 5]);
+    expect(paginationPageNumbers(5, 12)).toEqual([1, 2, 3, 4, 5]);
+    expect(paginationPageNumbers(6, 12)).toEqual([6, 7, 8, 9, 10]);
+    expect(paginationPageNumbers(12, 12)).toEqual([11, 12, 13, 14, 15]);
   });
 
   it("paginates only after searching the complete client list", () => {

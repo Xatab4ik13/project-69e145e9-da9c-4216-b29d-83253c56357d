@@ -1,6 +1,8 @@
 import { memo, useCallback, useMemo, useState } from "react";
 import { Check, ChevronRight, Clock3, Coins, Search, Smartphone, Star, Users, WalletCards } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CrmPagination } from "@/components/crm/CrmPagination";
+import { paginateClients } from "@/lib/crm/clients";
 import { fmtPhone, fmtDateShort, phoneDigits, rub } from "@/lib/crm/logic";
 import { DEMO_TODAY } from "@/lib/crm/mock";
 import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
@@ -17,6 +19,7 @@ const RULES = [
 export function AdminLoyalty({ initialClientId }: { initialClientId?: string | null }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
+  const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(initialClientId ?? null);
   const metrics = useMemo(() => loyaltyMetrics(MOCK_LOYALTY_CLIENTS, DEMO_TODAY), []);
 
@@ -26,6 +29,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
     const matchesFilter = filter === "all" || (filter === "active" ? client.activated : !client.activated);
     return matchesQuery && matchesFilter;
   }), [filter, query]);
+  const pagination = useMemo(() => paginateClients(clients, page), [clients, page]);
 
   const openClient = useCallback((id: string) => setSelectedId(id), []);
   const selected = MOCK_LOYALTY_CLIENTS.find((client) => client.id === selectedId) ?? null;
@@ -65,7 +69,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Номер телефона"
               aria-label="Поиск клиента по номеру телефона"
               className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
@@ -78,7 +82,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
               <button
                 key={value}
                 type="button"
-                onClick={() => setFilter(value)}
+                onClick={() => { setFilter(value); setPage(1); }}
                 className={`rounded-md px-3 py-1.5 font-medium ${filter === value ? "bg-background text-crm shadow-sm" : "text-muted-foreground"}`}
               >
                 {label}
@@ -101,12 +105,25 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
               </tr>
             </thead>
             <tbody>
-              {clients.map((client) => (
+              {pagination.items.map((client) => (
                 <ClientRow key={client.id} client={client} onSelect={openClient} />
               ))}
             </tbody>
           </table>
           {clients.length === 0 && <p className="px-4 py-10 text-center text-muted-foreground">Клиенты с таким номером не найдены.</p>}
+        </div>
+        <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+          <p className="text-sm text-muted-foreground" aria-live="polite">
+            {clients.length > 0
+              ? `Показано ${pagination.start}–${pagination.end} из ${clients.length}`
+              : "Клиентов не найдено"}
+          </p>
+          <CrmPagination
+            currentPage={pagination.currentPage}
+            pageCount={pagination.pageCount}
+            onPageChange={setPage}
+            label="Страницы лояльности"
+          />
         </div>
       </section>
 
