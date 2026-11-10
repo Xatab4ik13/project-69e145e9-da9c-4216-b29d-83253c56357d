@@ -478,7 +478,7 @@ function NewBookingDialog({
   useEffect(() => {
     if (open) {
       setSlot(null);
-      setPhone(""); setCar(""); setPkgName("Комфорт"); setExtras([]); setError("");
+      setPhone(initial?.phone ?? ""); setCar(initial?.car ?? ""); setPkgName("Комфорт"); setExtras([]); setError("");
     }
   }, [open, initial]);
 
