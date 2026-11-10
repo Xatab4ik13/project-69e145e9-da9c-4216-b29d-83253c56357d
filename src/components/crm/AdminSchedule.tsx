@@ -20,7 +20,6 @@ import {
   fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
   bookingState, STATE_LABEL, STATE_ACTION, isPastSlot,
 } from "@/lib/crm/logic";
-import type { BookingState } from "@/lib/crm/logic";
 
 type NewBookingInitial = { box: 1 | 2; start: number; phone?: string; car?: string; carType?: string };
 
@@ -393,11 +392,16 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
 
   return (
     <aside className={mobile ? "fixed inset-0 z-40 flex flex-col bg-background md:hidden" : "hidden w-[380px] shrink-0 flex-col border-l border-border md:flex"}>
-      <div className="flex items-center justify-between border-b border-border px-5 py-4">
-        <h2 className="text-lg font-semibold">Карточка заказа</h2>
-        <button type="button" aria-label={mobile ? "Назад к расписанию" : "Закрыть карточку"} onClick={onClose} className="p-1">
-          {mobile ? <ChevronLeft className="h-6 w-6" /> : <X className="h-5 w-5" />}
-        </button>
+      <div className={mobile ? "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-4 py-4" : "flex items-center justify-between px-5 pt-5"}>
+        {mobile && (
+          <button type="button" aria-label="Назад к расписанию" onClick={onClose} className="p-1">
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+        )}
+        <h2 className={`text-lg font-semibold ${mobile ? "text-center" : ""}`}>Карточка заказа</h2>
+        {mobile ? <span className="w-8" /> : (
+          <button type="button" aria-label="Закрыть карточку" onClick={onClose} className="p-1"><X className="h-5 w-5" /></button>
+        )}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
         <p className="mt-3 text-2xl font-bold">{b.car}</p>

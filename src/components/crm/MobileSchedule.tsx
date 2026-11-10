@@ -94,7 +94,7 @@ export function MobileSchedule({
           <ChevronLeft className="h-4 w-4" />
         </button>
         <button type="button" onClick={onToday} className="min-w-0 rounded-lg bg-background px-2 py-2.5 text-sm font-semibold shadow-sm">
-          <span className="truncate">{fmtDateShort(date)} {date.slice(0, 4)}, {weekday}</span>
+          <span className="block truncate">{fmtDateShort(date)} {date.slice(0, 4)}, {weekday}</span>
         </button>
         <button type="button" aria-label="Следующий день" onClick={onNextDay} className="rounded-lg border border-border bg-background p-2.5">
           <ChevronRight className="h-4 w-4" />
