@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, ArrowUp, ArrowUpRight, Check, Clock, Copy, CornerUpRight, MapPin, Phone, Plus } from "lucide-react";
-import imgMap from "@/assets/parking-map.webp.asset.json";
-import imgParkCar from "@/assets/parking-car-full.webp.asset.json";
+import imgMap from "@/assets/parking-map-4.webp.asset.json";
+import imgParkCar from "@/assets/parking-car-4.webp.asset.json";
 
 const ADDRESS = "Санкт-Петербург, проспект Большевиков, 18к2";
 const PHONE = "+7 (904) 511-73-96";
@@ -14,7 +14,7 @@ function Contacts() {
   const steps = [
     { icon: <ArrowUp className="h-8 w-8" strokeWidth={3} />, t: "С проспекта Большевиков", d: "Двигайтесь со стороны улицы Дыбенко. Сверните направо в боковой проезд рядом с «Вкусно — и точка»." },
     { icon: <CornerUpRight className="h-8 w-8" strokeWidth={3} />, t: "Во въезд паркинга", d: "Проедьте вдоль здания и поверните направо во въезд паркинга." },
-    { icon: <span className="flex h-8 w-8 items-center justify-center rounded-md border-[3px] border-foreground font-display text-lg">P</span>, t: "На 5-й уровень", d: "Поднимитесь на 5-й уровень паркинга. Здесь находится автомойка Aquarius." },
+    { icon: <span className="flex h-8 w-8 items-center justify-center rounded-md border-[3px] border-foreground font-display text-lg">P</span>, t: "На 4-й уровень", d: "Поднимитесь на 4-й уровень паркинга. Здесь находится автомойка Aquarius." },
   ];
   return (
     <section id="contacts" className="mx-auto max-w-6xl px-6 py-10">
@@ -22,7 +22,7 @@ function Contacts() {
         <div>
           <p className="font-display text-sm uppercase tracking-[0.3em]">Контакты и проезд</p>
           <h2 className="mt-2 font-display text-5xl uppercase">Ждём на Большевиков</h2>
-          <p className="btn-lime mt-3 inline-block rounded-lg px-4 py-1 font-display text-2xl uppercase">Автомойка на 5-м уровне паркинга</p>
+          <p className="btn-lime mt-3 inline-block rounded-lg px-4 py-1 font-display text-2xl uppercase">Автомойка на 4-м уровне паркинга</p>
           <p className="mt-3">Заезд с проспекта Большевиков — маршрут показан на схеме.</p>
           <img src={imgMap.url} alt="Схема заезда в паркинг Aquarius" width={1400} height={800} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
           <div className="mt-4 flex flex-wrap items-center gap-6">
@@ -41,12 +41,12 @@ function Contacts() {
               </button>
             </div>
           </div>
-          <img src={imgParkCar.url} alt="Автомобиль у метки паркинга, 5-й уровень" width={1000} height={312} loading="lazy" decoding="async" className="mt-4 w-1/2" />
+          <img src={imgParkCar.url} alt="Автомобиль у метки паркинга, 4-й уровень" width={1000} height={315} loading="lazy" decoding="async" className="mt-4 w-1/2" />
         </div>
         <div>
           <p className="font-display text-sm uppercase tracking-[0.3em]">Адрес</p>
           <p className="mt-2 font-display text-3xl leading-tight">Санкт-Петербург<br />проспект Большевиков, 18к2</p>
-          <p className="btn-lime mt-3 inline-block rounded-lg px-4 py-1 font-display text-xl">Паркинг · 5-й уровень</p>
+          <p className="btn-lime mt-3 inline-block rounded-lg px-4 py-1 font-display text-xl">Паркинг · 4-й уровень</p>
           <p className="mt-3 flex items-center gap-2"><Clock className="h-5 w-5" /> Ежедневно · 10:00–22:00</p>
           <div className="mt-6 border-t border-border pt-6">
             <a href={PHONE_HREF} className="font-display text-4xl">{PHONE}</a>
