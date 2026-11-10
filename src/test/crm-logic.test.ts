@@ -83,6 +83,7 @@ import { autoStart, cancelBooking, confirmBooking, needsCall } from "@/lib/crm/l
 
 import { bookingState, STATE_LABEL } from "@/lib/crm/logic";
 describe("booking colors", () => {
+  const lada = MOCK_BOOKINGS.find((b) => b.id === "b4")!; // 17:00, unconfirmed
   const camry = MOCK_BOOKINGS.find((b) => b.id === "b6")!; // 16:00, in progress
   it("unconfirmed within 15 min reads as a red call", () => {
     expect(bookingState(lada, lada.date, 16 * 60 + 50)).toBe("call");
