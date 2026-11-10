@@ -32,7 +32,7 @@ export function AdminSchedule() {
   const [source, setSource] = useState<"all" | BookingSource>("all");
   const [newOpen, setNewOpen] = useState<NewBookingInitial | null>(null);
   const [section, setSection] = useState<AdminSection>("schedule");
-  const [loyaltyClientId, setLoyaltyClientId] = useState("lc1");
+  const [loyaltyClientId, setLoyaltyClientId] = useState<string | null>(null);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -51,7 +51,7 @@ export function AdminSchedule() {
 
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-background text-sm text-foreground">
-      <Sidebar section={section} onChange={setSection} />
+      <Sidebar section={section} onChange={(next) => { if (next === "loyalty") setLoyaltyClientId(null); setSection(next); }} />
       {section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}

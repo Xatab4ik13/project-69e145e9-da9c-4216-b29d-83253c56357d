@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Check, ChevronRight, Clock3, Coins, Search, Smartphone, Star, Users, WalletCards } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fmtPhone, fmtDateShort, phoneDigits, rub } from "@/lib/crm/logic";
 import { DEMO_TODAY } from "@/lib/crm/mock";
 import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
@@ -13,10 +14,10 @@ const RULES = [
   { value: "12 мес.", text: "срок каждого начисления", note: "Затем бонусы сгорают" },
 ];
 
-export function AdminLoyalty({ initialClientId = "lc1" }: { initialClientId?: string }) {
+export function AdminLoyalty({ initialClientId }: { initialClientId?: string | null }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
-  const [selectedId, setSelectedId] = useState(initialClientId);
+  const [selectedId, setSelectedId] = useState<string | null>(initialClientId ?? null);
   const metrics = loyaltyMetrics(MOCK_LOYALTY_CLIENTS, DEMO_TODAY);
 
   const clients = useMemo(() => MOCK_LOYALTY_CLIENTS.filter((client) => {
@@ -57,60 +58,60 @@ export function AdminLoyalty({ initialClientId = "lc1" }: { initialClientId?: st
         <Metric Icon={Coins} label="Списано в ноябре" value={formatBonuses(metrics.redeemedThisMonth)} />
       </section>
 
-      <div className="mt-5 flex min-h-[520px] gap-4">
-        <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border">
-          <div className="flex items-center gap-3 border-b border-border p-3">
-            <label className="flex w-72 items-center gap-2 rounded-lg border border-border px-3 py-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Номер телефона"
-                aria-label="Поиск клиента по номеру телефона"
-                className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
-              />
-            </label>
-            <div className="ml-auto flex rounded-lg bg-muted p-0.5">
-              {([
-                ["all", "Все"], ["active", "В приложении"], ["inactive", "Не активирован"],
-              ] as const).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setFilter(value)}
-                  className={`rounded-md px-3 py-1.5 font-medium ${filter === value ? "bg-background text-crm shadow-sm" : "text-muted-foreground"}`}
-                >
-                  {label}
-                </button>
+      <section className="mt-5 flex min-h-[520px] flex-col overflow-hidden rounded-xl border border-border">
+        <div className="flex items-center gap-3 border-b border-border p-3">
+          <label className="flex w-72 items-center gap-2 rounded-lg border border-border px-3 py-2">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Номер телефона"
+              aria-label="Поиск клиента по номеру телефона"
+              className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
+            />
+          </label>
+          <div className="ml-auto flex rounded-lg bg-muted p-0.5">
+            {([
+              ["all", "Все"], ["active", "В приложении"], ["inactive", "Не активирован"],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFilter(value)}
+                className={`rounded-md px-3 py-1.5 font-medium ${filter === value ? "bg-background text-crm shadow-sm" : "text-muted-foreground"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto">
+          <table className="w-full min-w-[720px] border-collapse text-left">
+            <thead className="sticky top-0 z-10 bg-crm-surface text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 font-medium">Телефон</th>
+                <th className="px-3 py-3 font-medium">Кабинет</th>
+                <th className="px-3 py-3 text-right font-medium">Баланс</th>
+                <th className="px-3 py-3 text-right font-medium">Визиты</th>
+                <th className="px-3 py-3 text-right font-medium">Оплачено</th>
+                <th className="px-3 py-3 font-medium">Последний визит</th>
+                <th className="w-8" />
+              </tr>
+            </thead>
+            <tbody>
+              {clients.map((client) => (
+                <ClientRow key={client.id} client={client} onSelect={() => setSelectedId(client.id)} />
               ))}
-            </div>
-          </div>
+            </tbody>
+          </table>
+          {clients.length === 0 && <p className="px-4 py-10 text-center text-muted-foreground">Клиенты с таким номером не найдены.</p>}
+        </div>
+      </section>
 
-          <div className="min-h-0 flex-1 overflow-auto">
-            <table className="w-full min-w-[720px] border-collapse text-left">
-              <thead className="sticky top-0 z-10 bg-crm-surface text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Телефон</th>
-                  <th className="px-3 py-3 font-medium">Кабинет</th>
-                  <th className="px-3 py-3 text-right font-medium">Баланс</th>
-                  <th className="px-3 py-3 text-right font-medium">Визиты</th>
-                  <th className="px-3 py-3 text-right font-medium">Оплачено</th>
-                  <th className="px-3 py-3 font-medium">Последний визит</th>
-                  <th className="w-8" />
-                </tr>
-              </thead>
-              <tbody>
-                {clients.map((client) => (
-                  <ClientRow key={client.id} client={client} selected={client.id === selectedId} onSelect={() => setSelectedId(client.id)} />
-                ))}
-              </tbody>
-            </table>
-            {clients.length === 0 && <p className="px-4 py-10 text-center text-muted-foreground">Клиенты с таким номером не найдены.</p>}
-          </div>
-        </section>
-
+      <Dialog open={selected !== null} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
         {selected && <ClientDetails client={selected} />}
-      </div>
+      </Dialog>
     </main>
   );
 }
@@ -124,21 +125,21 @@ function Metric({ Icon, label, value }: { Icon: typeof Users; label: string; val
   );
 }
 
-function ClientRow({ client, selected, onSelect }: { client: LoyaltyClient; selected: boolean; onSelect: () => void }) {
+function ClientRow({ client, onSelect }: { client: LoyaltyClient; onSelect: () => void }) {
   const balance = loyaltyBalance(client, DEMO_TODAY);
   return (
     <tr
       tabIndex={0}
       onClick={onSelect}
       onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onSelect(); }}
-      className={`cursor-pointer border-t border-border outline-none transition-colors hover:bg-crm-soft/45 focus:bg-crm-soft/45 ${selected ? "bg-crm-soft/60" : ""}`}
+      className="cursor-pointer border-t border-border outline-none transition-colors hover:bg-crm-soft/45 focus:bg-crm-soft/45"
     >
-      <td className="whitespace-nowrap px-4 py-3 font-semibold">{fmtPhone(client.phone)}</td>
-      <td className="px-3 py-3"><AccountStatus activated={client.activated} /></td>
-      <td className="whitespace-nowrap px-3 py-3 text-right font-bold tabular-nums">{formatBonuses(balance)}</td>
-      <td className="px-3 py-3 text-right tabular-nums">{client.visits}</td>
-      <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">{rub(client.totalSpent)}</td>
-      <td className="whitespace-nowrap px-3 py-3 text-muted-foreground">{client.lastVisit ? fmtDateShort(client.lastVisit) : "Ещё не было"}</td>
+      <td className="whitespace-nowrap px-4 py-4 font-semibold">{fmtPhone(client.phone)}</td>
+      <td className="px-3 py-4"><AccountStatus activated={client.activated} /></td>
+      <td className="whitespace-nowrap px-3 py-4 text-right font-bold tabular-nums">{formatBonuses(balance)}</td>
+      <td className="px-3 py-4 text-right tabular-nums">{client.visits}</td>
+      <td className="whitespace-nowrap px-3 py-4 text-right tabular-nums">{rub(client.totalSpent)}</td>
+      <td className="whitespace-nowrap px-3 py-4 text-muted-foreground">{client.lastVisit ? fmtDateShort(client.lastVisit) : "Ещё не было"}</td>
       <td className="pr-3 text-muted-foreground"><ChevronRight className="h-4 w-4" /></td>
     </tr>
   );
@@ -154,43 +155,48 @@ function ClientDetails({ client }: { client: LoyaltyClient }) {
   const balance = loyaltyBalance(client, DEMO_TODAY);
   const transactions = [...client.transactions].sort((a, b) => b.date.localeCompare(a.date));
   return (
-    <aside className="flex w-80 shrink-0 flex-col overflow-hidden rounded-xl border border-border">
-      <div className="border-b border-border p-4">
-        <p className="text-xs text-muted-foreground">Бонусный счёт клиента</p>
-        <h2 className="mt-1 whitespace-nowrap text-lg font-bold">{fmtPhone(client.phone)}</h2>
-        <div className="mt-2"><AccountStatus activated={client.activated} /></div>
-        <div className="mt-4 rounded-xl bg-crm-soft p-4 text-crm">
-          <p className="text-xs">Доступно бонусов</p>
-          <p className="mt-1 text-3xl font-bold tabular-nums">{formatBonuses(balance)}</p>
+    <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto p-0">
+      <DialogHeader className="border-b border-border px-6 py-5 pr-12">
+        <DialogDescription>Бонусный счёт клиента</DialogDescription>
+        <div className="flex items-center gap-3">
+          <DialogTitle className="text-2xl">{fmtPhone(client.phone)}</DialogTitle>
+          <AccountStatus activated={client.activated} />
+        </div>
+      </DialogHeader>
+      <div className="px-6 pb-6">
+        <div className="rounded-xl bg-crm-soft p-5 text-crm">
+          <p className="text-sm">Доступно бонусов</p>
+          <p className="mt-1 text-4xl font-bold tabular-nums">{formatBonuses(balance)}</p>
         </div>
         {!client.activated && (
-          <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             Бонусы за мойки уже копятся. 200 приветственных будут добавлены после первого входа по SMS.
           </p>
         )}
-        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-          <div className="rounded-lg bg-crm-surface p-3"><p className="text-muted-foreground">Визитов</p><p className="mt-1 text-lg font-semibold">{client.visits}</p></div>
-          <div className="rounded-lg bg-crm-surface p-3"><p className="text-muted-foreground">Оплачено</p><p className="mt-1 text-lg font-semibold">{rub(client.totalSpent)}</p></div>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="rounded-lg bg-crm-surface p-4"><p className="text-sm text-muted-foreground">Визитов</p><p className="mt-1 text-xl font-semibold">{client.visits}</p></div>
+          <div className="rounded-lg bg-crm-surface p-4"><p className="text-sm text-muted-foreground">Оплачено</p><p className="mt-1 text-xl font-semibold">{rub(client.totalSpent)}</p></div>
         </div>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <h3 className="flex items-center gap-2 font-semibold"><Star className="h-4 w-4 text-crm" /> История бонусов</h3>
-        {transactions.length ? (
-          <div className="mt-3 space-y-2">
-            {transactions.map((transaction) => (
-              <div key={transaction.id} className="rounded-lg border border-border p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div><p className="font-medium">{transaction.description}</p><p className="mt-1 text-xs text-muted-foreground">{fmtDateShort(transaction.date)}</p></div>
-                  <span className={`shrink-0 font-bold tabular-nums ${transaction.amount > 0 ? "text-crm-ok-foreground" : "text-foreground"}`}>
-                    {transaction.amount > 0 ? "+" : "−"}{formatBonuses(Math.abs(transaction.amount))}
-                  </span>
+
+        <section className="mt-6">
+          <h3 className="flex items-center gap-2 font-semibold"><Star className="h-4 w-4 text-crm" /> История бонусов</h3>
+          {transactions.length ? (
+            <div className="mt-3 space-y-2">
+              {transactions.map((transaction) => (
+                <div key={transaction.id} className="rounded-lg border border-border p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div><p className="font-medium">{transaction.description}</p><p className="mt-1 text-xs text-muted-foreground">{fmtDateShort(transaction.date)}</p></div>
+                    <span className={`shrink-0 text-lg font-bold tabular-nums ${transaction.amount > 0 ? "text-crm-ok-foreground" : "text-foreground"}`}>
+                      {transaction.amount > 0 ? "+" : "−"}{formatBonuses(Math.abs(transaction.amount))}
+                    </span>
+                  </div>
+                  {transaction.expiresAt && <p className="mt-2 text-xs text-muted-foreground">Действуют до {fmtDateShort(transaction.expiresAt)}</p>}
                 </div>
-                {transaction.expiresAt && <p className="mt-2 text-xs text-muted-foreground">Действуют до {fmtDateShort(transaction.expiresAt)}</p>}
-              </div>
-            ))}
-          </div>
-        ) : <p className="mt-3 text-muted-foreground">Операций пока не было. Бонусы появятся после первой оплаченной мойки.</p>}
+              ))}
+            </div>
+          ) : <p className="mt-3 text-muted-foreground">Операций пока не было. Бонусы появятся после первой оплаченной мойки.</p>}
+        </section>
       </div>
-    </aside>
+    </DialogContent>
   );
 }
