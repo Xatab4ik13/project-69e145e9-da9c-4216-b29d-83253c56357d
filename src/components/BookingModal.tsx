@@ -41,7 +41,9 @@ export function BookingModal({
   extras,
   basePrice,
   time,
+  onBack,
 }: {
+  onBack?: () => void;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   pkgName: string;
@@ -129,7 +131,15 @@ export function BookingModal({
           <DialogTitle className="font-display text-4xl uppercase sm:text-5xl">Запись на мойку</DialogTitle>
         </div>
 
-        <div className="mt-2 flex items-center gap-6 text-lg">
+        <div className="mt-2 flex flex-wrap items-center gap-6 text-lg">
+          {onBack && (
+            <>
+              <button type="button" onClick={onBack} className="flex items-center gap-2 pb-2 text-muted-foreground"><Check className="h-5 w-5 text-lime" strokeWidth={3} /> Комплекс</button>
+              <ChevronRight className="mb-2 h-5 w-5" />
+              <button type="button" onClick={onBack} className="flex items-center gap-2 pb-2 text-muted-foreground"><Check className="h-5 w-5 text-lime" strokeWidth={3} /> Уход</button>
+              <ChevronRight className="mb-2 h-5 w-5" />
+            </>
+          )}
           <button
             type="button"
             onClick={() => setStep(1)}
@@ -145,7 +155,7 @@ export function BookingModal({
         <div className="rounded-2xl bg-muted px-7 py-6">
           <div className="flex items-start justify-between">
             <p className="text-sm uppercase">{step === 1 ? "Вы выбрали" : "Ваша мойка"}</p>
-            <button type="button" onClick={close} className="text-sm underline underline-offset-4">Изменить</button>
+            <button type="button" onClick={onBack ?? close} className="text-sm underline underline-offset-4">Изменить</button>
           </div>
           <p className="font-display text-3xl">{pkgName}</p>
           {extras.length > 0 && (
