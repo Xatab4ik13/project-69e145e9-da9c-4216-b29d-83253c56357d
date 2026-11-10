@@ -117,7 +117,7 @@ function Configurator() {
   const [phase, setPhase] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | Cat>("all");
 
-  const pkg = packages[selected];
+  const pkg = packages[selected] ?? packages[0]!;
   const chosen = care.filter((c) => added.includes(c.id));
   const ph = phases.find((p) => p.id === phase);
   const total = pkg.price + chosen.reduce((a, c) => a + c.price, 0) + (ph?.price ?? 0);
