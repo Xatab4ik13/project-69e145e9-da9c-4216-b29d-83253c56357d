@@ -55,11 +55,18 @@ export function needsCall(b: Booking, today: string, nowMin: number): boolean {
   return b.wash === "scheduled" && !b.confirmed && b.date === today && b.start - nowMin <= CALL_BEFORE_MIN;
 }
 
-/** Terminal/cash confirm payment; app only issues an invoice (awaiting). */
-export function applyPayment(b: Booking, method: PaymentMethod): Booking {
+/** Terminal/cash confirm payment; app only issues an invoice (awaiting). The washer is stored with the payment. */
+export function applyPayment(b: Booking, method: PaymentMethod, washer?: string): Booking {
   if (b.wash !== "done" || b.payment === "paid") return b;
-  if (method === "app") return { ...b, payment: "awaiting", paymentMethod: "app" };
-  return { ...b, payment: "paid", paymentMethod: method };
+  const assigned = washer ? { washer } : {};
+  if (method === "app") return { ...b, payment: "awaiting", paymentMethod: "app", ...assigned };
+  return { ...b, payment: "paid", paymentMethod: method, ...assigned };
+}
+
+/** Money arrived for an in-app invoice. */
+export function receivePayment(b: Booking, washer?: string): Booking {
+  if (b.payment !== "awaiting") return b;
+  return { ...b, payment: "paid", ...(washer ? { washer } : {}) };
 }
 
 /** One state per booking — drives the color of its card, badge and panel line. */

@@ -1,24 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowRight, Banknote, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
-  Clock, CreditCard, Phone, Plus, Search, Smartphone, Star, User, Wrench, X,
+  ArrowRight, Banknote, Bell, Building2, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
+  Clock, CreditCard, LayoutDashboard, Phone, Plus, Search, Smartphone, Star, User, Wallet, Wrench, X,
 } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminServices } from "@/components/crm/AdminServices";
 import { AdminLoyalty } from "@/components/crm/AdminLoyalty";
 import { AdminClients } from "@/components/crm/AdminClients";
+import { AdminDashboard, MobileDashboard } from "@/components/crm/AdminDashboard";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { MobileAdminHeader, MobileAdminNavigation, MobileSchedule } from "@/components/crm/MobileSchedule";
 import { TONE } from "@/components/crm/booking-tone";
 import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
-import { METHOD_LABEL, SOURCE_LABEL } from "@/lib/crm/types";
-import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
+import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
+import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, MOCK_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
+import { WASHER_SHARE, WASHERS } from "@/lib/crm/finance";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
   fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
-  bookingState, STATE_LABEL, STATE_ACTION, isPastSlot, CUSTOM_PACKAGE_NAME, customServiceDetails,
+  bookingState, STATE_LABEL, STATE_ACTION, isPastSlot, CUSTOM_PACKAGE_NAME, customServiceDetails, receivePayment,
 } from "@/lib/crm/logic";
 
 type NewBookingInitial = { box: 1 | 2; start: number; phone?: string; car?: string; carType?: string };
@@ -36,6 +38,9 @@ export function AdminSchedule() {
   const [newOpen, setNewOpen] = useState<NewBookingInitial | null>(null);
   const [section, setSection] = useState<AdminSection>("schedule");
   const [loyaltyClientId, setLoyaltyClientId] = useState<string | null>(null);
+  const [role, setRole] = useState<CrmRole>("admin");
+  /** Owner screens add up the demo month plus whatever happens in the live schedule. */
+  const financeBookings = useMemo(() => [...HISTORY_BOOKINGS, ...bookings], [bookings]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -57,11 +62,18 @@ export function AdminSchedule() {
     setSection(next);
   };
 
+  const changeRole = (next: CrmRole) => {
+    setRole(next);
+    setMobileOrderOpen(false);
+    setLoyaltyClientId(null);
+    setSection(next === "owner" ? "dashboard" : "schedule");
+  };
+
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
-      <MobileAdminHeader />
-      <Sidebar section={section} onChange={changeSection} />
-      {section === "services" ? <AdminServices /> : section === "clients" ? (
+      <MobileAdminHeader role={role} />
+      <Sidebar section={section} onChange={changeSection} role={role} onRoleChange={changeRole} />
+      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} today={DEMO_TODAY} /> : section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
           onNewBooking={(client) => {
@@ -131,6 +143,8 @@ export function AdminSchedule() {
         />
       )}
 
+      {section === "dashboard" && <MobileDashboard bookings={financeBookings} today={DEMO_TODAY} />}
+
       {section === "schedule" && selected && (
         <OrderPanel
           key={selected.id}
@@ -152,7 +166,7 @@ export function AdminSchedule() {
         />
       )}
 
-      <MobileAdminNavigation section={section} onChange={changeSection} />
+      <MobileAdminNavigation section={section} onChange={changeSection} role={role} onRoleChange={changeRole} />
 
       <NewBookingDialog
         open={!!newOpen}
@@ -171,15 +185,40 @@ export function AdminSchedule() {
   );
 }
 
-type AdminSection = "schedule" | "clients" | "services" | "loyalty";
+type AdminSection = "schedule" | "clients" | "services" | "loyalty" | "dashboard" | "finance" | "notifications";
 
-function Sidebar({ section, onChange }: { section: AdminSection; onChange: (section: AdminSection) => void }) {
-  const items: { label: string; icon: typeof CalendarDays; target?: AdminSection }[] = [
+/** Owner sees everything the manager sees, plus his own screens (Финансы and Уведомления — soon). */
+const SECTION_ITEMS: Record<CrmRole, { label: string; icon: typeof CalendarDays; target?: AdminSection }[]> = {
+  admin: [
     { label: "Расписание", icon: CalendarDays, target: "schedule" },
     { label: "Клиенты", icon: User, target: "clients" },
     { label: "Лояльность", icon: Star, target: "loyalty" },
     { label: "Услуги", icon: Wrench, target: "services" },
-  ];
+  ],
+  owner: [
+    { label: "Дашборд", icon: LayoutDashboard, target: "dashboard" },
+    { label: "Расписание", icon: CalendarDays, target: "schedule" },
+    { label: "Клиенты", icon: User, target: "clients" },
+    { label: "Лояльность", icon: Star, target: "loyalty" },
+    { label: "Услуги", icon: Wrench, target: "services" },
+    { label: "Финансы", icon: Wallet },
+    { label: "Уведомления", icon: Bell },
+  ],
+};
+
+const ROLES: { id: CrmRole; label: string; icon: typeof User }[] = [
+  { id: "admin", label: "Управляющий", icon: User },
+  { id: "owner", label: "Владелец", icon: Building2 },
+];
+
+function Sidebar({
+  section, onChange, role, onRoleChange,
+}: {
+  section: AdminSection;
+  onChange: (section: AdminSection) => void;
+  role: CrmRole;
+  onRoleChange: (role: CrmRole) => void;
+}) {
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r border-border bg-crm-surface px-3 py-5 md:flex">
       <div className="px-2">
@@ -187,16 +226,17 @@ function Sidebar({ section, onChange }: { section: AdminSection; onChange: (sect
         <p className="mt-3 text-muted-foreground">Управление мойкой</p>
       </div>
       <nav className="mt-6 space-y-1">
-        {items.map(({ label, icon: Icon, target }) => {
+        {SECTION_ITEMS[role].map(({ label, icon: Icon, target }) => {
           const active = target === section;
           return (
             <button
               key={label}
               type="button"
               disabled={!target}
+              title={target ? undefined : "Скоро"}
               onClick={() => target && onChange(target)}
               aria-current={active ? "page" : undefined}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left font-medium disabled:cursor-default ${active ? "bg-crm-soft text-crm" : "text-foreground"}`}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left font-medium disabled:cursor-default disabled:text-muted-foreground ${active ? "bg-crm-soft text-crm" : "text-foreground"}`}
             >
               <Icon className="h-5 w-5" /> {label}
             </button>
@@ -205,11 +245,20 @@ function Sidebar({ section, onChange }: { section: AdminSection; onChange: (sect
       </nav>
       <div className="mt-auto space-y-4">
         <span className="flex items-center gap-3 px-3"><CircleHelp className="h-5 w-5" /> Помощь</span>
-        <div className="flex items-center gap-3 border-t border-border px-2 pt-4">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-crm font-semibold text-crm-foreground">А</span>
-          <div>
-            <p className="font-semibold">Администратор</p>
-            <p className="text-xs text-crm">Мой аккаунт</p>
+        <div className="border-t border-border px-2 pt-4">
+          <p className="px-1 text-xs text-muted-foreground">Режим просмотра</p>
+          <div className="mt-2 space-y-1">
+            {ROLES.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onRoleChange(id)}
+                aria-pressed={role === id}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left font-medium ${role === id ? "bg-crm-soft text-crm" : "text-foreground"}`}
+              >
+                <Icon className="h-5 w-5" /> {label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -370,6 +419,7 @@ function Legend() {
 
 function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Booking; onClose: () => void; onCancel: () => void; onUpdate: (fn: (b: Booking) => Booking) => void; mobile?: boolean }) {
   const [method, setMethod] = useState<PaymentMethod>(b.paymentMethod ?? "terminal");
+  const [washer, setWasher] = useState<string | null>(b.washer ?? null);
   const sum = total(b);
   const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
   const StateIcon = TONE[state].Icon;
@@ -467,7 +517,7 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
           {b.wash === "done" && b.payment === "paid" && (
             <div className="rounded-lg bg-crm-ok p-4 text-crm-ok-foreground">
               <p className="flex items-center gap-2 font-semibold"><Check className="h-4 w-4" /> Оплачено</p>
-              <p className="mt-1">{METHOD_LABEL[b.paymentMethod!]} · {rub(sum)}</p>
+              <p className="mt-1">{METHOD_LABEL[b.paymentMethod!]} · {rub(sum)}{b.washer ? ` · ${b.washer}` : ""}</p>
             </div>
           )}
           {b.wash === "done" && b.payment !== "paid" && (
@@ -487,19 +537,40 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
                   </button>
                 ))}
               </div>
+              <p className="mt-4 text-base font-semibold">Мойщик</p>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {WASHERS.map((w) => (
+                  <button
+                    key={w}
+                    type="button"
+                    onClick={() => setWasher(w)}
+                    aria-pressed={washer === w}
+                    className={`relative rounded-lg border px-1 py-2.5 text-sm font-medium ${washer === w ? "border-2 border-crm bg-crm-soft text-crm" : "border-border"}`}
+                  >
+                    {washer === w && <Check className="absolute right-1 top-1 h-4 w-4 rounded-full bg-crm p-0.5 text-crm-foreground" />}
+                    {w}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                {washer ? `${washer} получит 30% — ${rub(Math.round(sum * WASHER_SHARE))}` : "Выберите мойщика: с его заказа считается 30%."}
+              </p>
               {method === "terminal" && (
                 <>
-                  <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "terminal"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Подтвердить оплату</button>
+                  <button type="button" disabled={!washer} onClick={() => onUpdate((x) => applyPayment(x, "terminal", washer ?? undefined))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Подтвердить оплату</button>
                   <p className="mt-2 text-center text-xs text-muted-foreground">Нажмите после успешной оплаты на терминале.</p>
                 </>
               )}
               {method === "cash" && (
-                <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "cash"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Подтвердить получение наличных</button>
+                <button type="button" disabled={!washer} onClick={() => onUpdate((x) => applyPayment(x, "cash", washer ?? undefined))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Подтвердить получение наличных</button>
               )}
               {method === "app" && (b.payment === "awaiting" ? (
-                <p className="mt-3 rounded-lg bg-crm-money p-3 text-center font-medium text-crm-money-foreground">Ожидает оплаты в приложении</p>
+                <>
+                  <p className="mt-3 rounded-lg bg-crm-money p-3 text-center font-medium text-crm-money-foreground">Ожидает оплаты в приложении</p>
+                  <button type="button" disabled={!washer} onClick={() => onUpdate((x) => receivePayment(x, washer ?? undefined))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Оплата поступила</button>
+                </>
               ) : (
-                <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "app"))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Выставить счёт</button>
+                <button type="button" onClick={() => onUpdate((x) => applyPayment(x, "app", washer ?? undefined))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Выставить счёт</button>
               ))}
             </>
           )}

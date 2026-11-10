@@ -28,6 +28,8 @@ export interface Booking {
   confirmed: boolean;
   payment: PaymentStatus;
   paymentMethod?: PaymentMethod;
+  /** Washer who took the order — chosen when the money is accepted. */
+  washer?: string;
 }
 
 export const SOURCE_LABEL: Record<BookingSource, string> = {
@@ -41,3 +43,6 @@ export const METHOD_LABEL: Record<PaymentMethod, string> = {
   cash: "Наличные",
   app: "В приложении",
 };
+
+/** Who is looking at the CRM: the manager runs the day, the owner also sees the money. */
+export type CrmRole = "admin" | "owner";
