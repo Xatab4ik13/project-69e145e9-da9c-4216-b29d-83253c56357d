@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, useState } from "react";
-import { Check, ChevronRight, Clock3, Coins, Search, Smartphone, Star, Users, WalletCards } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Check, ChevronLeft, ChevronRight, Clock3, Coins, Search, Smartphone, Star, Users, WalletCards } from "lucide-react";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CrmPagination } from "@/components/crm/CrmPagination";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { paginateClients } from "@/lib/crm/clients";
@@ -36,48 +36,48 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
   const selected = MOCK_LOYALTY_CLIENTS.find((client) => client.id === selectedId) ?? null;
 
   return (
-    <main className="min-w-0 flex-1 overflow-y-auto px-6 pb-5 pt-5">
+    <main className="min-w-0 flex-1 overflow-y-auto bg-crm-surface px-4 pb-5 pt-4 md:bg-background md:px-6 md:pb-5 md:pt-5">
       <div className="flex items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Лояльность</h1>
-          <p className="mt-1 text-muted-foreground">Бонусные счета клиентов и история операций</p>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Лояльность</h1>
+          <p className="mt-1 text-sm text-muted-foreground md:text-base">Бонусные счета клиентов и история операций</p>
         </div>
-        <span className="ml-auto rounded-lg bg-crm-soft px-3 py-2 text-crm">1 бонус = 1 ₽</span>
-        <AdminNotificationIndicator />
+        <span className="ml-auto hidden rounded-lg bg-crm-soft px-3 py-2 text-crm md:inline">1 бонус = 1 ₽</span>
+        <div className="hidden md:block"><AdminNotificationIndicator /></div>
       </div>
 
-      <section aria-label="Правила программы" className="mt-5 grid grid-cols-4 overflow-hidden rounded-xl border border-crm/20 bg-crm-soft">
+      <section aria-label="Правила программы" className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-crm/20 bg-crm/20 md:mt-5 md:grid-cols-4">
         {RULES.map((rule) => (
-          <div key={rule.value} className="border-r border-crm/15 px-4 py-3 last:border-r-0">
-            <div className="flex items-baseline gap-2 text-crm">
+          <div key={rule.value} className="bg-crm-soft px-3 py-3 md:px-4">
+            <div className="flex flex-col text-crm md:flex-row md:items-baseline md:gap-2">
               <span className="text-2xl font-bold tracking-tight">{rule.value}</span>
-              <span className="font-medium">{rule.text}</span>
+              <span className="mt-0.5 text-sm font-medium md:mt-0 md:text-base">{rule.text}</span>
             </div>
             <p className="mt-1 text-xs text-crm/75">{rule.note}</p>
           </div>
         ))}
       </section>
 
-      <section aria-label="Показатели лояльности" className="mt-4 grid grid-cols-4 gap-3">
+      <section aria-label="Показатели лояльности" className="mt-3 grid grid-cols-2 gap-2 md:mt-4 md:grid-cols-4 md:gap-3">
         <Metric Icon={Users} label="Клиентов" value={formatBonuses(metrics.clients)} />
         <Metric Icon={Smartphone} label="Кабинетов активно" value={formatBonuses(metrics.activated)} />
         <Metric Icon={WalletCards} label="Бонусов на балансах" value={formatBonuses(metrics.balance)} />
         <Metric Icon={Coins} label="Списано в ноябре" value={formatBonuses(metrics.redeemedThisMonth)} />
       </section>
 
-      <section className="mt-5 flex min-h-[520px] flex-col overflow-hidden rounded-xl border border-border">
-        <div className="flex items-center gap-3 border-b border-border p-3">
-          <label className="flex w-72 items-center gap-2 rounded-lg border border-border px-3 py-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
+      <section className="mt-4 flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:mt-5 md:min-h-[520px]">
+        <div className="flex flex-col gap-3 border-b border-border p-3 md:flex-row md:items-center">
+          <label className="flex min-h-12 w-full items-center gap-2 rounded-xl border border-border bg-background px-4 py-3 md:min-h-0 md:w-72 md:rounded-lg md:px-3 md:py-2">
+            <Search className="h-5 w-5 shrink-0 text-muted-foreground md:h-4 md:w-4" />
             <input
               value={query}
               onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Номер телефона"
               aria-label="Поиск клиента по номеру телефона"
-              className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
+              className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
             />
           </label>
-          <div className="ml-auto flex rounded-lg bg-muted p-0.5">
+          <div className="grid w-full grid-cols-3 gap-1 rounded-lg bg-muted p-1 md:ml-auto md:flex md:w-auto md:gap-0 md:p-0.5">
             {([
               ["all", "Все"], ["active", "В приложении"], ["inactive", "Не активирован"],
             ] as const).map(([value, label]) => (
@@ -85,7 +85,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
                 key={value}
                 type="button"
                 onClick={() => { setFilter(value); setPage(1); }}
-                className={`rounded-md px-3 py-1.5 font-medium ${filter === value ? "bg-background text-crm shadow-sm" : "text-muted-foreground"}`}
+                className={`min-h-11 whitespace-nowrap rounded-md px-2 py-2.5 text-sm font-medium md:min-h-0 md:px-3 md:py-1.5 ${filter === value ? "bg-background text-crm shadow-sm" : "text-muted-foreground"}`}
               >
                 {label}
               </button>
