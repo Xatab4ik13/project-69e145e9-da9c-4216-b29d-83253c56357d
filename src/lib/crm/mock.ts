@@ -1,0 +1,38 @@
+import type { Booking } from "./types";
+
+/** Demo data only — replace with API later. */
+export const DEMO_TODAY = "2026-11-11";
+export const DEMO_NOW_MIN = 16 * 60 + 55;
+export const WORKERS = ["Дмитрий", "Сергей", "Артём"];
+
+export const PACKAGES = [
+  { name: "Стандарт", price: 1200, duration: 40 },
+  { name: "Комфорт", price: 1600, duration: 50 },
+  { name: "Люкс", price: 1900, duration: 80 },
+];
+
+export const EXTRAS = [
+  { name: "Кварцевый воск", price: 600 },
+  { name: "Чернение резины", price: 300 },
+  { name: "Антидождь", price: 2100 },
+  { name: "Кондиционер кожи", price: 600 },
+  { name: "Пылесос багажника", price: 300 },
+];
+
+const h = (hh: number, mm = 0) => hh * 60 + mm;
+const pkg = (n: string) => {
+  const p = PACKAGES.find((x) => x.name === n)!;
+  return { name: `Комплекс «${p.name}»`, price: p.price };
+};
+
+export const MOCK_BOOKINGS: Booking[] = [
+  { id: "b1", date: DEMO_TODAY, box: 1, start: h(14), duration: 50, car: "Hyundai Solaris", carType: "Седан", client: "Ирина", source: "site", worker: "Сергей", packageName: "Комфорт", services: [pkg("Комфорт")], wash: "done", payment: "paid", paymentMethod: "terminal" },
+  { id: "b2", date: DEMO_TODAY, box: 1, start: h(15), duration: 40, car: "Renault Logan", carType: "Седан", client: "Павел", source: "admin", worker: "Сергей", packageName: "Стандарт", services: [pkg("Стандарт")], wash: "done", payment: "paid", paymentMethod: "cash" },
+  { id: "b3", date: DEMO_TODAY, box: 1, start: h(16), duration: 50, car: "Kia Rio", carType: "Седан", client: "Алексей", source: "app", worker: "Дмитрий", packageName: "Комфорт", services: [pkg("Комфорт"), { name: "Кварцевый воск", price: 600 }, { name: "Чернение резины", price: 300 }], wash: "done", payment: "unpaid" },
+  { id: "b4", date: DEMO_TODAY, box: 1, start: h(17, 15), duration: 40, car: "Lada Vesta", carType: "Седан", client: "Марина", source: "site", worker: "Дмитрий", packageName: "Стандарт", services: [pkg("Стандарт")], wash: "scheduled", payment: "unpaid" },
+  { id: "b5", date: DEMO_TODAY, box: 2, start: h(14, 30), duration: 50, car: "Skoda Rapid", carType: "Лифтбек", client: "Олег", source: "site", worker: "Артём", packageName: "Комфорт", services: [pkg("Комфорт")], wash: "done", payment: "paid", paymentMethod: "terminal" },
+  { id: "b6", date: DEMO_TODAY, box: 2, start: h(16), duration: 80, car: "Toyota Camry", carType: "Седан", client: "Виктор", source: "app", worker: "Артём", packageName: "Люкс", services: [pkg("Люкс")], wash: "in_progress", payment: "unpaid" },
+  { id: "b7", date: DEMO_TODAY, box: 2, start: h(18), duration: 40, car: "Renault Sandero", carType: "Хэтчбек", client: "Наталья", source: "admin", worker: "Артём", packageName: "Стандарт", services: [pkg("Стандарт")], wash: "scheduled", payment: "unpaid" },
+  { id: "b8", date: "2026-11-12", box: 1, start: h(11), duration: 50, car: "Volkswagen Polo", carType: "Седан", client: "Денис", source: "app", worker: "Дмитрий", packageName: "Комфорт", services: [pkg("Комфорт")], wash: "scheduled", payment: "unpaid" },
+  { id: "b9", date: "2026-11-10", box: 2, start: h(12), duration: 40, car: "Kia Ceed", carType: "Хэтчбек", client: "Юлия", source: "site", worker: "Сергей", packageName: "Стандарт", services: [pkg("Стандарт")], wash: "done", payment: "paid", paymentMethod: "cash" },
+];

@@ -30,6 +30,14 @@
  */
 
 @theme inline {
+  --color-crm: var(--crm);
+  --color-crm-foreground: var(--crm-foreground);
+  --color-crm-soft: var(--crm-soft);
+  --color-crm-surface: var(--crm-surface);
+  --color-crm-warn: var(--crm-warn);
+  --color-crm-warn-foreground: var(--crm-warn-foreground);
+  --color-crm-ok: var(--crm-ok);
+  --color-crm-ok-foreground: var(--crm-ok-foreground);
   --font-sans: "Inter", system-ui, sans-serif;
   --font-display: "Oswald", "Arial Narrow", sans-serif;
   --color-lime: var(--lime);
@@ -79,6 +87,14 @@
 :root {
   --radius: 0.625rem;
   --lime: oklch(0.92 0.22 125);
+  --crm: oklch(0.45 0.09 250);
+  --crm-foreground: oklch(0.99 0 0);
+  --crm-soft: oklch(0.94 0.025 250);
+  --crm-surface: oklch(0.975 0.004 250);
+  --crm-warn: oklch(0.95 0.05 75);
+  --crm-warn-foreground: oklch(0.45 0.11 60);
+  --crm-ok: oklch(0.95 0.04 150);
+  --crm-ok-foreground: oklch(0.4 0.09 150);
   --lime-foreground: oklch(0.15 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.15 0 0);
