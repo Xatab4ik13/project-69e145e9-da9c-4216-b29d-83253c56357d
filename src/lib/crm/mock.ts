@@ -81,7 +81,7 @@ export const HISTORY_BOOKINGS: Booking[] = (() => {
   const all: Booking[] = [...MOCK_BOOKINGS];
   for (let date = "2026-10-01"; date < DEMO_TODAY; date = addDays(date, 1)) {
     const weekend = [0, 6].includes(new Date(date + "T12:00:00").getDay());
-    const count = (weekend ? 12 : 9) + Math.floor(r() * 4);
+    const count = (weekend ? 13 : 10) + Math.floor(r() * 4);
     for (let i = 0; i < count; i++) {
       const box = (r() < 0.5 ? 1 : 2) as 1 | 2;
       const start = OPEN_MIN + Math.floor(r() * ((CLOSE_MIN - OPEN_MIN) / 30)) * 30;
