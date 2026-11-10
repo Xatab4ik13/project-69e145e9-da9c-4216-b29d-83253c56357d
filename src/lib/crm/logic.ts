@@ -62,6 +62,41 @@ export function applyPayment(b: Booking, method: PaymentMethod): Booking {
   return { ...b, payment: "paid", paymentMethod: method };
 }
 
+/** One state per booking — drives the color of its card, badge and panel line. */
+export type BookingState = "call" | "unconfirmed" | "confirmed" | "working" | "ready" | "awaiting" | "finished";
+
+export function bookingState(b: Booking, today: string, nowMin: number): BookingState {
+  if (b.wash === "done") {
+    if (b.payment === "paid") return "finished";
+    if (b.payment === "awaiting") return "awaiting";
+    return "ready";
+  }
+  if (b.wash === "in_progress") return "working";
+  if (needsCall(b, today, nowMin)) return "call";
+  return b.confirmed ? "confirmed" : "unconfirmed";
+}
+
+export const STATE_LABEL: Record<BookingState, string> = {
+  call: "Позвонить",
+  unconfirmed: "Не подтверждена",
+  confirmed: "Подтверждена",
+  working: "В работе",
+  ready: "Готова",
+  awaiting: "Ожидает оплаты",
+  finished: "Завершена",
+};
+
+/** What the admin still has to do for this booking, empty when nothing is left. */
+export const STATE_ACTION: Record<BookingState, string> = {
+  call: "Позвонить клиенту",
+  unconfirmed: "Ждём подтверждения",
+  confirmed: "",
+  working: "Идёт мойка",
+  ready: "Забрать деньги",
+  awaiting: "Ждём оплату в приложении",
+  finished: "",
+};
+
 export function statusLabel(b: Booking): string | null {
   if (b.wash === "done" && b.payment === "paid") return "Завершена";
   if (b.wash === "done" && b.payment === "awaiting") return "Ожидает оплаты";
