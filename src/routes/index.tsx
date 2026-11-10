@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, ArrowUp, ArrowUpRight, Check, Clock, Copy, CornerUpRight, MapPin, Phone, Plus } from "lucide-react";
 import imgMap from "@/assets/parking-map.webp.asset.json";
-import imgParkCar from "@/assets/parking-car.webp.asset.json";
+import imgParkCar from "@/assets/parking-car-full.webp.asset.json";
 
 const ADDRESS = "Санкт-Петербург, проспект Большевиков, 18к2";
 const PHONE = "+7 (904) 511-73-96";
@@ -41,11 +41,7 @@ function Contacts() {
               </button>
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-4">
-            <img src={imgParkCar.url} alt="Автомобиль у метки паркинга" width={800} height={381} loading="lazy" decoding="async" className="w-[38%]" />
-            <span className="flex h-12 w-12 items-center justify-center rounded-lg border-[3px] border-foreground font-display text-3xl">P</span>
-            <span className="btn-lime flex h-12 w-12 items-center justify-center rounded-lg font-display text-3xl">5</span>
-          </div>
+          <img src={imgParkCar.url} alt="Автомобиль у метки паркинга, 5-й уровень" width={1000} height={312} loading="lazy" decoding="async" className="mt-4 w-1/2" />
         </div>
         <div>
           <p className="font-display text-sm uppercase tracking-[0.3em]">Адрес</p>
