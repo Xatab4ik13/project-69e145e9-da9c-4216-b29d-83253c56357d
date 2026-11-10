@@ -139,7 +139,7 @@ type AdminSection = "schedule" | "clients" | "services" | "loyalty";
 function Sidebar({ section, onChange }: { section: AdminSection; onChange: (section: AdminSection) => void }) {
   const items: { label: string; icon: typeof CalendarDays; target?: AdminSection }[] = [
     { label: "Расписание", icon: CalendarDays, target: "schedule" },
-    { label: "Клиенты", icon: User },
+    { label: "Клиенты", icon: User, target: "clients" },
     { label: "Лояльность", icon: Star, target: "loyalty" },
     { label: "Уведомления", icon: Bell },
     { label: "Услуги", icon: Wrench, target: "services" },
