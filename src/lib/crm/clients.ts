@@ -130,6 +130,21 @@ export function filterClients(
   });
 }
 
+export const CLIENTS_PER_PAGE = 8;
+
+export function paginateClients(clients: CrmClient[], requestedPage: number) {
+  const pageCount = Math.max(1, Math.ceil(clients.length / CLIENTS_PER_PAGE));
+  const currentPage = Math.min(Math.max(1, requestedPage), pageCount);
+  const offset = (currentPage - 1) * CLIENTS_PER_PAGE;
+  return {
+    items: clients.slice(offset, offset + CLIENTS_PER_PAGE),
+    pageCount,
+    currentPage,
+    start: clients.length === 0 ? 0 : offset + 1,
+    end: Math.min(offset + CLIENTS_PER_PAGE, clients.length),
+  };
+}
+
 export function carClassRoman(carClass: CarClass): string {
   return (["", "I", "II", "III", "IV"] as const)[carClass];
 }
