@@ -143,6 +143,8 @@ export function AdminSchedule() {
         />
       )}
 
+      {section === "dashboard" && <MobileDashboard bookings={financeBookings} today={DEMO_TODAY} />}
+
       {section === "schedule" && selected && (
         <OrderPanel
           key={selected.id}
@@ -183,15 +185,41 @@ export function AdminSchedule() {
   );
 }
 
-type AdminSection = "schedule" | "clients" | "services" | "loyalty";
+type AdminSection = "schedule" | "clients" | "services" | "loyalty" | "dashboard" | "finance" | "notifications";
+type CrmRole = "admin" | "owner";
 
-function Sidebar({ section, onChange }: { section: AdminSection; onChange: (section: AdminSection) => void }) {
-  const items: { label: string; icon: typeof CalendarDays; target?: AdminSection }[] = [
+/** Owner sees everything the manager sees, plus his own screens (Финансы and Уведомления — soon). */
+const SECTION_ITEMS: Record<CrmRole, { label: string; icon: typeof CalendarDays; target?: AdminSection }[]> = {
+  admin: [
     { label: "Расписание", icon: CalendarDays, target: "schedule" },
     { label: "Клиенты", icon: User, target: "clients" },
     { label: "Лояльность", icon: Star, target: "loyalty" },
     { label: "Услуги", icon: Wrench, target: "services" },
-  ];
+  ],
+  owner: [
+    { label: "Дашборд", icon: LayoutDashboard, target: "dashboard" },
+    { label: "Расписание", icon: CalendarDays, target: "schedule" },
+    { label: "Клиенты", icon: User, target: "clients" },
+    { label: "Лояльность", icon: Star, target: "loyalty" },
+    { label: "Услуги", icon: Wrench, target: "services" },
+    { label: "Финансы", icon: Wallet },
+    { label: "Уведомления", icon: Bell },
+  ],
+};
+
+const ROLES: { id: CrmRole; label: string; icon: typeof User }[] = [
+  { id: "admin", label: "Управляющий", icon: User },
+  { id: "owner", label: "Владелец", icon: Building2 },
+];
+
+function Sidebar({
+  section, onChange, role, onRoleChange,
+}: {
+  section: AdminSection;
+  onChange: (section: AdminSection) => void;
+  role: CrmRole;
+  onRoleChange: (role: CrmRole) => void;
+}) {
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r border-border bg-crm-surface px-3 py-5 md:flex">
       <div className="px-2">
@@ -199,16 +227,17 @@ function Sidebar({ section, onChange }: { section: AdminSection; onChange: (sect
         <p className="mt-3 text-muted-foreground">Управление мойкой</p>
       </div>
       <nav className="mt-6 space-y-1">
-        {items.map(({ label, icon: Icon, target }) => {
+        {SECTION_ITEMS[role].map(({ label, icon: Icon, target }) => {
           const active = target === section;
           return (
             <button
               key={label}
               type="button"
               disabled={!target}
+              title={target ? undefined : "Скоро"}
               onClick={() => target && onChange(target)}
               aria-current={active ? "page" : undefined}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left font-medium disabled:cursor-default ${active ? "bg-crm-soft text-crm" : "text-foreground"}`}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left font-medium disabled:cursor-default disabled:text-muted-foreground ${active ? "bg-crm-soft text-crm" : "text-foreground"}`}
             >
               <Icon className="h-5 w-5" /> {label}
             </button>
@@ -217,11 +246,20 @@ function Sidebar({ section, onChange }: { section: AdminSection; onChange: (sect
       </nav>
       <div className="mt-auto space-y-4">
         <span className="flex items-center gap-3 px-3"><CircleHelp className="h-5 w-5" /> Помощь</span>
-        <div className="flex items-center gap-3 border-t border-border px-2 pt-4">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-crm font-semibold text-crm-foreground">А</span>
-          <div>
-            <p className="font-semibold">Администратор</p>
-            <p className="text-xs text-crm">Мой аккаунт</p>
+        <div className="border-t border-border px-2 pt-4">
+          <p className="px-1 text-xs text-muted-foreground">Режим просмотра</p>
+          <div className="mt-2 space-y-1">
+            {ROLES.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onRoleChange(id)}
+                aria-pressed={role === id}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left font-medium ${role === id ? "bg-crm-soft text-crm" : "text-foreground"}`}
+              >
+                <Icon className="h-5 w-5" /> {label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
