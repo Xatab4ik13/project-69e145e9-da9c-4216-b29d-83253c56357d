@@ -229,7 +229,7 @@ function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; 
       <p className="truncate font-semibold">{b.car}</p>
       {h > 60 && <p className="truncate text-xs">{b.packageName}{extras > 0 ? ` + ${extras} доп${extras > 1 && extras < 5 ? "а" : extras >= 5 ? "ов" : ""}` : ""}</p>}
       {h > 70 && (
-        <div className="mt-auto flex w-full items-center gap-1.5 pb-0.5">
+        <div className="mt-1.5 flex w-full items-center gap-1.5">
           {selected && h > 90 && <span className="mr-auto font-bold">{rub(total(b))}</span>}
           <span className={`rounded bg-muted px-1.5 py-0.5 text-xs ${selected ? "" : "mr-auto"}`}>{SOURCE_LABEL[b.source]}</span>
           {status && !finished && (
