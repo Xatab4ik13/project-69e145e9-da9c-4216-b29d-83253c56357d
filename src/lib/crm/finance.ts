@@ -22,10 +22,14 @@ export interface ExpenseItem {
 /** Stable monthly articles. Each month's plan is booked in full on the 1st, so the owner sees it up front. */
 export const MONTHLY_EXPENSES: ExpenseItem[] = [
   { id: "rent", name: "Аренда", monthly: 97955.5 },
-  { id: "utilities", name: "Коммуналка", monthly: 24851 },
   { id: "accounting", name: "Бухгалтерия", monthly: 11000 },
   { id: "bank", name: "Банковское обслуживание", monthly: 950 },
-  { id: "supplies", name: "Химия и расходники", monthly: 20000 },
+];
+
+/** Costs with no plan: they count only when the owner enters the paid bill, on its date. */
+export const VARIABLE_ARTICLES = [
+  { id: "utilities", name: "Коммуналка" },
+  { id: "supplies", name: "Химия и расходники" },
 ];
 
 export const monthlyFixedTotal = (items: ExpenseItem[] = MONTHLY_EXPENSES) =>
@@ -87,10 +91,10 @@ export function fixedRowsForPeriod(p: Period, ops: FinOp[] = [], overrides: Plan
     if (d.endsWith("-01"))
       for (const r of articleStatus(monthOf(d), ops, overrides)) rows.set(r.name, (rows.get(r.name) ?? 0) + articleCost(r));
   }
-  const other = ops
-    .filter((o) => o.kind === "expense" && (!o.article || o.article === "other") && o.date >= p.from && o.date <= p.to)
-    .reduce((s, o) => s + o.amount, 0);
-  if (other) rows.set("Прочие расходы", other);
+  const stable = new Set(MONTHLY_EXPENSES.map((i) => i.id));
+  for (const o of ops)
+    if (o.kind === "expense" && !(o.article && stable.has(o.article)) && o.date >= p.from && o.date <= p.to)
+      rows.set(o.name, (rows.get(o.name) ?? 0) + o.amount);
   return [...rows].map(([name, value]) => ({ name, value }));
 }
 
