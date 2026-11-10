@@ -371,11 +371,3 @@ function RevenueChart({ summary }: { summary: FinanceSummary }) {
   );
 }
 
-function RuleLine({ text }: { text: string }) {
-  return (
-    <li className="flex gap-2">
-      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-crm" />
-      <span className="text-muted-foreground">{text}</span>
-    </li>
-  );
-}
