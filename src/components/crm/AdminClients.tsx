@@ -161,7 +161,7 @@ export function AdminClients({
         </section>
 
         {selected && (
-          <aside className="flex w-[380px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
+          <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card min-[1800px]:w-[380px]">
             <div className="border-b border-border p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
