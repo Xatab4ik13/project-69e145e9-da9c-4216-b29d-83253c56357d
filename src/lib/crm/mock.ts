@@ -52,8 +52,8 @@ const HISTORY_CARS: [string, string][] = [
   ["Kia Sorento", "Внедорожник"], ["Hyundai H1", "Минивэн"], ["Volkswagen Touareg", "Внедорожник"],
 ];
 
-/** 110 phones; bookings are drawn with a bias to the first ones — those are the regulars. */
-const HISTORY_PHONES = Array.from({ length: 110 }, (_, i) => {
+/** 180 phones; bookings are drawn with a mild bias to the first ones — those are the regulars. */
+const HISTORY_PHONES = Array.from({ length: 180 }, (_, i) => {
   const a = 10 + ((i * 37) % 90);
   const b = 100 + ((i * 73) % 900);
   const c = 10 + ((i * 17) % 90);
@@ -104,7 +104,7 @@ export const HISTORY_BOOKINGS: Booking[] = (() => {
       const mr = r();
       const paymentMethod: PaymentMethod =
         source === "app" ? (mr < 0.75 ? "app" : mr < 0.9 ? "terminal" : "cash") : mr < 0.5 ? "terminal" : "cash";
-      const phone = HISTORY_PHONES[Math.floor(Math.pow(r(), 1.6) * HISTORY_PHONES.length)]!;
+      const phone = HISTORY_PHONES[Math.floor(Math.pow(r(), 1.35) * HISTORY_PHONES.length)]!;
       const [car, carType] = HISTORY_CARS[Number(phone.slice(-3)) % HISTORY_CARS.length]!;
       all.push({
         id: `h-${date}-${i}`,
