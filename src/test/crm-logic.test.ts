@@ -64,8 +64,7 @@ describe("booking identity", () => {
   });
 });
 
-import { autoStart, cancelBooking, confirmBooking, needsCall } from "@/lib/crm/logic";
-describe("confirmation", () => {
+import { autoStart, cancelBooking, confirmBooking, needsCall } from "@/lib/crm/logic";describe("confirmation", () => {
   const lada = MOCK_BOOKINGS.find((b) => b.id === "b4")!; // 17:00, unconfirmed
   it("unconfirmed booking within 15 min needs a call", () => {
     expect(needsCall(lada, lada.date, 16 * 60 + 45)).toBe(true);
