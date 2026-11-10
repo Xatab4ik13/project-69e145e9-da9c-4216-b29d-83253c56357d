@@ -42,7 +42,7 @@ function Contacts() {
             </div>
           </div>
           <div className="mt-4 flex items-center gap-4">
-            <img src={imgParkCar.url} alt="Автомобиль у метки паркинга" width={800} height={381} loading="lazy" decoding="async" className="w-3/5" />
+            <img src={imgParkCar.url} alt="Автомобиль у метки паркинга" width={800} height={381} loading="lazy" decoding="async" className="w-[38%]" />
             <span className="flex h-12 w-12 items-center justify-center rounded-lg border-[3px] border-foreground font-display text-3xl">P</span>
             <span className="btn-lime flex h-12 w-12 items-center justify-center rounded-lg font-display text-3xl">5</span>
           </div>
