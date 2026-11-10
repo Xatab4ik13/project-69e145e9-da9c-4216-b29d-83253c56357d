@@ -362,12 +362,6 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
         <div className="mt-4 space-y-2 border-t border-border pt-4">
           <p><span className="text-muted-foreground">Телефон:</span> {b.phone ? <a href={`tel:+7${b.phone}`} className="text-crm">{fmtPhone(b.phone)}</a> : <span className="text-muted-foreground">не указан</span>}</p>
           <p><span className="text-muted-foreground">Источник:</span> {SOURCE_LABEL[b.source].toLowerCase()}</p>
-          <label className="flex items-center gap-2">
-            <span className="text-muted-foreground">Исполнитель:</span>
-            <select value={b.worker} onChange={(e) => onUpdate((x) => ({ ...x, worker: e.target.value }))} className="rounded-md border border-border bg-background px-2 py-1">
-              {WORKERS.map((w) => <option key={w}>{w}</option>)}
-            </select>
-          </label>
         </div>
 
         <div className="mt-4 border-t border-border pt-4">
@@ -385,7 +379,6 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
             <span className="text-lg font-semibold">К оплате</span>
             <span className="text-2xl font-bold">{rub(sum)}</span>
           </div>
-          <button type="button" className="mt-1 text-crm hover:underline">Бонусы и купоны →</button>
         </div>
 
         <div className="mt-4 border-t border-border pt-4">
@@ -495,7 +488,7 @@ function NewBookingDialog({
     if (!picked) return setError("Выберите свободное время.");
     onCreate({
       id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: initial?.carType ?? "Седан",
-      phone, source: "admin", worker: WORKERS[0] ?? "", packageName: pkg.name, services,
+      phone, source: "admin", packageName: pkg.name, services,
       wash: "scheduled", confirmed: false, payment: "unpaid",
     });
   };
