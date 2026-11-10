@@ -469,7 +469,7 @@ function Configurator() {
         </div>
         <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs">
           <p>Точная стоимость после выбора автомобиля. Затем — дата и время.</p>
-          <a href="#" className="inline-flex items-center gap-1 underline underline-offset-4">Все дополнительные услуги <ArrowRight className="h-3 w-3" /></a>
+          <a href="#" className="inline-flex items-center gap-1 underline underline-offset-4">Все дополнительные услуги</a>
         </div>
       </section>
     </>
