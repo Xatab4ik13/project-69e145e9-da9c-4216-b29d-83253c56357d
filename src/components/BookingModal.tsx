@@ -202,7 +202,7 @@ export function BookingModal({
                   <p className="text-sm">{t}</p>
                 </div>
               ))}
-              <p className="mt-3 border-t border-foreground/20 pt-3 text-sm">Бонусами можно оплатить до 20% следующей мойки.</p>
+              <p className="mt-3 border-t border-foreground/20 pt-3 text-sm">Бонусами можно оплатить до 20% мойки.</p>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <AppStoreButton />
                 <GooglePlayButton />
@@ -290,7 +290,7 @@ export function BookingModal({
                       <p className="text-sm leading-tight">приветственных бонусов<br />после регистрации —<br />сразу на мойку</p>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm text-muted-foreground">Бонусами можно оплатить до 20% следующей мойки.</p>
+                  <p className="mt-3 text-sm text-muted-foreground">Бонусами можно оплатить до 20% мойки.</p>
                   <div className="mt-3 flex flex-wrap gap-3">
                     <AppStoreButton />
                     <GooglePlayButton />
