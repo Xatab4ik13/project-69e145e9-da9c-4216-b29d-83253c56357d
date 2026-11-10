@@ -6,10 +6,13 @@ import type { CarClass, CatalogService, ServiceCellField } from "@/lib/crm/servi
 
 const STORAGE_KEY = "aquarius-crm-service-catalog-v1";
 const ROMAN_CLASS: Record<CarClass, string> = { 1: "I", 2: "II", 3: "III", 4: "IV" };
+const NUMBER_INPUT = "shrink-0 rounded-md border border-border bg-background px-2 py-1.5 text-right tabular-nums outline-none focus:border-crm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+
+type SaveStatus = "idle" | "dirty" | "saved" | "error";
 
 export function AdminServices() {
   const [catalog, setCatalog] = useState<CatalogService[]>(DEFAULT_SERVICE_CATALOG);
-  const [loaded, setLoaded] = useState(false);
+  const [status, setStatus] = useState<SaveStatus>("idle");
 
   useEffect(() => {
     try {
@@ -21,30 +24,42 @@ export function AdminServices() {
     } catch {
       // A broken local draft must not prevent the default price list from opening.
     }
-    setLoaded(true);
   }, []);
-
-  useEffect(() => {
-    if (loaded) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(catalog));
-  }, [catalog, loaded]);
 
   const edit = (serviceId: string, classId: CarClass, field: ServiceCellField, raw: string) => {
     const value = raw.trim() === "" ? null : Number(raw);
     setCatalog((current) => updateServiceCell(current, serviceId, classId, field, value === null || Number.isFinite(value) ? value : null));
+    setStatus("dirty");
   };
 
+  const save = () => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(catalog));
+      setStatus("saved");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  const statusText = {
+    idle: "Цены и время можно изменить вручную.",
+    dirty: "Есть несохранённые изменения.",
+    saved: "Изменения сохранены.",
+    error: "Не удалось сохранить. Попробуйте ещё раз.",
+  }[status];
+
   return (
-    <main className="min-w-0 flex-1 overflow-y-auto px-6 pb-6 pt-5">
+    <main className="flex min-w-0 flex-1 flex-col overflow-hidden px-6 pb-4 pt-5">
       <h1 className="text-3xl font-bold tracking-tight">Услуги</h1>
       <p className="mt-1 text-muted-foreground">Редактируемый прайс по классам автомобилей</p>
 
-      <div className="mt-4 rounded-xl border border-crm/20 bg-crm-soft px-4 py-3 text-crm">
+      <div className="mt-4 shrink-0 rounded-xl border border-crm/20 bg-crm-soft px-4 py-3 text-crm">
         Цены указаны в рублях, время — в минутах. На сайте показывается цена I класса с пометкой «от».
       </div>
 
-      <div className="mt-5 overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[1120px] border-collapse text-left">
-          <thead className="bg-crm-surface text-muted-foreground">
+      <div className="mt-5 min-h-0 flex-1 overflow-auto rounded-xl border border-border">
+        <table className="w-full min-w-[1120px] table-fixed border-collapse text-left">
+          <thead className="sticky top-0 z-10 bg-crm-surface text-muted-foreground">
             <tr>
               <th className="w-64 px-4 py-3 font-medium">Услуга</th>
               {CAR_CLASSES.map((classId) => (
@@ -71,7 +86,7 @@ export function AdminServices() {
                     return (
                       <td key={classId} className="px-3 py-2.5">
                         <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-1.5">
+                          <label className="flex shrink-0 items-center gap-1.5">
                             <span className="sr-only">{service.name}, {ROMAN_CLASS[classId]} класс, цена</span>
                             <input
                               type="number"
@@ -80,11 +95,11 @@ export function AdminServices() {
                               aria-label={`${service.name}, ${ROMAN_CLASS[classId]} класс, цена`}
                               value={cell.price ?? ""}
                               onChange={(event) => edit(service.id, classId, "price", event.target.value)}
-                              className="w-24 rounded-md border border-border bg-background px-2 py-1.5 text-right font-semibold outline-none focus:border-crm"
+                              className={`${NUMBER_INPUT} w-24 font-semibold`}
                             />
                             <span className="text-muted-foreground">₽</span>
                           </label>
-                          <label className="flex items-center gap-1.5">
+                          <label className="flex shrink-0 items-center gap-1.5">
                             <span className="sr-only">{service.name}, {ROMAN_CLASS[classId]} класс, время в минутах</span>
                             <input
                               type="number"
@@ -93,7 +108,7 @@ export function AdminServices() {
                               aria-label={`${service.name}, ${ROMAN_CLASS[classId]} класс, время в минутах`}
                               value={cell.minutes ?? ""}
                               onChange={(event) => edit(service.id, classId, "minutes", event.target.value)}
-                              className="w-16 rounded-md border border-border bg-background px-2 py-1.5 text-right outline-none focus:border-crm"
+                              className={`${NUMBER_INPUT} w-16`}
                             />
                             <span className="text-xs text-muted-foreground">мин</span>
                           </label>
@@ -108,7 +123,17 @@ export function AdminServices() {
         </table>
       </div>
 
-      <p className="mt-4 text-muted-foreground">Изменения сохраняются автоматически в этом браузере.</p>
+      <div className="mt-3 flex shrink-0 items-center justify-between gap-4 rounded-xl border border-border bg-background px-4 py-3">
+        <p className={`text-sm ${status === "error" ? "text-destructive" : "text-muted-foreground"}`} aria-live="polite">{statusText}</p>
+        <button
+          type="button"
+          onClick={save}
+          disabled={status === "idle" || status === "saved"}
+          className="w-36 shrink-0 rounded-lg bg-crm px-5 py-2.5 font-semibold text-crm-foreground disabled:cursor-default disabled:opacity-50"
+        >
+          {status === "saved" ? "Сохранено" : "Сохранить"}
+        </button>
+      </div>
     </main>
   );
 }
