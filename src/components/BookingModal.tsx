@@ -195,7 +195,7 @@ export function BookingModal({
               <p className="font-display text-3xl uppercase leading-tight">Aquarius в вашем телефоне</p>
               <p className="mt-1">Повторяйте запись и копите бонусы.</p>
               <div className="my-4 min-h-[200px]" aria-hidden />
-              {[["5%", "бонусами с оплаты"], ["200", "бонусов после первого оплаченного визита"]].map(([v, t]) => (
+              {[["5%", "бонусами с оплаты"], ["200", "приветственных бонусов после регистрации — можно сразу оплатить мойку"]].map(([v, t]) => (
                 <div key={v} className="flex items-center gap-4 py-1">
                   <p className="w-24 font-display text-4xl">{v}</p>
                   <span className="h-10 border-l border-foreground/30" />
@@ -287,7 +287,7 @@ export function BookingModal({
                     <span className="h-12 border-l border-foreground/30" />
                     <div className="flex items-center gap-3">
                       <p className="font-display text-4xl">200</p>
-                      <p className="text-sm leading-tight">бонусов после<br />первого оплаченного<br />визита</p>
+                      <p className="text-sm leading-tight">приветственных бонусов<br />после регистрации —<br />сразу на мойку</p>
                     </div>
                   </div>
                   <p className="mt-3 text-sm text-muted-foreground">Бонусами можно оплатить до 20% следующей мойки.</p>
