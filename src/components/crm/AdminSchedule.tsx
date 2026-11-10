@@ -244,8 +244,8 @@ function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; 
       className={`absolute inset-x-2 flex flex-col justify-start overflow-hidden rounded-lg border px-3 py-1 text-left leading-tight transition-colors ${tone.card} ${selected ? "z-[5] ring-2 ring-crm ring-offset-2 ring-offset-background" : ""}`}
       style={{ top: (b.start - OPEN_MIN) * PX_PER_MIN + 1, height: h - 2 }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="font-semibold">{fmtTime(b.start)} – {fmtTime(b.start + b.duration)}</span>
+      <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
+        <span className="shrink-0 whitespace-nowrap font-semibold">{fmtTime(b.start)} – {fmtTime(b.start + b.duration)}</span>
         {h > 45 && (
           <span className={`flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold ${tone.badge}`}>
             <Icon className="h-3 w-3" />{STATE_LABEL[state]}
@@ -291,7 +291,7 @@ function OrderPanel({ b, onClose, onCancel, onUpdate }: { b: Booking; onClose: (
   const sum = total(b);
   const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
   const StateIcon = TONE[state].Icon;
-  const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : b.confirmed ? "Подтверждена" : "Не подтверждена";
+  const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : state === "call" ? "Позвонить" : b.confirmed ? "Подтверждена" : "Не подтверждена";
   const payLabel = b.payment === "paid" ? "Оплачено" : b.payment === "awaiting" ? "Ожидает оплаты" : "Не оплачено";
   const washTone =
     b.wash === "done" ? "bg-crm-ok text-crm-ok-foreground"
