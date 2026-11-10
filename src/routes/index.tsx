@@ -183,6 +183,7 @@ export const Route = createFileRoute("/")({
 const nav = ["Услуги", "Приложение", "Как проехать"];
 
 function Index() {
+  const [headerBooking, setHeaderBooking] = useState(false);
   return (
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-6xl items-center justify-between gap-6 border-b border-border px-6 py-3">
@@ -197,9 +198,10 @@ function Index() {
           ))}
         </nav>
         <div className="flex items-center gap-6">
-          <a href="#" className="btn-lime rounded-lg px-5 py-2.5 text-sm">
+          <button type="button" onClick={() => setHeaderBooking(true)} className="btn-lime rounded-lg px-5 py-2.5 text-sm">
             Записаться
-          </a>
+          </button>
+          <HeaderBooking open={headerBooking} onOpenChange={setHeaderBooking} />
         </div>
       </header>
 
@@ -428,5 +430,159 @@ function Configurator() {
         </div>
       </section>
     </>
+  );
+}
+
+function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const [stage, setStage] = useState<"pkg" | "care" | "rest">("pkg");
+  const [selected, setSelected] = useState<number | null>(null);
+  const [added, setAdded] = useState<string[]>([]);
+  const [phase, setPhase] = useState<string | null>(null);
+
+  const reset = () => { setStage("pkg"); setSelected(null); setAdded([]); setPhase(null); };
+  const close = () => { onOpenChange(false); setTimeout(reset, 300); };
+
+  const pkg = packages[selected ?? 0] ?? packages[0]!;
+  const chosen = care.filter((c) => added.includes(c.id));
+  const ph = phases.find((p) => p.id === phase);
+  const total = pkg.price + chosen.reduce((a, c) => a + c.price, 0) + (ph?.price ?? 0);
+  const extra = chosen.reduce((a, c) => a + c.extra, 0);
+  const [tMin, tMax] = [pkg.time[0] + extra, pkg.time[1] + extra];
+  const toggle = (id: string) => setAdded((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
+
+  if (stage === "rest") {
+    return (
+      <BookingModal
+        open={open}
+        onOpenChange={(o) => (o ? onOpenChange(o) : close())}
+        onBack={() => setStage("care")}
+        pkgName={pkg.name}
+        extras={[...(ph ? [ph.label] : []), ...chosen.map((c) => c.name)]}
+        basePrice={total}
+        time={[tMin, tMax]}
+      />
+    );
+  }
+
+  const steps = ["Комплекс", "Уход", "Автомобиль и время", "Контакты"];
+  const cur = stage === "pkg" ? 0 : 1;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
+      <DialogContent className="max-h-[95vh] max-w-4xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden">
+        <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6">
+          <X className="h-7 w-7" />
+        </button>
+        <div className="flex items-center gap-4">
+          <img src="/apple-touch-icon.png" alt="" width={64} height={64} className="h-16 w-16" />
+          <DialogTitle className="font-display text-4xl uppercase sm:text-5xl">Запись на мойку</DialogTitle>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-6 text-lg">
+          {steps.map((s, i) => (
+            <span key={s} className="flex items-center gap-6">
+              {i > 0 && <ChevronRight className="mb-2 h-5 w-5" />}
+              <button
+                type="button"
+                disabled={i !== 0 || cur === 0}
+                onClick={() => setStage("pkg")}
+                className={`flex items-center gap-2 pb-2 ${i === cur ? "border-b-4 border-lime font-semibold" : "text-muted-foreground"}`}
+              >
+                {i < cur && <Check className="h-5 w-5 text-lime" strokeWidth={3} />}
+                {s}
+              </button>
+            </span>
+          ))}
+        </div>
+
+        {stage === "pkg" ? (
+          <>
+            <h2 className="mt-4 font-display text-4xl uppercase sm:text-5xl">Выберите комплекс</h2>
+            <div className="mt-2 grid gap-4 md:grid-cols-3">
+              {packages.map((p, i) => (
+                <div key={p.name} className="flex flex-col rounded-xl border border-border p-5 shadow-sm">
+                  <h3 className="font-display text-3xl uppercase">{p.name}</h3>
+                  <p className="font-display text-3xl">от {rub(p.price)} ₽</p>
+                  <p className="mt-2 flex items-center gap-2"><Clock className="h-5 w-5" /> {p.time[0] === p.time[1] ? p.time[0] : `${p.time[0]}–${p.time[1]}`} минут</p>
+                  <ul className="mt-3 space-y-1.5">
+                    {p.items.map((it) => (
+                      <li key={it} className="flex items-center gap-2"><Check className="h-4 w-4" strokeWidth={3} /> {it === "Кузов пеной" ? "Мойка кузова пеной" : it}</li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => { setSelected(i); setStage("care"); }}
+                    className="mt-auto flex items-center justify-center gap-2 rounded-lg border border-foreground py-2.5 font-semibold"
+                    style={{ marginTop: "1.25rem" }}
+                  >
+                    Выбрать <ArrowRight className="h-5 w-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-border pt-4 text-sm">
+              <p>Сушка включена во время комплекса.</p>
+              <p>Точная стоимость — после выбора автомобиля.</p>
+              <p className="mt-2 text-muted-foreground">Далее можно добавить уход или перейти к выбору автомобиля.</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="mt-4 flex items-baseline justify-between gap-4">
+              <h2 className="font-display text-4xl uppercase sm:text-5xl">Добавьте уход</h2>
+              <p className="text-sm">Комплекс: <b>{pkg.name}</b></p>
+            </div>
+            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-border p-4">
+                <p className="font-semibold">Способ мойки</p>
+                <p className="text-sm text-muted-foreground">Без добавочного времени</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {phases.map((p) => {
+                    const on = phase === p.id;
+                    return (
+                      <button key={p.id} type="button" onClick={() => setPhase(on ? null : p.id)} className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold ${on ? "btn-lime" : "border border-foreground"}`}>
+                        {on ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />} {p.label} · {rub(p.price)} ₽
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {care.map((c) => {
+                const on = added.includes(c.id);
+                return (
+                  <div key={c.id} className="flex items-center gap-4 rounded-xl border border-border p-4">
+                    <img src={c.img.url} alt={c.alt} width={96} height={64} loading="lazy" className="h-16 w-24 object-contain" />
+                    <div className="flex-1">
+                      <p className="font-semibold">{c.name}</p>
+                      <p className="text-sm">от {rub(c.price)} ₽{c.extra > 0 ? ` +${c.extra} минут` : ""}</p>
+                    </div>
+                    <button type="button" onClick={() => toggle(c.id)} className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold ${on ? "btn-lime" : "border border-foreground"}`}>
+                      {on ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />} {on ? "Добавлено" : "Добавить"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-6">
+                  <p className="font-display text-4xl">{rub(total)} ₽</p>
+                  <span className="h-10 border-l border-foreground/30" />
+                  <span className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5" /> {tMin === tMax ? tMin : `${tMin}–${tMax}`} минут</span>
+                </div>
+                <button type="button" onClick={() => setStage("pkg")} className="mt-3 flex items-center gap-2">
+                  <ArrowLeft className="h-5 w-5" /> <span className="underline underline-offset-4">Назад</span>
+                </button>
+              </div>
+              <div className="text-center sm:w-[22rem]">
+                <button type="button" onClick={() => setStage("rest")} className="btn-lime flex w-full items-center justify-center gap-2 rounded-lg py-3.5 text-lg font-semibold">
+                  {chosen.length || ph ? "Продолжить" : "Без ухода, продолжить"} <ArrowRight className="h-5 w-5" />
+                </button>
+                <p className="mt-2 text-sm text-muted-foreground">Далее — автомобиль и время</p>
+              </div>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
