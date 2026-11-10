@@ -74,9 +74,9 @@ export function AdminFinance(props: Props) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <div className="flex rounded-lg bg-muted p-0.5">
+        <div className="flex w-full rounded-lg bg-muted p-0.5 sm:w-auto">
           {(["month", "day"] as const).map((v) => (
-            <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className={`min-h-10 rounded-md px-4 font-medium ${view === v ? "bg-crm text-crm-foreground" : "text-muted-foreground"}`}>
+            <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className={`min-h-11 flex-1 rounded-md px-4 font-medium sm:flex-none ${view === v ? "bg-crm text-crm-foreground" : "text-muted-foreground"}`}>
               {v === "month" ? "Месяц" : "День"}
             </button>
           ))}
@@ -182,8 +182,8 @@ export function AdminFinance(props: Props) {
         {periodOps.length === 0 && <p className="mt-2 text-muted-foreground">Пока ничего не внесено</p>}
         {periodOps.map((o) => (
           <div key={o.id} className="flex items-center gap-3 border-b border-border py-2 last:border-0">
-            <button type="button" onClick={() => openDay(o.date)} className="w-20 shrink-0 whitespace-nowrap text-left tabular-nums text-muted-foreground underline-offset-2 hover:underline">{fmtDateShort(o.date)}</button>
-            <span className="min-w-0 flex-1 truncate">{o.name}<span className="block text-xs text-muted-foreground">{o.kind === "payout" ? "мойщику" : o.article && articles.some((a) => a.id === o.article) ? "постоянная статья" : "по счёту"}</span></span>
+            <button type="button" onClick={() => openDay(o.date)} className="hidden w-20 shrink-0 whitespace-nowrap text-left tabular-nums text-muted-foreground underline-offset-2 hover:underline md:block">{fmtDateShort(o.date)}</button>
+            <span className="min-w-0 flex-1"><span className="block truncate">{o.name}</span><span className="block text-xs text-muted-foreground"><span className="md:hidden">{fmtDateShort(o.date)} · </span>{o.kind === "payout" ? "мойщику" : o.article && articles.some((a) => a.id === o.article) ? "постоянная статья" : "по счёту"}</span></span>
             <span className="font-semibold tabular-nums">{money(o.amount)}</span>
             <button type="button" aria-label={`Удалить ${o.name}`} onClick={() => props.onRemoveOp(o.id)} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
           </div>
@@ -268,7 +268,7 @@ function OpForm({
   const field = "mt-1 h-12 w-full rounded-lg border border-border bg-background px-3 text-base outline-none focus:border-crm";
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 md:items-center" onClick={onClose}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); if (ok) save(); }} className="w-full rounded-t-2xl bg-background p-5 md:max-w-md md:rounded-2xl">
+      <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); if (ok) save(); }} className="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl bg-background p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:max-w-md md:rounded-2xl">
         <div className="flex items-center">
           <h2 className="text-xl font-bold">Внести оплату</h2>
           <button type="button" aria-label="Закрыть" onClick={onClose} className="ml-auto flex h-11 w-11 items-center justify-center rounded-lg hover:bg-muted"><X className="h-5 w-5" /></button>
