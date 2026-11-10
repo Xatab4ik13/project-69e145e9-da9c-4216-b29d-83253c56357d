@@ -122,7 +122,7 @@ export const HISTORY_BOOKINGS: Booking[] = (() => {
         confirmed: true,
         payment: paymentMethod === "app" && r() < 0.08 ? "awaiting" : "paid",
         paymentMethod,
-        washer: WASHERS[Math.floor(r() * WASHERS.length)],
+        washer: WASHERS[Math.floor(r() * WASHERS.length)]!,
       });
     }
   }

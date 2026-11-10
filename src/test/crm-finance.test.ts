@@ -7,31 +7,26 @@ import { applyPayment, receivePayment } from "@/lib/crm/logic";
 import { HISTORY_BOOKINGS } from "@/lib/crm/mock";
 import type { Booking } from "@/lib/crm/types";
 
-const mk = (over: Partial<Booking>): Booking => {
-  const merged = { ...defaults, ...over } as Record<string, unknown>;
-  // exactOptionalPropertyTypes: an optional field must be absent, not undefined.
-  for (const key of Object.keys(merged)) if (merged[key] === undefined) delete merged[key];
-  return merged as Booking;
-};
-
-const defaults = {
-  id: Math.random().toString(36).slice(2),
+/** A paid cash order; payment method and washer are added only where a test needs them. */
+const base: Booking = {
+  id: "base",
   date: "2026-10-05",
-  box: 1 as const,
+  box: 1,
   start: 12 * 60,
   duration: 60,
   car: "Kia Rio",
   carType: "Седан",
   phone: "9000000000",
-  source: "site" as const,
+  source: "site",
   packageName: "Стандарт",
   services: [{ name: "Комплекс «Стандарт»", price: 1200 }],
-  wash: "done" as const,
+  wash: "done",
   confirmed: true,
-  payment: "paid" as const,
-  paymentMethod: "cash" as const,
-  washer: "Рома",
+  payment: "paid",
 };
+
+let counter = 0;
+const mk = (over: Partial<Booking>): Booking => ({ ...base, id: `b${++counter}`, ...over });
 
 const oneDay = { from: "2026-10-05", to: "2026-10-05" };
 
@@ -53,9 +48,9 @@ describe("owner economics constants", () => {
 
 describe("summarize", () => {
   const list = [
-    mk({ phone: "9000000001", paymentMethod: "cash", services: [{ name: "a", price: 1000 }] }),
-    mk({ phone: "9000000002", paymentMethod: "terminal", services: [{ name: "a", price: 2000 }] }),
-    mk({ phone: "9000000003", paymentMethod: "app", services: [{ name: "a", price: 5000 }] }),
+    mk({ phone: "9000000001", paymentMethod: "cash", washer: "Рома", services: [{ name: "a", price: 1000 }] }),
+    mk({ phone: "9000000002", paymentMethod: "terminal", washer: "Малик", services: [{ name: "a", price: 2000 }] }),
+    mk({ phone: "9000000003", paymentMethod: "app", washer: "Сергей", services: [{ name: "a", price: 5000 }] }),
   ];
   const s = summarize(list, oneDay, "2026-10-05");
 
@@ -80,7 +75,7 @@ describe("summarize", () => {
 
   it("splits money by payment method and by washer", () => {
     expect(s.methods).toEqual({ cash: 1000, terminal: 2000, app: 5000 });
-    expect(s.byWasher["Рома"]).toBe(8000);
+    expect(s.byWasher).toEqual({ "Рома": 1000, "Малик": 2000, "Сергей": 5000 });
   });
 
   it("measures box load against 12 working hours", () => {
@@ -105,15 +100,15 @@ describe("summarize", () => {
   });
 
   it("shows how much revenue is still missing this month", () => {
-    const s3 = summarize(list, oneDay, "2026-10-05");
-    expect(s3.month.revenue).toBe(8000);
-    expect(s3.month.left).toBeCloseTo(s3.month.target - 8000, 5);
-    expect(s3.month.left).toBeGreaterThan(0);
+    expect(s.month.revenue).toBe(8000);
+    expect(s.month.left).toBeCloseTo(s.month.target - 8000, 5);
+    expect(s.month.left).toBeGreaterThan(0);
   });
 });
 
 describe("washer on the booking", () => {
-  const done = mk({ payment: "unpaid", paymentMethod: undefined, washer: undefined });
+  /** Car washed, money not taken yet: neither method nor washer chosen. */
+  const done = mk({ payment: "unpaid" });
 
   it("terminal and cash store the chosen washer", () => {
     expect(applyPayment(done, "terminal", "Малик")).toMatchObject({ payment: "paid", washer: "Малик" });
