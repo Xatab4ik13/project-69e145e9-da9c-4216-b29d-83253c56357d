@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, ArrowUp, ArrowUpRight, Check, Clock, Copy, CornerUpRight, MapPin, Phone, Plus } from "lucide-react";
-import imgMap from "@/assets/parking-map-4.webp.asset.json";
+import imgMap from "@/assets/parking-map-aquarius.webp.asset.json";
 import imgParkCar from "@/assets/parking-car-4.webp.asset.json";
 
 const ADDRESS = "Санкт-Петербург, проспект Большевиков, 18к2";
@@ -24,7 +24,7 @@ function Contacts() {
           <h2 className="mt-2 font-display text-5xl uppercase">Ждём на Большевиков</h2>
           <p className="btn-lime mt-3 inline-block rounded-lg px-4 py-1 font-display text-2xl uppercase">Автомойка на 4-м уровне паркинга</p>
           <p className="mt-3">Заезд с проспекта Большевиков — маршрут показан на схеме.</p>
-          <img src={imgMap.url} alt="Схема заезда в паркинг Aquarius" width={1400} height={800} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
+          <img src={imgMap.url} alt="Схема заезда в паркинг Aquarius: от улицы Дыбенко к въезду, 4-й уровень" width={1280} height={735} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
           <div className="mt-4 flex flex-wrap items-center gap-6">
             <a href={YMAPS} target="_blank" rel="noreferrer" className="btn-lime inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm">Маршрут до въезда <ArrowUpRight className="h-4 w-4" /></a>
             <a href={YMAPS} target="_blank" rel="noreferrer" className="text-sm underline underline-offset-4">Открыть в Яндекс Картах</a>
