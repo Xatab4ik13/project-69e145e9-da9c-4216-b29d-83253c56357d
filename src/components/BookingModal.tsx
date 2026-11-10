@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import logoAsset from "@/assets/aquarius-logo.webp.asset.json";
+import { ArrowUpRight } from "lucide-react";
 import { ArrowLeft, ArrowRight, CalendarDays, CalendarClock, Car, Check, ChevronDown, ChevronRight, Clock, MapPin, Phone, Search, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -48,6 +50,19 @@ export function MobileBookingBar({ label, step, onBack, onClose }: { label: stri
   );
 }
 
+const YMAPS = "https://yandex.ru/maps/?text=" + encodeURIComponent("Санкт-Петербург, проспект Большевиков, 18к2");
+function downloadIcs(day: Date, slot: string, minutes: number, pkg: string) {
+  const [h, m] = slot.split(":").map(Number) as [number, number];
+  const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m);
+  const end = new Date(start.getTime() + minutes * 60000);
+  const f = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", `DTSTART:${f(start)}`, `DTEND:${f(end)}`, `SUMMARY:Автомойка Аквариус — ${pkg}`, "LOCATION:Санкт-Петербург\\, проспект Большевиков\\, 18к2\\, паркинг 4-й уровень", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  a.download = "aquarius.ics";
+  a.click();
+}
+
 const rub = (n: number) => n.toLocaleString("ru-RU").replace(/\u00a0/g, " ");
 const addMin = (t: string, m: number) => {
   const [h, mm] = t.split(":").map(Number) as [number, number];
@@ -67,8 +82,10 @@ export function BookingModal({
   basePrice,
   time,
   onBack,
+  extraPrices = [],
 }: {
   onBack?: () => void;
+  extraPrices?: number[];
   open: boolean;
   onOpenChange: (o: boolean) => void;
   pkgName: string;
@@ -113,11 +130,79 @@ export function BookingModal({
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(o) : close())}>
       <DialogContent className={`max-h-[95vh] max-w-3xl overflow-y-auto rounded-3xl p-8 sm:p-10 [&>button:last-child]:hidden ${MOBILE_SHEET}`}>
-        <button type="button" onClick={close} aria-label="Закрыть" className={`absolute right-6 top-6 ${done ? "" : "max-md:hidden"}`}>
+        <button type="button" onClick={close} aria-label="Закрыть" className="absolute right-6 top-6 max-md:hidden">
           <X className="h-7 w-7" />
         </button>
-        {done && car && slot ? (
-          <div>
+        {done && car && slot ? (<>
+          <div className="md:hidden">
+            <div className="flex items-center justify-between">
+              <img src={logoAsset.url} alt="aquarius автомойка" className="h-12 w-auto" />
+              <button type="button" onClick={close} aria-label="Закрыть"><X className="h-7 w-7" /></button>
+            </div>
+            <div className="mt-6 flex items-start gap-4">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-lime"><Check className="h-8 w-8" strokeWidth={3} /></span>
+              <div>
+                <DialogTitle className="font-display text-4xl uppercase leading-none">Вы записаны!</DialogTitle>
+                <p className="mt-1 text-lg">Ждём вас в Aquarius.</p>
+              </div>
+            </div>
+            <div className="mt-5 flex items-start gap-4">
+              <CalendarDays className="h-9 w-9 shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="font-display text-xl">{WD_FULL[day.getDay()]}, {day.getDate()} {MONTHS_GEN[day.getMonth()]} {day.getFullYear()}</p>
+                <p className="font-display text-4xl">{range}</p>
+                <p className="mt-1 flex items-center gap-2"><Clock className="h-5 w-5" /> {minutes} минут</p>
+              </div>
+            </div>
+            <div className="mt-5 rounded-2xl bg-muted px-5 py-4">
+              <p className="text-sm uppercase">Ваша мойка</p>
+              <p className="mt-1 flex items-center gap-3 border-b border-foreground/20 pb-3"><Car className="h-6 w-8" strokeWidth={1.5} /> {car.name} · {car.body}</p>
+              <div className="space-y-2 border-b border-foreground/20 py-3">
+                {[[`Комплекс «${pkgName}»`, price - extraPrices.reduce((a, b) => a + b, 0)] as const, ...extras.map((e, i) => [e, extraPrices[i] ?? 0] as const)].map(([n, p]) => (
+                  <div key={n} className="flex items-center gap-3">
+                    <Check className="h-5 w-5 shrink-0 text-lime" strokeWidth={3} />
+                    <span className="flex-1">{n}</span>
+                    <span className="font-display">{rub(p)} ₽</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between pt-3">
+                <span className="font-display text-xl">Итого</span>
+                <span className="font-display text-4xl">{rub(price)} ₽</span>
+              </div>
+            </div>
+            <div className="mt-5 flex items-start gap-4">
+              <MapPin className="h-8 w-8 shrink-0" strokeWidth={1.5} />
+              <div>
+                <p>Санкт-Петербург<br />проспект Большевиков, 18к2</p>
+                <p className="mt-2 flex items-center gap-3"><span className="rounded-md border border-foreground/40 bg-muted px-2 font-display">P4</span><span className="font-display">Паркинг · 4-й уровень</span></p>
+              </div>
+            </div>
+            <a href={YMAPS} target="_blank" rel="noreferrer" className="btn-lime mt-5 flex items-center justify-center gap-2 rounded-lg py-3 text-lg">Маршрут до въезда <ArrowUpRight className="h-5 w-5" /></a>
+            <button type="button" onClick={() => downloadIcs(day, slot, minutes ?? 60, pkgName)} className="mt-3 flex w-full items-center justify-center gap-3 rounded-lg border border-foreground py-3 text-lg font-semibold"><CalendarDays className="h-5 w-5" /> Добавить в календарь</button>
+            <div className="mt-4 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Вопросы по записи?</span>
+              <a href="tel:+79045117396" className="flex items-center gap-2 font-display text-base"><Phone className="h-5 w-5" /> +7 (904) 511-73-96</a>
+            </div>
+            <div className="mt-5 rounded-2xl bg-muted px-5 py-5">
+              <p className="font-display text-3xl uppercase leading-tight">Aquarius в вашем телефоне</p>
+              <p className="mt-1">Повторяйте запись и копите бонусы.</p>
+              <div className="my-4 min-h-[200px]" aria-hidden />
+              {[["5%", "бонусами с оплаты"], ["200", "бонусов после первого оплаченного визита"]].map(([v, t]) => (
+                <div key={v} className="flex items-center gap-4 py-1">
+                  <p className="w-24 font-display text-4xl">{v}</p>
+                  <span className="h-10 border-l border-foreground/30" />
+                  <p className="text-sm">{t}</p>
+                </div>
+              ))}
+              <p className="mt-3 border-t border-foreground/20 pt-3 text-sm">Бонусами можно оплатить до 20% следующей мойки.</p>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <a href="#" className="flex flex-col rounded-lg border border-foreground bg-background px-3 py-1.5 font-semibold leading-tight">App Store<span className="text-xs font-normal">для iPhone</span></a>
+                <a href="#" className="flex flex-col rounded-lg border border-foreground bg-background px-3 py-1.5 font-semibold leading-tight">Google Play<span className="text-xs font-normal">для Android</span></a>
+              </div>
+            </div>
+          </div>
+          <div className="max-md:hidden">
             <div className="flex items-center gap-4">
               <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-lime"><Check className="h-9 w-9" strokeWidth={3} /></span>
               <DialogTitle className="font-display text-3xl uppercase sm:text-5xl">Вы записаны!</DialogTitle>
@@ -150,7 +235,7 @@ export function BookingModal({
             </div>
             <button type="button" onClick={close} className="btn-lime mt-6 w-full rounded-lg py-3.5 text-lg font-semibold">Отлично</button>
           </div>
-        ) : (<>
+        </>) : (<>
         <MobileBookingBar
           label={step === 1 ? "Автомобиль и время" : "Контакты"}
           step={step === 1 ? 3 : 4}
