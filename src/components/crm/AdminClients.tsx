@@ -114,7 +114,7 @@ export function AdminClients({
               </tr>
             </thead>
             <tbody>
-              {visible.map((client) => <ClientTableRow key={client.id} client={client} onSelect={openClient} />)}
+              {pagination.items.map((client) => <ClientTableRow key={client.id} client={client} onSelect={openClient} />)}
             </tbody>
           </table>
           {visible.length === 0 && (
