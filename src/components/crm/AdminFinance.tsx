@@ -116,7 +116,7 @@ export function AdminFinance(props: Props) {
             <span>Статья</span><span>План на месяц</span><span className="text-right">Оплачено</span><span className="text-right">Осталось</span><span />
           </div>
           {articles.map((r) => (
-            <div key={r.id} className="grid grid-cols-2 items-center gap-x-3 gap-y-2 border-b border-border py-3 last:border-0 md:grid-cols-[1.6fr_1fr_1fr_1fr_8rem]">
+            <div key={r.id} className="grid grid-cols-2 items-center gap-x-3 gap-y-2 border-b border-border py-3 last:border-0 md:grid-cols-[1.6fr_1fr_1fr_1fr_10rem]">
               <span className="col-span-2 font-medium md:col-span-1">{r.name}</span>
               <label className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground md:hidden">План</span>
@@ -126,7 +126,7 @@ export function AdminFinance(props: Props) {
               <span className={`text-right font-semibold tabular-nums ${r.left > 0 ? "text-crm-alert-foreground" : "text-crm-ok-foreground"}`}>
                 <span className="text-xs font-normal text-muted-foreground md:hidden">Осталось </span>{r.left > 0 ? money(r.left) : "Оплачено"}
               </span>
-              <button type="button" onClick={() => setDraft({ kind: "expense", article: r.id, amount: r.left })} className="min-h-11 rounded-lg border border-border px-3 font-semibold">
+              <button type="button" onClick={() => setDraft({ kind: "expense", article: r.id, amount: r.left })} className="min-h-11 whitespace-nowrap rounded-lg border border-border px-3 font-semibold">
                 Внести оплату
               </button>
             </div>
@@ -139,7 +139,7 @@ export function AdminFinance(props: Props) {
           <h2 className="font-semibold">Мойщики</h2>
           <p className="text-sm text-muted-foreground">начислено 30% за {view === "day" ? "день" : "месяц"} · долг на сегодня по всем заказам</p>
           {washers.map((w) => (
-            <div key={w.washer} className="mt-2 grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 border-b border-border py-2 last:border-0 md:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+            <div key={w.washer} className="mt-2 grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 border-b border-border py-2 last:border-0 md:grid-cols-[1fr_auto_auto_auto_auto] md:gap-x-4 [&_span]:whitespace-nowrap">
               <span className="font-medium">{w.washer}<span className="block text-xs font-normal text-muted-foreground">заказы {money(w.orders)}</span></span>
               <span className="text-right tabular-nums md:text-left"><span className="text-xs text-muted-foreground">Начислено </span>{money(w.earned)}</span>
               <span className="tabular-nums"><span className="text-xs text-muted-foreground">Выплачено </span>{money(w.paid)}</span>
