@@ -126,6 +126,17 @@ export const fmtDateShort = (iso: string) =>
 export const bookingDuration = (slotMin: number, extraMinutes: number[]) =>
   slotMin + extraMinutes.reduce((a, b) => a + b, 0);
 
+export const CUSTOM_PACKAGE_NAME = "Свои услуги";
+
+/** A custom service replaces the package and add-ons, including their base duration. */
+export function customServiceDetails(name: string, price: number, minutes: number) {
+  return {
+    packageName: CUSTOM_PACKAGE_NAME,
+    services: [{ name: name.trim(), price }],
+    duration: minutes,
+  };
+}
+
 /** A slot is unavailable once its start time is behind the current-time line. */
 export function isPastSlot(date: string, start: number, today: string, nowMin: number): boolean {
   return date < today || (date === today && start < nowMin);

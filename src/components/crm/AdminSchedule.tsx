@@ -18,7 +18,7 @@ import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, MOCK_BOOKINGS, PACKAGES } f
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
   fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
-  bookingState, STATE_LABEL, STATE_ACTION, isPastSlot,
+  bookingState, STATE_LABEL, STATE_ACTION, isPastSlot, CUSTOM_PACKAGE_NAME, customServiceDetails,
 } from "@/lib/crm/logic";
 
 type NewBookingInitial = { box: 1 | 2; start: number; phone?: string; car?: string; carType?: string };
@@ -426,7 +426,7 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
           <p className="text-base font-semibold">Услуги</p>
           <ul className="mt-2 space-y-1.5">
             {b.services.map((s) => (
-              <li key={s.name} className="flex justify-between"><span>{s.name}</span><span>{rub(s.price)}</span></li>
+              <li key={s.name} className="flex items-start justify-between gap-3"><span className="min-w-0 break-words">{s.name}</span><span className="shrink-0 whitespace-nowrap">{rub(s.price)}</span></li>
             ))}
           </ul>
           <p className="mt-3 flex items-center gap-2"><Clock className="h-4 w-4" /> {b.duration} минут</p>
@@ -523,30 +523,42 @@ function NewBookingDialog({
   const [car, setCar] = useState("");
   const [pkgName, setPkgName] = useState("Комфорт");
   const [extras, setExtras] = useState<string[]>([]);
+  const [customName, setCustomName] = useState("");
+  const [customPrice, setCustomPrice] = useState("");
+  const [customMinutes, setCustomMinutes] = useState("");
   const [slot, setSlot] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) {
       setSlot(null);
-      setPhone(initial?.phone ?? ""); setCar(initial?.car ?? ""); setPkgName("Комфорт"); setExtras([]); setError("");
+      setPhone(initial?.phone ?? ""); setCar(initial?.car ?? ""); setPkgName("Комфорт"); setExtras([]);
+      setCustomName(""); setCustomPrice(""); setCustomMinutes(""); setError("");
     }
   }, [open, initial]);
 
-  const pkg = PACKAGES.find((p) => p.name === pkgName)!;
+  const isCustom = pkgName === CUSTOM_PACKAGE_NAME;
+  const pkg = PACKAGES.find((p) => p.name === pkgName);
   const chosenExtras = EXTRAS.filter((e) => extras.includes(e.name));
-  const services = [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...chosenExtras.map(({ name, price }) => ({ name, price }))];
-  const duration = bookingDuration(SLOT_MIN, chosenExtras.map((e) => e.minutes));
-  const slots = freeSlots(bookings, date, duration, 60, DEMO_TODAY, DEMO_NOW_MIN);
+  const customPriceValue = Number(customPrice);
+  const custom = customServiceDetails(customName, customPriceValue, Number(customMinutes));
+  const services = isCustom ? custom.services : pkg
+    ? [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...chosenExtras.map(({ name, price }) => ({ name, price }))]
+    : [];
+  const duration = isCustom ? custom.duration : bookingDuration(SLOT_MIN, chosenExtras.map((e) => e.minutes));
+  const slots = duration > 0 ? freeSlots(bookings, date, duration, 60, DEMO_TODAY, DEMO_NOW_MIN) : [];
   const picked = slots.find((s) => s.start === slot);
 
   const submit = () => {
     if (!car.trim()) return setError("Укажите автомобиль.");
     if (phone.length !== 10) return setError("Введите номер телефона полностью: +7 (___) ___-__-__.");
+    if (isCustom && !customName.trim()) return setError("Укажите название услуги.");
+    if (isCustom && (!Number.isInteger(customPriceValue) || customPriceValue <= 0)) return setError("Укажите цену услуги в рублях.");
+    if (isCustom && (!Number.isInteger(duration) || duration <= 0)) return setError("Укажите длительность услуги в минутах.");
     if (!picked) return setError("Выберите свободное время.");
     onCreate({
       id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: initial?.carType ?? "Седан",
-      phone, source: "admin", packageName: pkg.name, services,
+      phone, source: "admin", packageName: isCustom ? custom.packageName : pkg?.name ?? "", services,
       wash: "scheduled", confirmed: false, payment: "unpaid",
     });
   };
@@ -568,24 +580,56 @@ function NewBookingDialog({
               setPhone(d);
             }} />
           <input aria-label="Автомобиль" className={field} placeholder="Автомобиль" value={car} onChange={(e) => setCar(e.target.value)} />
-          <select aria-label="Комплекс мойки" className={field} value={pkgName} onChange={(e) => setPkgName(e.target.value)}>
+          <select aria-label="Комплекс мойки" className={field} value={pkgName} onChange={(e) => { setPkgName(e.target.value); setSlot(null); }}>
             {PACKAGES.map((p) => <option key={p.name} value={p.name}>{p.name} · {rub(p.price)}</option>)}
+            <option value={CUSTOM_PACKAGE_NAME}>{CUSTOM_PACKAGE_NAME}</option>
           </select>
-          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
-            {EXTRAS.map((e) => {
-              const on = extras.includes(e.name);
-              return (
-                <button key={e.name} type="button" onClick={() => { setSlot(null); setExtras((l) => on ? l.filter((x) => x !== e.name) : [...l, e.name]); }}
-                  className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm sm:min-h-0 sm:rounded-full sm:px-3 sm:py-1 sm:text-xs ${on ? "border-crm bg-crm-soft text-crm" : "border-border"}`}>
-                  {e.name} · {rub(e.price)}{e.minutes ? ` +${e.minutes} мин` : ""}
-                </button>
-              );
-            })}
-          </div>
+          {isCustom ? (
+            <div className="space-y-3">
+              <textarea
+                aria-label="Название услуги"
+                className="min-h-28 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-base outline-none focus:border-crm sm:min-h-24 sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm"
+                placeholder="Название услуги"
+                rows={3}
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+              />
+              <input
+                aria-label="Цена услуги"
+                type="text"
+                inputMode="numeric"
+                className={field}
+                placeholder="Цена, ₽"
+                value={customPrice}
+                onChange={(e) => setCustomPrice(e.target.value.replace(/\D/g, "").slice(0, 7))}
+              />
+              <input
+                aria-label="Время услуги в минутах"
+                type="text"
+                inputMode="numeric"
+                className={field}
+                placeholder="Время, минут"
+                value={customMinutes}
+                onChange={(e) => { setCustomMinutes(e.target.value.replace(/\D/g, "").slice(0, 4)); setSlot(null); }}
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+              {EXTRAS.map((e) => {
+                const on = extras.includes(e.name);
+                return (
+                  <button key={e.name} type="button" onClick={() => { setSlot(null); setExtras((l) => on ? l.filter((x) => x !== e.name) : [...l, e.name]); }}
+                    className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm sm:min-h-0 sm:rounded-full sm:px-3 sm:py-1 sm:text-xs ${on ? "border-crm bg-crm-soft text-crm" : "border-border"}`}>
+                    {e.name} · {rub(e.price)}{e.minutes ? ` +${e.minutes} мин` : ""}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <div>
-            <p className="mb-2 font-medium">Свободное время · {duration} минут</p>
+            <p className="mb-2 font-medium">Свободное время{duration > 0 ? ` · ${duration} минут` : ""}</p>
             {slots.length === 0 ? (
-              <p className="text-muted-foreground">На этот день свободных слотов нет.</p>
+              <p className="text-muted-foreground">{isCustom && duration <= 0 ? "Укажите длительность, чтобы увидеть свободное время." : "На этот день свободных слотов нет."}</p>
             ) : (
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {slots.map((s) => (
