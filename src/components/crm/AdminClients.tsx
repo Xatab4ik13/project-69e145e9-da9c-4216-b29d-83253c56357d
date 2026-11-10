@@ -53,42 +53,42 @@ export function AdminClients({
   const selected = clients.find((client) => client.id === selectedId) ?? null;
 
   return (
-    <main className="min-w-0 flex-1 overflow-y-auto px-6 pb-5 pt-5">
+    <main className="min-w-0 flex-1 overflow-y-auto bg-crm-surface px-4 pb-5 pt-4 md:bg-background md:px-6 md:pb-5 md:pt-5">
       <div className="flex items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Клиенты</h1>
-          <p className="mt-1 text-muted-foreground">Телефоны, автомобили и история посещений</p>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Клиенты</h1>
+          <p className="mt-1 text-sm text-muted-foreground md:text-base">Телефоны, автомобили и история посещений</p>
         </div>
-        <span className="ml-auto rounded-lg bg-crm-soft px-3 py-2 text-crm">Один клиент — один номер телефона</span>
-        <AdminNotificationIndicator />
+        <span className="ml-auto hidden rounded-lg bg-crm-soft px-3 py-2 text-crm md:inline">Один клиент — один номер телефона</span>
+        <div className="hidden md:block"><AdminNotificationIndicator /></div>
       </div>
 
-      <section aria-label="Показатели клиентов" className="mt-5 grid grid-cols-4 gap-3">
+      <section aria-label="Показатели клиентов" className="mt-4 grid grid-cols-2 gap-2 md:mt-5 md:grid-cols-4 md:gap-3">
         <Metric Icon={Users} label="Всего клиентов" value={clients.length} />
         <Metric Icon={UserRoundPlus} label="Новых в ноябре" value={metrics.newThisMonth} />
         <Metric Icon={Repeat2} label="Постоянных" value={metrics.repeat} note="2 и более визитов" />
         <Metric Icon={Smartphone} label="В приложении" value={metrics.activated} />
       </section>
 
-      <section className="mt-5 flex min-h-[520px] flex-col overflow-hidden rounded-xl border border-border">
-        <div className="flex items-center gap-3 border-b border-border p-3">
-          <label className="flex w-80 items-center gap-2 rounded-lg border border-border px-3 py-2">
-            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <section className="mt-4 flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:mt-5 md:min-h-[520px]">
+        <div className="flex flex-col gap-3 border-b border-border p-3 md:flex-row md:items-center">
+          <label className="flex min-h-12 w-full items-center gap-2 rounded-xl border border-border bg-background px-4 py-3 md:min-h-0 md:w-80 md:rounded-lg md:px-3 md:py-2">
+            <Search className="h-5 w-5 shrink-0 text-muted-foreground md:h-4 md:w-4" />
             <input
               value={query}
               onChange={(event) => { setQuery(event.target.value); setPage(1); }}
               placeholder="Телефон или автомобиль"
               aria-label="Поиск клиента по телефону или автомобилю"
-              className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
+              className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
             />
           </label>
-          <div className="ml-auto flex rounded-lg bg-muted p-0.5">
+          <div className="flex w-full gap-1 overflow-x-auto rounded-lg bg-muted p-1 md:ml-auto md:w-auto md:gap-0 md:overflow-visible md:p-0.5">
             {FILTERS.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => { setFilter(item.id); setPage(1); }}
-                className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm ${filter === item.id ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
+                className={`min-h-11 shrink-0 whitespace-nowrap rounded-md px-4 py-2.5 text-sm md:min-h-0 md:px-3 md:py-1.5 ${filter === item.id ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
               >
                 {item.label}
               </button>
