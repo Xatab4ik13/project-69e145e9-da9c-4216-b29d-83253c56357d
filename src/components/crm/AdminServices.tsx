@@ -5,8 +5,8 @@ import {
   CAR_CLASSES, DEFAULT_SERVICE_CATALOG, SERVICE_GROUPS, updateServiceCell,
 } from "@/lib/crm/services";
 import type { CarClass, CatalogService, ServiceCellField } from "@/lib/crm/services";
+import { api } from "@/lib/crm/api";
 
-const STORAGE_KEY = "aquarius-crm-service-catalog-v1";
 const ROMAN_CLASS: Record<CarClass, string> = { 1: "I", 2: "II", 3: "III", 4: "IV" };
 const NUMBER_INPUT = "shrink-0 rounded-md border border-border bg-background px-2 py-1.5 text-right tabular-nums outline-none focus:border-crm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 const MOBILE_NUMBER_INPUT = "mt-1 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-right text-base tabular-nums outline-none focus:border-crm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
@@ -18,16 +18,10 @@ export function AdminServices() {
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  const [errorText, setErrorText] = useState("");
+
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed: unknown = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length === DEFAULT_SERVICE_CATALOG.length) setCatalog(parsed as CatalogService[]);
-      }
-    } catch {
-      // A broken local draft must not prevent the default price list from opening.
-    }
+    api.prices().then(setCatalog, (e: Error) => { setErrorText(e.message); setStatus("error"); });
   }, []);
 
   const edit = (serviceId: string, classId: CarClass, field: ServiceCellField, raw: string) => {
@@ -37,20 +31,18 @@ export function AdminServices() {
   };
 
   const save = () => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(catalog));
-      setStatus("saved");
-    } catch {
-      setStatus("error");
-    }
     setConfirmOpen(false);
+    api.savePrices(catalog).then(
+      () => setStatus("saved"),
+      (e: Error) => { setErrorText(e.message); setStatus("error"); },
+    );
   };
 
   const statusText = {
     idle: "Цены и время можно изменить вручную.",
     dirty: "Есть несохранённые изменения.",
     saved: "Изменения сохранены.",
-    error: "Не удалось сохранить. Попробуйте ещё раз.",
+    error: errorText || "Не удалось сохранить. Попробуйте ещё раз.",
   }[status];
 
   return (

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight, Banknote, Bell, Building2, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
-  Clock, CreditCard, HandCoins, LayoutDashboard, Phone, Plus, Search, Smartphone, Star, User, Wallet, Wrench, X,
+  Clock, CreditCard, HandCoins, LayoutDashboard, LogOut, Phone, Plus, Search, Smartphone, Star, User, Wallet, Wrench, X,
 } from "lucide-react";
 import { aquarius_logo as logo } from "@/assets/images";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,7 +19,9 @@ import { TONE } from "@/components/crm/booking-tone";
 import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
-import { SLOT_MIN, DEMO_NOW_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, MOCK_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
+import { SLOT_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
+import { api, bookingPatch, type ApiError, type NewBooking } from "@/lib/crm/api";
+import { useWashClock } from "@/lib/crm/use-wash-clock";
 import { WASHERS, type FinOp, type PlanOverrides } from "@/lib/crm/finance";
 import { DEMO_OPS } from "@/lib/crm/finance-mock";
 import {
@@ -33,18 +35,19 @@ type NewBookingInitial = { box: 1 | 2; start: number; phone?: string; car?: stri
 const PX_PER_MIN = 2;
 const HOURS = Array.from({ length: (CLOSE_MIN - OPEN_MIN) / 60 + 1 }, (_, i) => OPEN_MIN + i * 60);
 
-export function AdminSchedule() {
-  const [bookings, setBookings] = useState<Booking[]>(() => MOCK_BOOKINGS.map((b) => autoStart(b, DEMO_TODAY, DEMO_NOW_MIN)));
-  const [date, setDate] = useState(DEMO_TODAY);
-  const [selectedId, setSelectedId] = useState<string | null>("b3");
+export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () => void }) {
+  const { today, nowMin } = useWashClock();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loadError, setLoadError] = useState("");
+  const [date, setDate] = useState(today);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mobileOrderOpen, setMobileOrderOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<"all" | BookingSource>("all");
   const [newOpen, setNewOpen] = useState<NewBookingInitial | null>(null);
-  const [section, setSection] = useState<AdminSection>("schedule");
+  const [section, setSection] = useState<AdminSection>(role === "owner" ? "dashboard" : "schedule");
   const [scheduleView, setScheduleView] = useState<"day" | "week">("day");
   const [loyaltyClientId, setLoyaltyClientId] = useState<string | null>(null);
-  const [role, setRole] = useState<CrmRole>("admin");
   /** Owner screens add up the demo month plus whatever happens in the live schedule. */
   const financeBookings = useMemo(() => [...HISTORY_BOOKINGS, ...bookings], [bookings]);
   /** Owner's payments and plan edits; demo months come from mock data, then live in this browser until a real backend exists. */
@@ -77,21 +80,38 @@ export function AdminSchedule() {
     );
   }, [bookings, date, query, source]);
 
+  /** Two weeks around the open day; refreshed regularly so site bookings appear without reloading. */
+  const from = addDays(date, -7);
+  const to = addDays(date, 14);
+  const load = useCallback(() => {
+    api.bookings(from, to).then(
+      (list) => { setBookings(list); setLoadError(""); },
+      (e: ApiError) => (e.status === 401 ? onLogout() : setLoadError(e.message)),
+    );
+  }, [from, to, onLogout]);
+  useEffect(() => {
+    load();
+    const id = window.setInterval(load, 20_000);
+    return () => window.clearInterval(id);
+  }, [load]);
+
   const selected = bookings.find((b) => b.id === selectedId) ?? null;
-  const update = (id: string, fn: (b: Booking) => Booking) =>
-    setBookings((list) => list.map((b) => (b.id === id ? fn(b) : b)));
+  const update = (id: string, fn: (b: Booking) => Booking) => {
+    const current = bookings.find((b) => b.id === id);
+    if (!current) return;
+    const next = fn(current);
+    setBookings((list) => list.map((b) => (b.id === id ? next : b)));
+    api.updateBooking(id, bookingPatch(next)).then(
+      (saved) => setBookings((list) => list.map((b) => (b.id === id ? saved : b))),
+      (e: Error) => { setLoadError(`Не сохранилось: ${e.message}`); load(); },
+    );
+  };
   const changeSection = (next: AdminSection) => {
     if (next === "loyalty") setLoyaltyClientId(null);
     setMobileOrderOpen(false);
     setSection(next);
   };
 
-  const changeRole = (next: CrmRole) => {
-    setRole(next);
-    setMobileOrderOpen(false);
-    setLoyaltyClientId(null);
-    setSection(next === "owner" ? "dashboard" : "schedule");
-  };
   const changeScheduleView = (next: "day" | "week") => {
     setScheduleView(next);
     setSelectedId(null);
@@ -101,7 +121,7 @@ export function AdminSchedule() {
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
       <MobileAdminHeader role={role} />
-      <Sidebar section={section} onChange={changeSection} role={role} onRoleChange={changeRole} />
+      <Sidebar section={section} onChange={changeSection} role={role} onLogout={onLogout} />
       {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={DEMO_TODAY} /> : section === "finance" ? null : section === "notifications" ? <AdminNotifications today={DEMO_TODAY} /> : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={DEMO_TODAY} /> : section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
@@ -115,9 +135,9 @@ export function AdminSchedule() {
       ) : section === "loyalty" ? <AdminLoyalty initialClientId={loyaltyClientId} /> : scheduleView === "week" ? (
         <AdminWeekSchedule
           date={date}
-          bookings={financeBookings}
-          today={DEMO_TODAY}
-          nowMin={DEMO_NOW_MIN}
+          bookings={bookings}
+          today={today}
+          nowMin={nowMin}
           onDateChange={setDate}
           onOpenDay={(nextDate) => { setDate(nextDate); changeScheduleView("day"); }}
           onViewChange={changeScheduleView}
@@ -131,12 +151,13 @@ export function AdminSchedule() {
           </label>
           <AdminNotificationIndicator />
         </div>
+        {loadError && <p role="alert" className="mt-3 rounded-lg border border-destructive px-3 py-2 text-destructive">{loadError}</p>}
 
         <div className="mt-4 flex items-center gap-3">
           <button type="button" aria-label="Предыдущий день" onClick={() => setDate(addDays(date, -1))} className="rounded-lg border border-border p-2"><ChevronLeft className="h-4 w-4" /></button>
           <span className="min-w-60 text-center text-lg font-semibold">{fmtDateLong(date)}</span>
           <button type="button" aria-label="Следующий день" onClick={() => setDate(addDays(date, 1))} className="rounded-lg border border-border p-2"><ChevronRight className="h-4 w-4" /></button>
-          <button type="button" onClick={() => setDate(DEMO_TODAY)} className="ml-3 rounded-lg border border-border px-4 py-2 font-medium">Сегодня</button>
+          <button type="button" onClick={() => setDate(today)} className="ml-3 rounded-lg border border-border px-4 py-2 font-medium">Сегодня</button>
           <button type="button" onClick={() => setNewOpen({ box: 1, start: 12 * 60 })} className="ml-auto inline-flex items-center gap-2 rounded-lg bg-crm px-5 py-2.5 font-semibold text-crm-foreground">
             <Plus className="h-4 w-4" /> Новая запись
           </button>
@@ -176,7 +197,7 @@ export function AdminSchedule() {
           onQueryChange={setQuery}
           onPreviousDay={() => setDate(addDays(date, -1))}
           onNextDay={() => setDate(addDays(date, 1))}
-          onToday={() => setDate(DEMO_TODAY)}
+          onToday={() => setDate(today)}
           onShowWeek={() => changeScheduleView("week")}
           onSelect={(id) => { setSelectedId(id); setMobileOrderOpen(true); }}
           onFindFree={(box) => setNewOpen({ box, start: 12 * 60 })}
@@ -218,7 +239,7 @@ export function AdminSchedule() {
         />
       )}
 
-      <MobileAdminNavigation section={section} onChange={changeSection} role={role} onRoleChange={changeRole} />
+      <MobileAdminNavigation section={section} onChange={changeSection} role={role} onLogout={onLogout} />
 
       <NewBookingDialog
         open={!!newOpen}
@@ -226,7 +247,8 @@ export function AdminSchedule() {
         date={date}
         bookings={bookings}
         onClose={() => setNewOpen(null)}
-        onCreate={(b) => {
+        onCreate={async (draft) => {
+          const b = await api.createBooking(draft);
           setBookings((l) => [...l, b]);
           setSelectedId(b.id);
           setMobileOrderOpen(true);
@@ -262,18 +284,15 @@ const SECTION_ITEMS: Record<CrmRole, { label: string; icon: typeof CalendarDays;
   ],
 };
 
-const ROLES: { id: CrmRole; label: string; icon: typeof User }[] = [
-  { id: "admin", label: "Управляющий", icon: User },
-  { id: "owner", label: "Владелец", icon: Building2 },
-];
+const ROLE_LABEL: Record<CrmRole, string> = { admin: "Администратор", owner: "Владелец" };
 
 function Sidebar({
-  section, onChange, role, onRoleChange,
+  section, onChange, role, onLogout,
 }: {
   section: AdminSection;
   onChange: (section: AdminSection) => void;
   role: CrmRole;
-  onRoleChange: (role: CrmRole) => void;
+  onLogout: () => void;
 }) {
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r border-border bg-crm-surface px-3 py-5 md:flex">
@@ -302,20 +321,10 @@ function Sidebar({
       <div className="mt-auto space-y-4">
         <span className="flex items-center gap-3 px-3"><CircleHelp className="h-5 w-5" /> Помощь</span>
         <div className="border-t border-border px-2 pt-4">
-          <p className="px-1 text-xs text-muted-foreground">Режим просмотра</p>
-          <div className="mt-2 space-y-1">
-            {ROLES.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => onRoleChange(id)}
-                aria-pressed={role === id}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left font-medium ${role === id ? "bg-crm-soft text-crm" : "text-foreground"}`}
-              >
-                <Icon className="h-5 w-5" /> {label}
-              </button>
-            ))}
-          </div>
+          <p className="px-1 text-xs text-muted-foreground">{ROLE_LABEL[role]}</p>
+          <button type="button" onClick={onLogout} className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left font-medium">
+            <LogOut className="h-5 w-5" /> Выйти
+          </button>
         </div>
       </div>
     </aside>
@@ -331,14 +340,15 @@ function Grid({
   onSelect: (id: string) => void;
   onAdd: (box: 1 | 2, start: number) => void;
 }) {
+  const { today, nowMin } = useWashClock();
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (scroller.current) scroller.current.scrollTop = (14 * 60 - OPEN_MIN) * PX_PER_MIN - 12;
   }, []);
   const height = (CLOSE_MIN - OPEN_MIN) * PX_PER_MIN;
-  const showNow = date === DEMO_TODAY;
-  const nowTop = (DEMO_NOW_MIN - OPEN_MIN) * PX_PER_MIN;
-  const pastHeight = date < DEMO_TODAY ? height : showNow ? nowTop : 0;
+  const showNow = date === today;
+  const nowTop = (nowMin - OPEN_MIN) * PX_PER_MIN;
+  const pastHeight = date < today ? height : showNow ? nowTop : 0;
 
   return (
     <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border">
@@ -351,7 +361,7 @@ function Grid({
         <div className="relative grid grid-cols-[5rem_1fr_1fr] py-3" style={{ height: height + 24 }}>
           <div className="relative">
             {HOURS.flatMap((m) => [m, m + 30]).filter((m) => m <= CLOSE_MIN).map((m) => (
-              <span key={m} className={`absolute right-3 -translate-y-1/2 whitespace-nowrap tabular-nums ${m % 60 ? "text-xs text-muted-foreground" : "text-base"} ${isPastSlot(date, m, DEMO_TODAY, DEMO_NOW_MIN) ? "opacity-50" : ""}`} style={{ top: (m - OPEN_MIN) * PX_PER_MIN }}>
+              <span key={m} className={`absolute right-3 -translate-y-1/2 whitespace-nowrap tabular-nums ${m % 60 ? "text-xs text-muted-foreground" : "text-base"} ${isPastSlot(date, m, today, nowMin) ? "opacity-50" : ""}`} style={{ top: (m - OPEN_MIN) * PX_PER_MIN }}>
                 {fmtTime(m)}
               </span>
             ))}
@@ -363,7 +373,7 @@ function Grid({
               onDoubleClick={(e) => {
                 const y = e.clientY - e.currentTarget.getBoundingClientRect().top;
                 const start = OPEN_MIN + Math.round(y / PX_PER_MIN / 15) * 15;
-                if (!isPastSlot(date, start, DEMO_TODAY, DEMO_NOW_MIN)) onAdd(box, start);
+                if (!isPastSlot(date, start, today, nowMin)) onAdd(box, start);
               }}
             >
               {HOURS.map((m) => (
@@ -373,7 +383,7 @@ function Grid({
                 <div className="pointer-events-none absolute inset-x-0 top-0 bg-muted/50" style={{ height: pastHeight }} />
               )}
               {HOURS.filter((m) => m + SLOT_MIN <= CLOSE_MIN && !bookings.some((b) => b.box === box && b.wash !== "cancelled" && b.start < m + SLOT_MIN && m < b.start + b.duration)).map((m) => {
-                const past = isPastSlot(date, m, DEMO_TODAY, DEMO_NOW_MIN);
+                const past = isPastSlot(date, m, today, nowMin);
                 return (
                   <button
                     key={`f${m}`}
@@ -402,7 +412,7 @@ function Grid({
           {showNow && (
             <div
               role="img"
-              aria-label={`Текущее время ${fmtTime(DEMO_NOW_MIN)}`}
+              aria-label={`Текущее время ${fmtTime(nowMin)}`}
               className="pointer-events-none absolute inset-x-0 z-20 flex h-0 items-center"
               style={{ top: 12 + nowTop }}
             >
@@ -417,7 +427,8 @@ function Grid({
 }
 
 function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; onClick: () => void }) {
-  const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
+  const { today, nowMin } = useWashClock();
+  const state = bookingState(b, today, nowMin);
   const tone = TONE[state];
   const h = b.duration * PX_PER_MIN;
   const extras = b.services.length - 1;
@@ -474,10 +485,11 @@ function Legend() {
 }
 
 function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Booking; onClose: () => void; onCancel: () => void; onUpdate: (fn: (b: Booking) => Booking) => void; mobile?: boolean }) {
+  const { today, nowMin } = useWashClock();
   const [method, setMethod] = useState<PaymentMethod>(b.paymentMethod ?? "terminal");
   const [washer, setWasher] = useState<string | null>(b.washer ?? null);
   const sum = total(b);
-  const state = bookingState(b, DEMO_TODAY, DEMO_NOW_MIN);
+  const state = bookingState(b, today, nowMin);
   const StateIcon = TONE[state].Icon;
   const washLabel = b.wash === "done" ? "Готова" : b.wash === "in_progress" ? "В работе" : state === "call" ? "Позвонить" : b.confirmed ? "Подтверждена" : "Не подтверждена";
   const payLabel = b.payment === "paid" ? "Оплачено" : b.payment === "awaiting" ? "Ожидает оплаты" : "Не оплачено";
@@ -548,10 +560,10 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
         <div className="mt-4 border-t border-border pt-4">
           {b.wash === "scheduled" && !b.confirmed && (
             <>
-              {needsCall(b, DEMO_TODAY, DEMO_NOW_MIN) && (
+              {needsCall(b, today, nowMin) && (
                 <p className="mb-3 flex items-center gap-2 rounded-lg border-2 border-crm-alert-foreground bg-crm-alert p-3 font-medium text-crm-alert-foreground"><Phone className="h-4 w-4" /> Позвоните клиенту: до начала меньше 15 минут</p>
               )}
-              <button type="button" onClick={() => onUpdate((x) => confirmBooking(x, DEMO_TODAY, DEMO_NOW_MIN))} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Клиент подтвердил</button>
+              <button type="button" onClick={() => onUpdate((x) => confirmBooking(x, today, nowMin))} className="w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Клиент подтвердил</button>
               <p className="mt-2 text-center text-xs text-muted-foreground">Мойка начнётся автоматически во время записи.</p>
             </>
           )}
@@ -641,8 +653,10 @@ function NewBookingDialog({
   date: string;
   bookings: Booking[];
   onClose: () => void;
-  onCreate: (b: Booking) => void;
+  onCreate: (b: NewBooking) => Promise<void>;
 }) {
+  const { today, nowMin } = useWashClock();
+  const [busy, setBusy] = useState(false);
   const [phone, setPhone] = useState("");
   const [car, setCar] = useState("");
   const [pkgName, setPkgName] = useState("Комфорт");
@@ -670,7 +684,7 @@ function NewBookingDialog({
     ? [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...chosenExtras.map(({ name, price }) => ({ name, price }))]
     : [];
   const duration = isCustom ? custom.duration : bookingDuration(SLOT_MIN, chosenExtras.map((e) => e.minutes));
-  const slots = duration > 0 ? freeSlots(bookings, date, duration, 60, DEMO_TODAY, DEMO_NOW_MIN) : [];
+  const slots = duration > 0 ? freeSlots(bookings, date, duration, 60, today, nowMin) : [];
   const picked = slots.find((s) => s.start === slot);
 
   const submit = () => {
@@ -680,11 +694,12 @@ function NewBookingDialog({
     if (isCustom && (!Number.isInteger(customPriceValue) || customPriceValue <= 0)) return setError("Укажите цену услуги в рублях.");
     if (isCustom && (!Number.isInteger(duration) || duration <= 0)) return setError("Укажите длительность услуги в минутах.");
     if (!picked) return setError("Выберите свободное время.");
+    setBusy(true);
+    setError("");
     onCreate({
-      id: crypto.randomUUID(), date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: initial?.carType ?? "Седан",
-      phone, source: "admin", packageName: isCustom ? custom.packageName : pkg?.name ?? "", services,
-      wash: "scheduled", confirmed: false, payment: "unpaid",
-    });
+      date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: initial?.carType ?? "Седан",
+      phone, packageName: isCustom ? custom.packageName : pkg?.name ?? "", services,
+    }).catch((e: Error) => setError(e.message)).finally(() => setBusy(false));
   };
 
   const field = "min-h-12 w-full rounded-xl border border-border bg-background px-4 py-3 text-base outline-none focus:border-crm sm:min-h-0 sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm";
@@ -768,7 +783,7 @@ function NewBookingDialog({
           </div>
           <p className="text-muted-foreground">Итого: <b className="text-foreground">{rub(services.reduce((s, x) => s + x.price, 0))}</b></p>
           {error && <p className="text-destructive">{error}</p>}
-          <button type="button" onClick={submit} className="min-h-14 w-full rounded-xl bg-crm px-4 py-4 text-base font-semibold text-crm-foreground sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm">Создать запись</button>
+          <button type="button" disabled={busy} onClick={submit} className="disabled:opacity-60 min-h-14 w-full rounded-xl bg-crm px-4 py-4 text-base font-semibold text-crm-foreground sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm">Создать запись</button>
         </div>
       </DialogContent>
     </Dialog>

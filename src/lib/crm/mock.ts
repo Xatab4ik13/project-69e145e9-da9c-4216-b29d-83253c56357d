@@ -2,28 +2,12 @@ import { CLOSE_MIN, OPEN_MIN, addDays, findConflict } from "./logic";
 import { WASHERS } from "./finance";
 import type { Booking, BookingSource, PaymentMethod } from "./types";
 
-/** Every complex takes one 60-minute slot; add-ons may add minutes. */
-export const SLOT_MIN = 60;
+export { SLOT_MIN, PACKAGES, EXTRAS } from "./booking-rules";
+import { EXTRAS, PACKAGES } from "./booking-rules";
 
-/** Demo data only — replace with API later. */
+/** Demo data only — owner screens still read it until their own stage. */
 export const DEMO_TODAY = "2026-11-11";
 export const DEMO_NOW_MIN = 16 * 60 + 55;
-
-export const PACKAGES = [
-  { name: "Стандарт", price: 1200, duration: 60 },
-  { name: "Комфорт", price: 1600, duration: 60 },
-  { name: "Люкс", price: 1900, duration: 60 },
-];
-
-export const EXTRAS = [
-  { name: "Кварцевый воск", price: 600, minutes: 0 },
-  { name: "Чернение резины", price: 300, minutes: 0 },
-  { name: "Обезжиривание кузова", price: 500, minutes: 0 },
-  { name: "Силикон уплотнителей", price: 300, minutes: 0 },
-  { name: "Антидождь", price: 2100, minutes: 20 },
-  { name: "Кондиционер кожи", price: 600, minutes: 10 },
-  { name: "Пылесос багажника", price: 300, minutes: 10 },
-];
 
 const h = (hh: number, mm = 0) => hh * 60 + mm;
 const pkg = (n: string) => {

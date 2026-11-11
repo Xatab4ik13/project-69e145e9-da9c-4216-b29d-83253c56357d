@@ -31,5 +31,7 @@ use the editor.
 
 ## Project rules
 - CRM (/admin) keeps types, mock data and pure state logic in src/lib/crm/, separate from UI in src/components/crm/ — so a real API can replace mocks without rewriting the screen.
+- The backend lives in server/ (Bun + Hono + PostgreSQL, own package.json, SQL migrations in server/migrations) and reuses pure rules from src/lib/crm/; the frontend calls it only through src/lib/crm/api.ts at same-origin /api/v1 — the app is self-hosted on a VPS where Caddy routes /api/* to it, and Lovable Cloud is not used.
+- CRM roles (owner, admin) and sessions are checked by the server on every /crm endpoint; the UI never decides access from local storage.
 - The owner demo month in src/lib/crm/mock.ts is generated from a fixed seed: keep it deterministic, because finance tests and the owner dashboard read its totals.
 - Production host routing serves the public site on aquariuswash.ru and the CRM at the root of crm.aquariuswash.ru; /admin remains the preview fallback so the future installed PWA opens only the CRM.

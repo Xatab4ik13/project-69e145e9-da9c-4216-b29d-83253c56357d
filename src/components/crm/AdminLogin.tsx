@@ -2,16 +2,21 @@ import { useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { aquarius_logo as logo } from "@/assets/images";
 import { Input } from "@/components/ui/input";
+import { api, type CrmUser } from "@/lib/crm/api";
 
-export function AdminLogin({ onLogin }: { onLogin: () => void }) {
+export function AdminLogin({ onLogin }: { onLogin: (user: CrmUser) => void }) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!login.trim() || !password) return;
-    onLogin();
+    if (!login.trim() || !password || busy) return;
+    setBusy(true);
+    setError("");
+    api.login(login.trim(), password).then(onLogin, (e: Error) => setError(e.message)).finally(() => setBusy(false));
   };
 
   return (
@@ -55,8 +60,9 @@ export function AdminLogin({ onLogin }: { onLogin: () => void }) {
               </button>
             </div>
           </div>
-          <button type="submit" className="btn-lime h-12 w-full rounded-lg text-base">
-            Войти
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+          <button type="submit" disabled={busy} className="btn-lime h-12 w-full rounded-lg text-base disabled:opacity-60">
+            {busy ? "Входим…" : "Войти"}
           </button>
         </form>
       </div>
