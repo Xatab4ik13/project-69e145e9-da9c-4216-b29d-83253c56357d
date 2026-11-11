@@ -194,7 +194,7 @@ export function BookingModal({
       (e: Error & { status?: number }) => {
         setSendError(e.message);
         // Someone took this time a moment earlier: drop the choice and show fresh free times.
-        if (e.status === 409) { setSlot(null); setSlotsTick((t) => t + 1); }
+        if (e.status === 409) { setSlot(null); setStep(1); setSlotsTick((t) => t + 1); }
       },
     ).finally(() => setSending(false));
   };
@@ -601,10 +601,11 @@ export function BookingModal({
           <div className="text-center sm:w-[22rem]">
             {step === 1 ? (
               <>
+                {sendError && <p role="alert" className="mb-2 text-destructive">{sendError}</p>}
                 <button
                   type="button"
                   disabled={!canContinue}
-                  onClick={() => setStep(2)}
+                  onClick={() => { setSendError(""); setStep(2); }}
                   className={`flex w-full items-center justify-center gap-2 rounded-lg py-3.5 text-lg font-semibold ${canContinue ? "btn-lime" : "cursor-not-allowed bg-muted text-muted-foreground"}`}
                 >
                   Продолжить <ArrowRight className="h-5 w-5" />
