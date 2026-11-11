@@ -55,7 +55,7 @@ describe("Страница расчётов мойщиков", () => {
   it("фильтрует начисления и выплаты по дню, сохраняя общий долг", () => {
     render(<AdminWashers bookings={bookings} ops={ops} today={today} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "День", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "День" }));
 
     expect(within(metric("Всего заработали")).getByText("1 500 ₽")).toBeInTheDocument();
     expect(within(metric("Выплачено за период")).getByText("300 ₽")).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe("Страница расчётов мойщиков", () => {
   it("фильтрует начисления и выплаты по произвольному периоду", () => {
     render(<AdminWashers bookings={bookings} ops={ops} today={today} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Период", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Период" }));
     fireEvent.change(screen.getByLabelText("Начало периода"), { target: { value: "2026-11-10" } });
     fireEvent.change(screen.getByLabelText("Конец периода"), { target: { value: "2026-11-10" } });
 
