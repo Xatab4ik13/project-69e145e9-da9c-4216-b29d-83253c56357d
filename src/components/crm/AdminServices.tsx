@@ -5,6 +5,7 @@ import {
   CAR_CLASSES, DEFAULT_SERVICE_CATALOG, SERVICE_GROUPS, updateServiceCell,
 } from "@/lib/crm/services";
 import type { CarClass, CatalogService, ServiceCellField } from "@/lib/crm/services";
+import type { CrmRole } from "@/lib/crm/types";
 import { api } from "@/lib/crm/api";
 
 const ROMAN_CLASS: Record<CarClass, string> = { 1: "I", 2: "II", 3: "III", 4: "IV" };
@@ -13,7 +14,8 @@ const MOBILE_NUMBER_INPUT = "mt-1 min-h-11 w-full rounded-lg border border-borde
 
 type SaveStatus = "idle" | "dirty" | "saved" | "error";
 
-export function AdminServices() {
+export function AdminServices({ role }: { role: CrmRole }) {
+  const canEdit = role === "owner";
   const [catalog, setCatalog] = useState<CatalogService[]>(DEFAULT_SERVICE_CATALOG);
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -25,12 +27,14 @@ export function AdminServices() {
   }, []);
 
   const edit = (serviceId: string, classId: CarClass, field: ServiceCellField, raw: string) => {
+    if (!canEdit) return;
     const value = raw.trim() === "" ? null : Number(raw);
     setCatalog((current) => updateServiceCell(current, serviceId, classId, field, value === null || Number.isFinite(value) ? value : null));
     setStatus("dirty");
   };
 
   const save = () => {
+    if (!canEdit) return;
     setConfirmOpen(false);
     api.savePrices(catalog).then(
       () => setStatus("saved"),
@@ -38,19 +42,19 @@ export function AdminServices() {
     );
   };
 
-  const statusText = {
+  const statusText = canEdit ? {
     idle: "Цены и время можно изменить вручную.",
     dirty: "Есть несохранённые изменения.",
     saved: "Изменения сохранены.",
     error: errorText || "Не удалось сохранить. Попробуйте ещё раз.",
-  }[status];
+  }[status] : "Просмотр прайса. Изменять цены и время может только владелец.";
 
   return (
     <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-crm-surface px-4 pb-3 pt-4 md:bg-background md:px-6 md:pb-4 md:pt-5">
       <div className="flex items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Услуги</h1>
-          <p className="mt-1 text-sm text-muted-foreground md:text-base">Редактируемый прайс по классам автомобилей</p>
+          <p className="mt-1 text-sm text-muted-foreground md:text-base">{canEdit ? "Редактируемый прайс" : "Прайс"} по классам автомобилей</p>
         </div>
         <div className="ml-auto hidden md:block"><AdminNotificationIndicator /></div>
       </div>
@@ -65,7 +69,7 @@ export function AdminServices() {
             <section key={group} aria-label={group}>
               <h2 className="border-t border-border bg-crm-surface px-4 py-3 text-sm font-semibold text-crm first:border-t-0">{group}</h2>
               {catalog.filter((service) => service.group === group).map((service) => (
-                <MobileServiceEditor key={service.id} service={service} onEdit={edit} />
+                <MobileServiceEditor key={service.id} service={service} onEdit={edit} readOnly={!canEdit} />
               ))}
             </section>
           ))}
@@ -104,6 +108,7 @@ export function AdminServices() {
                               type="number"
                               min={0}
                               step={50}
+                              readOnly={!canEdit}
                               aria-label={`${service.name}, ${ROMAN_CLASS[classId]} класс, цена`}
                               value={cell.price ?? ""}
                               onChange={(event) => edit(service.id, classId, "price", event.target.value)}
@@ -117,6 +122,7 @@ export function AdminServices() {
                               type="number"
                               min={0}
                               step={5}
+                              readOnly={!canEdit}
                               aria-label={`${service.name}, ${ROMAN_CLASS[classId]} класс, время в минутах`}
                               value={cell.minutes ?? ""}
                               onChange={(event) => edit(service.id, classId, "minutes", event.target.value)}
@@ -137,31 +143,35 @@ export function AdminServices() {
 
       <div className="mt-3 flex shrink-0 flex-col items-stretch justify-between gap-2 rounded-xl border border-border bg-background p-3 sm:flex-row sm:items-center sm:gap-4 sm:px-4">
         <p className={`text-center text-sm sm:text-left ${status === "error" ? "text-destructive" : "text-muted-foreground"}`} aria-live="polite">{statusText}</p>
-        <button
-          type="button"
-          onClick={() => setConfirmOpen(true)}
-          disabled={status === "idle" || status === "saved"}
-          className="min-h-12 w-full shrink-0 rounded-xl bg-crm px-5 py-3 text-base font-semibold text-crm-foreground disabled:cursor-default disabled:opacity-50 sm:min-h-0 sm:w-36 sm:rounded-lg sm:py-2.5 sm:text-sm"
-        >
-          {status === "saved" ? "Сохранено" : "Сохранить"}
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => setConfirmOpen(true)}
+            disabled={status === "idle" || status === "saved"}
+            className="min-h-12 w-full shrink-0 rounded-xl bg-crm px-5 py-3 text-base font-semibold text-crm-foreground disabled:cursor-default disabled:opacity-50 sm:min-h-0 sm:w-36 sm:rounded-lg sm:py-2.5 sm:text-sm"
+          >
+            {status === "saved" ? "Сохранено" : "Сохранить"}
+          </button>
+        )}
       </div>
 
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent
-          className="w-[calc(100%-2rem)] max-w-sm rounded-xl p-5"
-          closeClassName="flex h-11 w-11 items-center justify-center rounded-lg sm:h-8 sm:w-8 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-4 sm:[&_svg]:w-4"
-        >
-          <DialogHeader className="pr-10 text-left">
-            <DialogTitle className="text-xl sm:text-lg">Сохранить изменения?</DialogTitle>
-            <DialogDescription className="text-base sm:text-sm">Изменённые цены и время будут записаны в прайс.</DialogDescription>
-          </DialogHeader>
-          <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
-            <button type="button" onClick={() => setConfirmOpen(false)} className="min-h-12 rounded-xl border border-border px-4 py-3 text-base font-semibold sm:min-h-0 sm:rounded-lg sm:py-2 sm:text-sm">Отмена</button>
-            <button type="button" onClick={save} className="min-h-12 rounded-xl bg-crm px-4 py-3 text-base font-semibold text-crm-foreground sm:min-h-0 sm:rounded-lg sm:py-2 sm:text-sm">Да, сохранить</button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {canEdit && (
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent
+            className="w-[calc(100%-2rem)] max-w-sm rounded-xl p-5"
+            closeClassName="flex h-11 w-11 items-center justify-center rounded-lg sm:h-8 sm:w-8 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-4 sm:[&_svg]:w-4"
+          >
+            <DialogHeader className="pr-10 text-left">
+              <DialogTitle className="text-xl sm:text-lg">Сохранить изменения?</DialogTitle>
+              <DialogDescription className="text-base sm:text-sm">Изменённые цены и время будут записаны в прайс.</DialogDescription>
+            </DialogHeader>
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+              <button type="button" onClick={() => setConfirmOpen(false)} className="min-h-12 rounded-xl border border-border px-4 py-3 text-base font-semibold sm:min-h-0 sm:rounded-lg sm:py-2 sm:text-sm">Отмена</button>
+              <button type="button" onClick={save} className="min-h-12 rounded-xl bg-crm px-4 py-3 text-base font-semibold text-crm-foreground sm:min-h-0 sm:rounded-lg sm:py-2 sm:text-sm">Да, сохранить</button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </main>
   );
 }
@@ -169,9 +179,11 @@ export function AdminServices() {
 function MobileServiceEditor({
   service,
   onEdit,
+  readOnly,
 }: {
   service: CatalogService;
   onEdit: (serviceId: string, classId: CarClass, field: ServiceCellField, raw: string) => void;
+  readOnly: boolean;
 }) {
   return (
     <article data-service-id={`mobile-${service.id}`} className="border-t border-border p-4">
@@ -190,6 +202,7 @@ function MobileServiceEditor({
                   inputMode="numeric"
                   min={0}
                   step={50}
+                  readOnly={readOnly}
                   aria-label={`${service.name}, ${ROMAN_CLASS[classId]} класс, цена`}
                   value={cell.price ?? ""}
                   onChange={(event) => onEdit(service.id, classId, "price", event.target.value)}
@@ -203,6 +216,7 @@ function MobileServiceEditor({
                   inputMode="numeric"
                   min={0}
                   step={5}
+                  readOnly={readOnly}
                   aria-label={`${service.name}, ${ROMAN_CLASS[classId]} класс, время в минутах`}
                   value={cell.minutes ?? ""}
                   onChange={(event) => onEdit(service.id, classId, "minutes", event.target.value)}

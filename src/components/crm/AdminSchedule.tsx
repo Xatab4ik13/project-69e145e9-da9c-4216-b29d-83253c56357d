@@ -130,7 +130,7 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
       <MobileAdminHeader role={role} />
       <Sidebar section={section} onChange={changeSection} role={role} onLogout={onLogout} />
-      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={today} /> : section === "finance" ? null : section === "notifications" ? <AdminNotifications today={DEMO_TODAY} /> : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={today} /> : section === "services" ? <AdminServices /> : section === "clients" ? (
+      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={today} /> : section === "finance" ? null : section === "notifications" ? <AdminNotifications today={DEMO_TODAY} /> : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={today} /> : section === "services" ? <AdminServices role={role} /> : section === "clients" ? (
         <AdminClients
           bookings={financeBookings}
           today={today}
