@@ -576,7 +576,7 @@ export function BookingModal({
             <p className="mt-2 text-sm text-muted-foreground">Чтобы связаться с вами по записи</p>
             <label className="mt-5 flex cursor-pointer items-center gap-3">
               <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="h-6 w-6 accent-lime" />
-              <span>Согласен на <a href="#" className="underline underline-offset-4">обработку персональных данных</a></span>
+              <span>Согласен на <a href="/docs/consent" target="_blank" rel="noreferrer" className="underline underline-offset-4">обработку персональных данных</a> и с <a href="/docs/privacy" target="_blank" rel="noreferrer" className="underline underline-offset-4">политикой</a></span>
             </label>
           </div>
         )}

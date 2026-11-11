@@ -3,7 +3,8 @@ import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
 import { AdminEntry } from "@/components/crm/AdminEntry";
 import { api } from "@/lib/crm/api";
 import { getAppHost } from "@/lib/crm/host.functions";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { LEGAL_DOCS, OPERATOR } from "@/lib/legal/docs";
 import { useEffect, useState } from "react";
 import { BookingModal, MobileBookingBar, MOBILE_SHEET } from "@/components/BookingModal";
 import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronRight, Clock, Copy, CornerUpRight, MapPin, Phone, Plus, X } from "lucide-react";
@@ -123,35 +124,31 @@ function Contacts() {
 
 function SiteFooter() {
   return (
-    <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-5 max-md:px-4">
-      <img src={logo.url} alt="Aquarius автомойка" width={160} height={64} loading="lazy" className="h-12 w-auto" />
-      <nav className="flex gap-8 text-sm font-semibold max-md:text-xs max-md:underline max-md:underline-offset-4">
-        <a href="#" className="max-md:hidden">Услуги</a>
-        <a href="#contacts" className="max-md:hidden">Контакты</a>
-        <a href="#">Политика конфиденциальности</a>
-      </nav>
+    <footer className="mx-auto max-w-6xl border-t border-border px-6 py-5 max-md:px-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <img src={logo.url} alt="Aquarius автомойка" width={160} height={64} loading="lazy" className="h-12 w-auto" />
+        <nav className="flex gap-8 text-sm font-semibold max-md:text-xs max-md:underline max-md:underline-offset-4">
+          <a href="#" className="max-md:hidden">Услуги</a>
+          <a href="#contacts" className="max-md:hidden">Контакты</a>
+          <Link to="/docs/$slug" params={{ slug: "privacy" }}>Политика конфиденциальности</Link>
+        </nav>
+      </div>
+      <div className="mt-5 flex flex-wrap justify-between gap-6 text-xs text-muted-foreground">
+        <ul className="flex flex-wrap gap-x-5 gap-y-1">
+          {LEGAL_DOCS.map((d) => (
+            <li key={d.slug}><Link to="/docs/$slug" params={{ slug: d.slug }} className="underline underline-offset-4">{d.short}</Link></li>
+          ))}
+        </ul>
+        <div className="space-y-0.5">
+          <p>{OPERATOR.name}</p>
+          <p>ИНН {OPERATOR.inn}</p>
+          <p>Р/с {OPERATOR.account} в {OPERATOR.bank}</p>
+          <p>БИК {OPERATOR.bik}, к/с {OPERATOR.corr}</p>
+        </div>
+      </div>
     </footer>
   );
 }
-import { care_foam_wash as imgFoam } from "@/assets/images";
-import { care_quartz_wax as imgWax } from "@/assets/images";
-import { care_antirain as imgRain } from "@/assets/images";
-import { care_tire_black as imgTire } from "@/assets/images";
-import { care_leather as imgLeather } from "@/assets/images";
-import { care_trunk_vacuum as imgTrunk } from "@/assets/images";
-import { care_body_degrease as imgDegrease } from "@/assets/images";
-import { care_silicone_seals as imgSilicone } from "@/assets/images";
-import { aquarius_logo as logo } from "@/assets/images";
-import { car_wash_hero as hero } from "@/assets/images";
-import { more_dry_clean as imgDry } from "@/assets/images";
-import { more_engine as imgEngine } from "@/assets/images";
-import { more_wheels as imgWheels } from "@/assets/images";
-
-const moreCare = [
-  { img: imgDry, alt: "Химчистка тканевого кресла", name: "Химчистка салона", info: "от 17 000 ₽ · 12 часов", note: "Запись до 13:00 предыдущего дня" },
-  { img: imgEngine, alt: "Мойка моторного отсека", name: "Мойка двигателя", info: "от 2 000 ₽ · 40 минут" },
-  { img: imgWheels, alt: "Чистка диска щёткой", name: "Чистка дисков", info: "от 500 ₽ за диск · 15 минут" },
-];
 
 function MoreCare() {
   return (
