@@ -1,6 +1,6 @@
 import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
 import { useEffect, useMemo, useState } from "react";
-import logoAsset from "@/assets/aquarius-logo.webp.asset.json";
+import { aquarius_logo as logoAsset } from "@/assets/images";
 import { ArrowUpRight } from "lucide-react";
 import { ArrowLeft, ArrowRight, CalendarDays, CalendarClock, Car, Check, ChevronDown, ChevronRight, Clock, MapPin, Phone, Search, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";

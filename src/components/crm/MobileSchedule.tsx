@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import {
   Bell, Building2, CalendarDays, ChevronLeft, ChevronRight, HandCoins, LayoutDashboard, Menu, Plus, Search, Star, User, Wallet, Wrench,
 } from "lucide-react";
-import logo from "@/assets/aquarius-logo.webp.asset.json";
+import { aquarius_logo as logo } from "@/assets/images";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { TONE } from "@/components/crm/booking-tone";
 import { bookingState, fmtDateShort, fmtTime, rub, total } from "@/lib/crm/logic";

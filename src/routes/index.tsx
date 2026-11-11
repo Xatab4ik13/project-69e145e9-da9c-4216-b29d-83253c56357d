@@ -6,8 +6,8 @@ import { useState } from "react";
 import { BookingModal, MobileBookingBar, MOBILE_SHEET } from "@/components/BookingModal";
 import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronRight, Clock, Copy, CornerUpRight, MapPin, Phone, Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import imgMap from "@/assets/parking-map-aquarius.webp.asset.json";
-import imgParkCar from "@/assets/parking-car-4.webp.asset.json";
+import { parking_map_aquarius as imgMap } from "@/assets/images";
+import { parking_car_4 as imgParkCar } from "@/assets/images";
 
 const ADDRESS = "Санкт-Петербург, проспект Большевиков, 18к2";
 const PHONE = "+7 (904) 511-73-96";
@@ -131,19 +131,19 @@ function SiteFooter() {
     </footer>
   );
 }
-import imgFoam from "@/assets/care-foam-wash.webp.asset.json";
-import imgWax from "@/assets/care-quartz-wax.webp.asset.json";
-import imgRain from "@/assets/care-antirain.webp.asset.json";
-import imgTire from "@/assets/care-tire-black.webp.asset.json";
-import imgLeather from "@/assets/care-leather.webp.asset.json";
-import imgTrunk from "@/assets/care-trunk-vacuum.webp.asset.json";
-import imgDegrease from "@/assets/care-body-degrease.webp.asset.json";
-import imgSilicone from "@/assets/care-silicone-seals.webp.asset.json";
-import logo from "@/assets/aquarius-logo.webp.asset.json";
-import hero from "@/assets/car-wash-hero.webp.asset.json";
-import imgDry from "@/assets/more-dry-clean.webp.asset.json";
-import imgEngine from "@/assets/more-engine.webp.asset.json";
-import imgWheels from "@/assets/more-wheels.webp.asset.json";
+import { care_foam_wash as imgFoam } from "@/assets/images";
+import { care_quartz_wax as imgWax } from "@/assets/images";
+import { care_antirain as imgRain } from "@/assets/images";
+import { care_tire_black as imgTire } from "@/assets/images";
+import { care_leather as imgLeather } from "@/assets/images";
+import { care_trunk_vacuum as imgTrunk } from "@/assets/images";
+import { care_body_degrease as imgDegrease } from "@/assets/images";
+import { care_silicone_seals as imgSilicone } from "@/assets/images";
+import { aquarius_logo as logo } from "@/assets/images";
+import { car_wash_hero as hero } from "@/assets/images";
+import { more_dry_clean as imgDry } from "@/assets/images";
+import { more_engine as imgEngine } from "@/assets/images";
+import { more_wheels as imgWheels } from "@/assets/images";
 
 const moreCare = [
   { img: imgDry, alt: "Химчистка тканевого кресла", name: "Химчистка салона", info: "от 17 000 ₽ · 12 часов", note: "Запись до 13:00 предыдущего дня" },

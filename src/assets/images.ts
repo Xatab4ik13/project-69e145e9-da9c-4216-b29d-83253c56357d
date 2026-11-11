@@ -1,0 +1,19 @@
+// Картинки лежат в public/images и отдаются тем же сервером, что и сайт.
+export const aquarius_logo = { url: "/images/aquarius-logo.webp" };
+export const car_wash_hero = { url: "/images/car-wash-hero.webp" };
+export const care_antirain = { url: "/images/care-antirain.webp" };
+export const care_body_degrease = { url: "/images/care-body-degrease.webp" };
+export const care_foam_wash = { url: "/images/care-foam-wash.webp" };
+export const care_leather = { url: "/images/care-leather.webp" };
+export const care_quartz_wax = { url: "/images/care-quartz-wax.webp" };
+export const care_silicone_seals = { url: "/images/care-silicone-seals.webp" };
+export const care_tire_black = { url: "/images/care-tire-black.webp" };
+export const care_trunk_vacuum = { url: "/images/care-trunk-vacuum.webp" };
+export const more_dry_clean = { url: "/images/more-dry-clean.webp" };
+export const more_engine = { url: "/images/more-engine.webp" };
+export const more_wheels = { url: "/images/more-wheels.webp" };
+export const parking_car_4 = { url: "/images/parking-car-4.webp" };
+export const parking_car_full = { url: "/images/parking-car-full.webp" };
+export const parking_map = { url: "/images/parking-map.webp" };
+export const parking_map_4 = { url: "/images/parking-map-4.webp" };
+export const parking_map_aquarius = { url: "/images/parking-map-aquarius.webp" };
