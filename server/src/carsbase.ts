@@ -38,7 +38,7 @@ export async function searchCars(q: string): Promise<CarHit[]> {
 }
 
 const infoCache = new Map<string, { at: number; info: CarInfo }>();
-/** Класс по последнему поколению: берём самый крупный кузов этого поколения. */
+/** Класс по последнему поколению: берём основной (самый короткий) кузов, а не удлинённые версии. */
 export async function carInfo(modelId: string): Promise<CarInfo> {
   const hit = infoCache.get(modelId);
   if (hit && Date.now() - hit.at < DAY) return hit.info;
@@ -53,7 +53,7 @@ export async function carInfo(modelId: string): Promise<CarInfo> {
     const spec = mod ? (await get<{ data: { body_size?: string }[] }>(`/specifications?id=${encodeURIComponent(mod.id)}`)).data[0] : undefined;
     const len = Number(spec?.body_size) || null;
     const cls = carClass(c.body_type, len);
-    if (!best || cls > best.cls) best = { cls, body: c.name.replace(/\s*\d дв\.$/, "").toLowerCase() };
+    if (!best || cls < best.cls) best = { cls, body: c.name.replace(/\s*\d дв\..*$/, "").toLowerCase() };
   }
   const info = best ?? { cls: 1 as CarClass, body: "" };
   infoCache.set(modelId, { at: Date.now(), info });
