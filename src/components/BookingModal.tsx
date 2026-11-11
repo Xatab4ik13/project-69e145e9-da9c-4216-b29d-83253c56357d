@@ -4,6 +4,7 @@ import { aquarius_logo as logoAsset } from "@/assets/images";
 import { ArrowUpRight } from "lucide-react";
 import { ArrowLeft, ArrowRight, CalendarDays, CalendarClock, Car, Check, ChevronDown, ChevronRight, Clock, MapPin, Phone, Search, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { api } from "@/lib/crm/api";
 
 type CarItem = { name: string; body: string; cls: 1 | 2 | 3 };
 // Класс автомобиля влияет на цену и время. Kia Rio — I класс (как на макете).
@@ -20,7 +21,8 @@ const CARS: CarItem[] = [
   { name: "Toyota Land Cruiser", body: "внедорожник", cls: 3 },
 ];
 const CLASS_K = { 1: 1, 2: 1.2, 3: 1.4 } as const;
-const SLOTS = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00", "20:30"];
+const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const WD = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 const WD_FULL = ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"];
 const MONTHS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
@@ -115,6 +117,10 @@ export function BookingModal({
   const [phone, setPhone] = useState("");
   const [agree, setAgree] = useState(false);
   const [done, setDone] = useState(false);
+  const [slots, setSlots] = useState<string[] | null>(null);
+  const [slotsError, setSlotsError] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
 
   const days = useMemo(() => {
     const now = new Date();
@@ -138,6 +144,35 @@ export function BookingModal({
     onOpenChange(false);
     if (done) setTimeout(() => { setDone(false); setStep(1); setCar(null); setSlot(null); setPhone(""); setAgree(false); }, 300);
   };
+  const dayIso = isoDay(day);
+  const extrasKey = extras.join("|");
+  useEffect(() => {
+    if (!open || !car || done) return;
+    let alive = true;
+    setSlots(null);
+    setSlotsError("");
+    api.slots(dayIso, extras).then(
+      (r) => alive && setSlots(r.slots.map(hhmm)),
+      (e: Error) => alive && setSlotsError(e.message),
+    );
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, car, dayIso, extrasKey, done]);
+
+  const confirm = () => {
+    if (!car || !slot || sending) return;
+    const [h, m] = slot.split(":").map(Number) as [number, number];
+    setSending(true);
+    setSendError("");
+    api.book({
+      date: dayIso, start: h * 60 + m, car: car.name, carType: car.body, phone, packageName: pkgName,
+      services: washLines.map(([name, price]) => ({ name, price })), extras,
+    }).then(
+      () => setDone(true),
+      (e: Error) => { setSendError(e.message); setSlot(null); setSlots(null); api.slots(dayIso, extras).then((r) => setSlots(r.slots.map(hhmm)), () => undefined); },
+    ).finally(() => setSending(false));
+  };
+
   const pickCar = (c: CarItem) => {
     setCar(c);
     setQuery("");
@@ -461,8 +496,11 @@ export function BookingModal({
                     ))}
                   </div>
                   <p className="mt-4 font-display text-xl">Свободное время</p>
+                  {slotsError ? <p className="mt-2 text-destructive">{slotsError}</p>
+                    : slots === null ? <p className="mt-2 text-muted-foreground">Загружаем свободное время…</p>
+                    : slots.length === 0 ? <p className="mt-2 text-muted-foreground">На этот день свободного времени нет — выберите другой день.</p> : null}
                   <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
-                    {SLOTS.map((s) => (
+                    {(slots ?? []).map((s) => (
                       <button
                         key={s}
                         type="button"
@@ -537,14 +575,17 @@ export function BookingModal({
                 <p className="mt-2 text-sm text-muted-foreground">Далее — номер телефона</p>
               </>
             ) : (
+              <>
+              {sendError && <p role="alert" className="mb-2 text-destructive">{sendError}</p>}
               <button
                 type="button"
-                disabled={!canConfirm}
-                onClick={() => setDone(true)}
-                className={`w-full rounded-lg py-3.5 text-lg font-semibold ${canConfirm ? "btn-lime" : "cursor-not-allowed bg-muted text-muted-foreground"}`}
+                disabled={!canConfirm || sending}
+                onClick={confirm}
+                className={`w-full rounded-lg py-3.5 text-lg font-semibold ${canConfirm && !sending ? "btn-lime" : "cursor-not-allowed bg-muted text-muted-foreground"}`}
               >
-                Подтвердить запись
+                {sending ? "Отправляем…" : "Подтвердить запись"}
               </button>
+              </>
             )}
           </div>
         </div>
