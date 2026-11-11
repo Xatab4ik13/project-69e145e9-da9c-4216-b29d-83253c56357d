@@ -123,10 +123,7 @@ export function BookingModal({
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
 
-  const days = useMemo(() => {
-    const now = new Date();
-    return Array.from({ length: 7 }, (_, i) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1 + i));
-  }, []);
+  const days = useMemo(() => bookingDays(new Date()), []);
   const day = days[dayIdx]!;
   const [matches, setMatches] = useState<CarHit[] | null>(null);
   const [carError, setCarError] = useState("");
