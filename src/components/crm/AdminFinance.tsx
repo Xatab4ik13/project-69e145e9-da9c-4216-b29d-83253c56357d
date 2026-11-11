@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trash2, X } from "lucide-react";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { addDays, fmtDateLong, fmtDateShort, fmtTime, rub, total } from "@/lib/crm/logic";
 import {
   WASHERS, VARIABLE_ARTICLES, articleStatus, daysInMonth, paidIn, summarize, washerLedger,
@@ -35,6 +39,7 @@ export function AdminFinance(props: Props) {
   const [month, setMonth] = useState(today.slice(0, 7));
   const [day, setDay] = useState(today);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [deleteOp, setDeleteOp] = useState<FinOp | null>(null);
 
   const isCurrent = month === today.slice(0, 7);
   const isFuture = month > today.slice(0, 7);
@@ -185,7 +190,7 @@ export function AdminFinance(props: Props) {
             <button type="button" onClick={() => openDay(o.date)} className="hidden w-20 shrink-0 whitespace-nowrap text-left tabular-nums text-muted-foreground underline-offset-2 hover:underline md:block">{fmtDateShort(o.date)}</button>
             <span className="min-w-0 flex-1"><span className="block truncate">{o.name}</span><span className="block text-xs text-muted-foreground"><span className="md:hidden">{fmtDateShort(o.date)} · </span>{o.kind === "payout" ? "мойщику" : o.article && articles.some((a) => a.id === o.article) ? "постоянная статья" : "по счёту"}</span></span>
             <span className="font-semibold tabular-nums">{money(o.amount)}</span>
-            <button type="button" aria-label={`Удалить ${o.name}`} onClick={() => props.onRemoveOp(o.id)} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
+            <button type="button" aria-label={`Удалить ${o.name}`} onClick={() => setDeleteOp(o)} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
       </section>
@@ -214,6 +219,29 @@ export function AdminFinance(props: Props) {
           onSave={(op) => { props.onAddOp(op); setDraft(null); }}
         />
       )}
+
+      <AlertDialog open={deleteOp !== null} onOpenChange={(open) => { if (!open) setDeleteOp(null); }}>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-xl p-5">
+          <AlertDialogHeader className="text-left">
+            <AlertDialogTitle className="text-xl">Удалить платёж?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              {deleteOp ? `${deleteOp.name} · ${money(deleteOp.amount)}` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="grid grid-cols-2 gap-2 space-x-0 sm:flex">
+            <AlertDialogCancel className="m-0 min-h-11">Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteOp) props.onRemoveOp(deleteOp.id);
+                setDeleteOp(null);
+              }}
+              className="min-h-11 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
