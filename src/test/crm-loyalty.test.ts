@@ -59,6 +59,6 @@ describe("loyalty from real bookings (no app yet)", () => {
     expect(list).toHaveLength(1);
     expect(list[0]!.activated).toBe(false);
     expect(list[0]!.transactions.map((t) => t.amount)).toEqual([100]);
-    expect(list[0]!.transactions[0].expiresAt).toBe("2027-11-10");
+    expect(list[0]!.transactions[0]!.expiresAt).toBe("2027-11-10");
   });
 });
