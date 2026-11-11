@@ -315,7 +315,7 @@ function Index() {
             <MapPin className="h-4 w-4" /> Большевиков, 18к2 · Ежедневно <b>10:00–22:00</b>
           </p>
           <div className="order-3 space-y-2 border-b border-border pb-2 text-base md:hidden">
-            <a href={YMAPS} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 leading-none"><MapPin className="h-5 w-5 shrink-0" /> <span>Большевиков, 18к2 · 4-й уровень</span></a>
+            <button type="button" onClick={openNavigator} className="flex items-center gap-3 text-left leading-none"><MapPin className="h-5 w-5 shrink-0" /> <span className="underline decoration-dotted underline-offset-4">Большевиков, 18к2 · 4-й уровень</span></button>
             <p className="flex items-center gap-3"><Clock className="h-5 w-5" /> Ежедневно 10:00–22:00</p>
             <a href={PHONE_HREF} className="block pt-1 font-display text-3xl">{PHONE}</a>
           </div>
