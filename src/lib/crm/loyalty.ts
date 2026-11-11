@@ -83,3 +83,31 @@ export function loyaltyMetrics(clients: LoyaltyClient[], today: string) {
 export function formatBonuses(value: number): string {
   return value.toLocaleString("ru-RU", { maximumFractionDigits: 2 }).replace(/\u00a0/g, " ");
 }
+
+/**
+ * Loyalty accounts derived from real bookings while there is no app yet:
+ * one account per phone, nobody is activated (no SMS login, no welcome bonus,
+ * no redemptions), and each paid wash accrues 5% of its check for 12 months.
+ */
+export function loyaltyFromBookings(
+  bookings: { id: string; date: string; phone: string; wash: string; payment: PaymentStatus; services: { price: number }[] }[],
+): LoyaltyClient[] {
+  const byPhone = new Map<string, LoyaltyClient>();
+  for (const b of bookings) {
+    const phone = b.phone.replace(/\D/g, "").slice(-10);
+    if (phone.length !== 10 || b.wash === "cancelled" || b.payment !== "paid") continue;
+    const paid = b.services.reduce((s, l) => s + l.price, 0);
+    const client = byPhone.get(phone) ?? { id: phone, phone, activated: false, visits: 0, totalSpent: 0, lastVisit: null, transactions: [] };
+    client.visits += 1;
+    client.totalSpent += paid;
+    if (!client.lastVisit || b.date > client.lastVisit) client.lastVisit = b.date;
+    const amount = accrualAfterPayment(b.payment, paid);
+    if (amount > 0) client.transactions.push({
+      id: b.id, type: "accrual", amount, date: b.date,
+      description: `5% с оплаты мойки · ${paid.toLocaleString("ru-RU").replace(/\u00a0/g, " ")} ₽`,
+      expiresAt: expiryAfterTwelveMonths(b.date),
+    });
+    byPhone.set(phone, client);
+  }
+  return [...byPhone.values()].sort((a, b) => (b.lastVisit ?? "").localeCompare(a.lastVisit ?? ""));
+}

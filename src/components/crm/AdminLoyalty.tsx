@@ -5,9 +5,8 @@ import { CrmPagination } from "@/components/crm/CrmPagination";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { paginateClients } from "@/lib/crm/clients";
 import { fmtPhone, fmtDateShort, phoneDigits, rub } from "@/lib/crm/logic";
-import { DEMO_TODAY } from "@/lib/crm/mock";
-import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
-import { formatBonuses, loyaltyBalance, loyaltyMetrics } from "@/lib/crm/loyalty";
+import { formatBonuses, loyaltyBalance, loyaltyFromBookings, loyaltyMetrics } from "@/lib/crm/loyalty";
+import type { Booking } from "@/lib/crm/types";
 import type { LoyaltyClient } from "@/lib/crm/loyalty";
 
 const RULES = [
@@ -17,23 +16,24 @@ const RULES = [
   { value: "12 мес.", text: "срок каждого начисления", note: "Затем бонусы сгорают" },
 ];
 
-export function AdminLoyalty({ initialClientId }: { initialClientId?: string | null }) {
+export function AdminLoyalty({ initialClientId, bookings, today }: { initialClientId?: string | null; bookings: Booking[]; today: string }) {
+  const allClients = useMemo(() => loyaltyFromBookings(bookings), [bookings]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(initialClientId ?? null);
-  const metrics = useMemo(() => loyaltyMetrics(MOCK_LOYALTY_CLIENTS, DEMO_TODAY), []);
+  const metrics = useMemo(() => loyaltyMetrics(allClients, today), [allClients, today]);
 
-  const clients = useMemo(() => MOCK_LOYALTY_CLIENTS.filter((client) => {
+  const clients = useMemo(() => allClients.filter((client) => {
     const digits = phoneDigits(query);
     const matchesQuery = !query.trim() || (digits.length > 0 && client.phone.includes(digits));
     const matchesFilter = filter === "all" || (filter === "active" ? client.activated : !client.activated);
     return matchesQuery && matchesFilter;
-  }), [filter, query]);
+  }), [allClients, filter, query]);
   const pagination = useMemo(() => paginateClients(clients, page), [clients, page]);
 
   const openClient = useCallback((id: string) => setSelectedId(id), []);
-  const selected = MOCK_LOYALTY_CLIENTS.find((client) => client.id === selectedId) ?? null;
+  const selected = allClients.find((client) => client.id === selectedId) ?? null;
 
   return (
     <main className="min-w-0 flex-1 overflow-y-auto bg-crm-surface px-4 pb-5 pt-4 md:bg-background md:px-6 md:pb-5 md:pt-5">
@@ -62,7 +62,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
         <Metric Icon={Users} label="Клиентов" value={formatBonuses(metrics.clients)} />
         <Metric Icon={Smartphone} label="Кабинетов активно" value={formatBonuses(metrics.activated)} />
         <Metric Icon={WalletCards} label="Бонусов на балансах" value={formatBonuses(metrics.balance)} />
-        <Metric Icon={Coins} label="Списано в ноябре" value={formatBonuses(metrics.redeemedThisMonth)} />
+        <Metric Icon={Coins} label="Списано за месяц" value={formatBonuses(metrics.redeemedThisMonth)} />
       </section>
 
       <section className="mt-4 flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:mt-5 md:min-h-[520px]">
@@ -95,7 +95,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
 
         <div className="min-h-0 flex-1 md:overflow-auto">
           <div className="divide-y divide-border md:hidden">
-            {pagination.items.map((client) => <ClientMobileCard key={client.id} client={client} onSelect={openClient} />)}
+            {pagination.items.map((client) => <ClientMobileCard key={client.id} client={client} onSelect={openClient} today={today} />)}
           </div>
           <table className="hidden w-full min-w-[720px] border-collapse text-left md:table">
             <thead className="sticky top-0 z-10 bg-crm-surface text-muted-foreground">
@@ -111,7 +111,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
             </thead>
             <tbody>
               {pagination.items.map((client) => (
-                <ClientRow key={client.id} client={client} onSelect={openClient} />
+                <ClientRow key={client.id} client={client} onSelect={openClient} today={today} />
               ))}
             </tbody>
           </table>
@@ -133,7 +133,7 @@ export function AdminLoyalty({ initialClientId }: { initialClientId?: string | n
       </section>
 
       <Dialog open={selected !== null} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
-        {selected && <ClientDetails client={selected} />}
+        {selected && <ClientDetails client={selected} today={today} />}
       </Dialog>
     </main>
   );
@@ -148,8 +148,8 @@ function Metric({ Icon, label, value }: { Icon: typeof Users; label: string; val
   );
 }
 
-const ClientRow = memo(function ClientRow({ client, onSelect }: { client: LoyaltyClient; onSelect: (id: string) => void }) {
-  const balance = loyaltyBalance(client, DEMO_TODAY);
+const ClientRow = memo(function ClientRow({ client, onSelect, today }: { client: LoyaltyClient; onSelect: (id: string) => void; today: string }) {
+  const balance = loyaltyBalance(client, today);
   return (
     <tr
       tabIndex={0}
@@ -168,8 +168,8 @@ const ClientRow = memo(function ClientRow({ client, onSelect }: { client: Loyalt
   );
 });
 
-const ClientMobileCard = memo(function ClientMobileCard({ client, onSelect }: { client: LoyaltyClient; onSelect: (id: string) => void }) {
-  const balance = loyaltyBalance(client, DEMO_TODAY);
+const ClientMobileCard = memo(function ClientMobileCard({ client, onSelect, today }: { client: LoyaltyClient; onSelect: (id: string) => void; today: string }) {
+  const balance = loyaltyBalance(client, today);
   return (
     <button
       type="button"
@@ -203,8 +203,8 @@ function AccountStatus({ activated }: { activated: boolean }) {
     : <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-crm-warn px-2.5 py-1 text-xs font-medium text-crm-warn-foreground"><Clock3 className="h-3.5 w-3.5" /> Не активирован</span>;
 }
 
-function ClientDetails({ client }: { client: LoyaltyClient }) {
-  const balance = loyaltyBalance(client, DEMO_TODAY);
+function ClientDetails({ client, today }: { client: LoyaltyClient; today: string }) {
+  const balance = loyaltyBalance(client, today);
   const transactions = [...client.transactions].sort((a, b) => b.date.localeCompare(a.date));
   return (
     <DialogContent
