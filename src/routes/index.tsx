@@ -1,5 +1,6 @@
 import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
 import { AdminEntry } from "@/components/crm/AdminEntry";
+import { api } from "@/lib/crm/api";
 import { getAppHost } from "@/lib/crm/host.functions";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -361,9 +362,29 @@ const phases = [
   { id: "three", label: "Три фазы", short: "три фазы", price: 800 },
 ];
 
+// Цены сайта берутся из прайса CRM (цена I класса); текущие значения выше — запасной вариант, если прайс недоступен.
+const PKG_IDS: Record<string, string> = { "Стандарт": "standard", "Комфорт": "comfort", "Люкс": "lux" };
+const PHASE_IDS: Record<string, string> = { two: "two-phases", three: "three-phases" };
+let pricesLoaded: Promise<void> | null = null;
+function useSitePrices() {
+  const [, setV] = useState(0);
+  useEffect(() => {
+    pricesLoaded ??= api.prices().then((catalog) => {
+      const byId = new Map(catalog.map((s) => [s.id, s.classes[1]]));
+      for (const p of packages) { const v = byId.get(PKG_IDS[p.name] ?? ""); if (v?.price != null) p.price = v.price; }
+      for (const c of care) { const v = byId.get(c.id); if (v?.price != null) c.price = v.price; if (v?.minutes != null) c.extra = v.minutes; }
+      for (const p of phases) { const v = byId.get(PHASE_IDS[p.id] ?? ""); if (v?.price != null) p.price = v.price; }
+    }).catch(() => { pricesLoaded = null; });
+    let alive = true;
+    pricesLoaded.then(() => alive && setV((n) => n + 1));
+    return () => { alive = false; };
+  }, []);
+}
+
 const rub = (n: number) => n.toLocaleString("ru-RU").replace(/\u00a0/g, " ");
 
 function Configurator() {
+  useSitePrices();
   const [selected, setSelected] = useState(1);
   const [added, setAdded] = useState<string[]>(["wax", "tire"]);
   const [phase, setPhase] = useState<string | null>(null);
@@ -540,6 +561,7 @@ function Configurator() {
 
 function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const [done, setDone] = useState(false);
+  useSitePrices();
   const [stage, setStage] = useState<"pkg" | "care" | "rest">("pkg");
   const [selected, setSelected] = useState<number | null>(null);
   const [added, setAdded] = useState<string[]>([]);
