@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import logo from "@/assets/aquarius-logo.webp.asset.json";
+import { aquarius_logo as logo } from "@/assets/images";
 import { Input } from "@/components/ui/input";
 
 export function AdminLogin({ onLogin }: { onLogin: () => void }) {

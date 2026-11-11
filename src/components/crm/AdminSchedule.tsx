@@ -3,7 +3,7 @@ import {
   ArrowRight, Banknote, Bell, Building2, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
   Clock, CreditCard, HandCoins, LayoutDashboard, Phone, Plus, Search, Smartphone, Star, User, Wallet, Wrench, X,
 } from "lucide-react";
-import logo from "@/assets/aquarius-logo.webp.asset.json";
+import { aquarius_logo as logo } from "@/assets/images";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminServices } from "@/components/crm/AdminServices";
 import { AdminLoyalty } from "@/components/crm/AdminLoyalty";
