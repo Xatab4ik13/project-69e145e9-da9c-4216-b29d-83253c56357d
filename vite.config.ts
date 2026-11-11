@@ -15,4 +15,6 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Local development only: forward /api to the Bun API in server/ (production uses Caddy).
+  vite: { server: { proxy: { "/api": "http://127.0.0.1:4000" } } },
 });
