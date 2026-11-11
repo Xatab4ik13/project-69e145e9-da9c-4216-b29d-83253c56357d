@@ -269,8 +269,9 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       payment_method: data.paymentMethod === undefined ? b.paymentMethod ?? null : data.paymentMethod,
       washer: data.washer === undefined ? b.washer ?? null : data.washer,
     };
-    const [row] = await sql`update bookings set wash = ${next.wash}, confirmed = ${next.confirmed}, payment = ${next.payment},
-      payment_method = ${next.payment_method}, washer = ${next.washer}, updated_at = now() where id = ${id.data} returning *`;
+    const row = (await sql`update bookings set wash = ${next.wash}, confirmed = ${next.confirmed}, payment = ${next.payment},
+      payment_method = ${next.payment_method}, washer = ${next.washer}, updated_at = now() where id = ${id.data} returning *`.catch(overlapAsNull))?.[0];
+    if (!row) return c.json({ error: "Это время уже занято другой записью" }, 409);
     return c.json({ booking: toBooking(row as Row) });
   });
 
