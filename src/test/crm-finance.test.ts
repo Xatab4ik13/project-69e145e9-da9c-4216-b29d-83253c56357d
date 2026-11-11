@@ -71,6 +71,11 @@ describe("summarize", () => {
     expect(summarize([list[0]], oneDay, "2026-10-05").tax).toBe(0);
   });
 
+  it("uses a zero tax rate for cash in the breakeven calculation", () => {
+    const cashOnly = summarize([list[0]], oneDay, "2026-10-05");
+    expect(cashOnly.month.target).toBeCloseTo(109905.5 / 0.7, 5);
+  });
+
   it("a mid-month day carries no stable articles", () => {
     expect(s.fixed).toBe(0);
     expect(s.profit).toBeCloseTo(8000 - (2400 + 51.2 + 20 + 420), 5);

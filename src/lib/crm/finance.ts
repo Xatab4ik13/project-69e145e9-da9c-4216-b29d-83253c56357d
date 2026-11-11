@@ -10,7 +10,7 @@ export const WASHER_SHARE = 0.3;
 export const ACQUIRING_FEE = 0.0256;
 /** СБП Т-Банка on payments made inside the app (owner confirmed 0,4%). */
 export const SBP_FEE = 0.004;
-/** УСН «доходы» — 6% of the whole revenue. */
+/** УСН «доходы» — 6% of terminal and app revenue; cash is excluded at the owner's request. */
 export const TAX_RATE = 0.06;
 
 export interface ExpenseItem {
