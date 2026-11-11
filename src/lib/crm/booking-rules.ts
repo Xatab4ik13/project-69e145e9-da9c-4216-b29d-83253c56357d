@@ -1,5 +1,11 @@
 import { bookingDuration } from "./logic";
 
+/** Seven booking dates start today; the slots API removes past times for the current day. */
+export function bookingDays(now: Date, count = 7): Date[] {
+  return Array.from({ length: count }, (_, i) =>
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() + i));
+}
+
 /** Every complex takes one 60-minute slot; add-ons may add minutes. */
 export const SLOT_MIN = 60;
 

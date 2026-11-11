@@ -1,4 +1,4 @@
-import { catalogDuration } from "@/lib/crm/booking-rules";
+import { bookingDays, catalogDuration } from "@/lib/crm/booking-rules";
 import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
 import { useEffect, useMemo, useState } from "react";
 import { aquarius_logo as logoAsset } from "@/assets/images";
