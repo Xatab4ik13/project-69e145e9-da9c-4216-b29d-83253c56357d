@@ -24,7 +24,7 @@ d("Aquarius API", () => {
 
   beforeAll(async () => {
     await sql.unsafe("drop schema public cascade; create schema public;");
-    for (const f of ["001_init.sql", "002_no_overlap.sql"]) await sql.unsafe(readFileSync(join(import.meta.dir, "..", "migrations", f), "utf8"));
+    for (const f of ["001_init.sql", "002_no_overlap.sql", "003_finance.sql"]) await sql.unsafe(readFileSync(join(import.meta.dir, "..", "migrations", f), "utf8"));
     const hash = await Bun.password.hash("secret123");
     await sql`insert into users (login, password_hash, role) values ('owner', ${hash}, 'owner'), ('admin', ${hash}, 'admin')`;
   });
@@ -98,6 +98,21 @@ d("Aquarius API", () => {
     try { await sql`insert into bookings ${sql({ ...row, start_min: 630 })}`; } catch (e) { code = (e as { errno?: string }).errno ?? ""; }
     expect(code).toBe("23P01");
     await sql`insert into bookings ${sql({ ...row, start_min: 660 })}`;
+  });
+  test("finance: owner records payments and plan, admin only reads", async () => {
+    const owner = await login("owner");
+    const admin = await login("admin");
+    const op = { date: "2026-11-01", kind: "expense", article: "rent", name: "Аренда", amount: 97955.5 };
+    expect((await call("/crm/finance/ops", { method: "POST", body: JSON.stringify(op) }, admin)).status).toBe(403);
+    const res = await call("/crm/finance/ops", { method: "POST", body: JSON.stringify(op) }, owner);
+    expect(res.status).toBe(201);
+    const { op: saved } = await res.json();
+    await call("/crm/finance/plan", { method: "PUT", body: JSON.stringify({ month: "2026-12", article: "rent", amount: 100000 }) }, owner);
+    const fin = await (await call("/crm/finance", {}, admin)).json();
+    expect(fin.ops.map((o: { amount: number }) => o.amount)).toEqual([97955.5]);
+    expect(fin.overrides).toEqual({ "2026-12": { rent: 100000 } });
+    await call(`/crm/finance/ops/${saved.id}`, { method: "DELETE" }, owner);
+    expect((await (await call("/crm/finance", {}, owner)).json()).ops).toEqual([]);
   });
 });
 
