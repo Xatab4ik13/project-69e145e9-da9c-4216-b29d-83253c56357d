@@ -208,7 +208,14 @@ function AppPromo() {
   );
 }
 
+type IndexSearch = { booking?: 1 };
+
+export function validateIndexSearch(search: Record<string, unknown>): IndexSearch {
+  return search["booking"] === "1" || search["booking"] === 1 ? { booking: 1 } : {};
+}
+
 export const Route = createFileRoute("/")({
+  validateSearch: validateIndexSearch,
   loader: () => getAppHost(),
   head: ({ loaderData }) => loaderData === "crm" ? ({
     meta: [
@@ -258,7 +265,16 @@ function scrollToNav(e: { preventDefault: () => void }, name: string) {
 }
 
 function Index() {
-  const [headerBooking, setHeaderBooking] = useState(false);
+  const headerBooking = Route.useSearch().booking === 1;
+  const navigate = Route.useNavigate();
+  const setHeaderBooking = (open: boolean) => {
+    void navigate({
+      to: "/",
+      search: (previous) => open ? { ...previous, booking: 1 as const } : {},
+      replace: !open,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="relative mx-auto flex max-w-6xl items-center justify-between gap-6 border-b border-border px-6 py-3 max-md:gap-3 max-md:px-4 max-md:border-b-0">
