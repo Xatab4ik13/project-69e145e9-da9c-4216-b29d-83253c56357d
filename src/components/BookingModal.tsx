@@ -169,7 +169,7 @@ export function BookingModal({
       services: washLines.map(([name, price]) => ({ name, price })), extras,
     }).then(
       () => setDone(true),
-      (e: Error) => { setSendError(e.message); setSlot(null); setSlots(null); api.slots(dayIso, extras).then((r) => setSlots(r.slots.map(hhmm)), () => undefined); },
+      (e: Error) => setSendError(e.message),
     ).finally(() => setSending(false));
   };
 
