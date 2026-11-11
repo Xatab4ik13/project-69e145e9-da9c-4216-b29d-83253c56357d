@@ -57,6 +57,8 @@ export const api = {
   savePrices: (catalog: CatalogService[]) => request<{ ok: true }>("/crm/prices", json("PUT", { catalog })),
   slots: (date: string, pkg: string, extras: string[], cls: 1 | 2 | 3 | 4) =>
     request<{ duration: number; slots: number[] }>(`/slots?date=${date}&cls=${cls}&pkg=${encodeURIComponent(pkg)}&extras=${encodeURIComponent(extras.join(","))}`),
+  pushKey: () => request<{ key: string }>("/crm/push/key"),
+  pushSubscribe: (sub: PushSubscriptionJSON) => request<{ ok: true }>("/crm/push/subscribe", json("POST", sub)),
   book: (b: SiteBooking) => request<{ id: string; start: number; duration: number }>("/bookings", json("POST", b)),
 };
 

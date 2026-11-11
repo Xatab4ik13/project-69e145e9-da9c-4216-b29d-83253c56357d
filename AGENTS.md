@@ -36,3 +36,4 @@ use the editor.
 - The owner demo month in src/lib/crm/mock.ts is generated from a fixed seed: keep it deterministic, because finance tests and the owner dashboard read its totals.
 - Production host routing serves the public site on aquariuswash.ru and the CRM at the root of crm.aquariuswash.ru; /admin remains the preview fallback so the future installed PWA opens only the CRM.
 - Car catalog comes live from Cars Base via server/src/carsbase.ts (token only in server env, in-memory 24h cache, brand logos unpacked once to CARSBASE_LOGO_DIR); class rules are pure in src/lib/crm/car-class.ts so site, CRM and tests share them.
+- CRM PWA is manifest + push-only service worker (public/push-sw.js, no caching), linked only in CRM route heads and registered only on crm.aquariuswash.ru; push uses self-hosted Web Push (VAPID env on server), reminder rules pure in src/lib/crm/crm-push.ts — so the site favicon and preview stay untouched.

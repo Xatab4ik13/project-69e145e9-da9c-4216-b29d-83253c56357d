@@ -24,7 +24,7 @@ d("Aquarius API", () => {
 
   beforeAll(async () => {
     await sql.unsafe("drop schema public cascade; create schema public;");
-    for (const f of ["001_init.sql", "002_no_overlap.sql", "003_finance.sql"]) await sql.unsafe(readFileSync(join(import.meta.dir, "..", "migrations", f), "utf8"));
+    for (const f of ["001_init.sql", "002_no_overlap.sql", "003_finance.sql", "004_push.sql"]) await sql.unsafe(readFileSync(join(import.meta.dir, "..", "migrations", f), "utf8"));
     const hash = await Bun.password.hash("secret123");
     await sql`insert into users (login, password_hash, role) values ('owner', ${hash}, 'owner'), ('admin', ${hash}, 'admin')`;
   });

@@ -1,3 +1,4 @@
+import { CRM_PWA_LINKS, CRM_PWA_META } from "@/lib/crm/pwa-head";
 import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
 import { AdminEntry } from "@/components/crm/AdminEntry";
 import { api } from "@/lib/crm/api";
@@ -227,7 +228,9 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
+      ...CRM_PWA_META,
     ],
+    links: CRM_PWA_LINKS,
   }) : ({
     meta: [
       { title: "Автомойка Аквариус на Большевиков — запись онлайн" },

@@ -7,10 +7,13 @@ import { MIN_WASH_MIN, catalogDuration } from "../../src/lib/crm/booking-rules";
 import { DEFAULT_SERVICE_CATALOG } from "../../src/lib/crm/services";
 import { washNow } from "../../src/lib/crm/clock";
 import { carInfo, logoFile, searchCars } from "./carsbase";
+import { notifyAll, vapidPublicKey } from "./push";
+import { newBookingPush } from "../../src/lib/crm/crm-push";
 import type { Booking } from "../../src/lib/crm/types";
 
 const COOKIE = "aq_session";
-const SESSION_DAYS = 30;
+/** Login stays valid for a year on each device. */
+export const SESSION_DAYS = 365;
 /** Site visitors may book up to this many days ahead. */
 const BOOK_AHEAD_DAYS = 30;
 
@@ -187,6 +190,7 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       return toBooking(row as Row);
     }).catch(overlapAsNull);
     if (!created) return c.json({ error: "Это время только что заняли. Выберите другое." }, 409);
+    void notifyAll(sql, newBookingPush(created)).catch((e) => console.error("push", e));
     return c.json({ id: created.id, date: created.date, start: created.start, duration: created.duration }, 201);
   });
 
@@ -229,6 +233,23 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
   // ---------- CRM ----------
   app.use("/crm/*", requireUser);
 
+  // ---------- push-уведомления (обе роли) ----------
+  app.get("/crm/push/key", (c) => c.json({ key: vapidPublicKey() }));
+  const subSchema = z.object({ endpoint: z.string().url().max(1000), keys: z.object({ p256dh: z.string().min(1).max(200), auth: z.string().min(1).max(100) }) });
+  app.post("/crm/push/subscribe", async (c) => {
+    const data = await body(c, subSchema);
+    if (!data) return c.json({ error: "Неверная подписка" }, 400);
+    await sql`insert into push_subscriptions (endpoint, user_id, p256dh, auth) values (${data.endpoint}, ${c.get("user").id}, ${data.keys.p256dh}, ${data.keys.auth})
+      on conflict (endpoint) do update set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth`;
+    return c.json({ ok: true });
+  });
+  app.delete("/crm/push/subscribe", async (c) => {
+    const data = await body(c, z.object({ endpoint: z.string().max(1000) }));
+    if (!data) return c.json({ error: "Неверная подписка" }, 400);
+    await sql`delete from push_subscriptions where endpoint = ${data.endpoint}`;
+    return c.json({ ok: true });
+  });
+
   app.get("/crm/bookings", async (c) => {
     const from = dateSchema.safeParse(c.req.query("from"));
     const to = dateSchema.safeParse(c.req.query("to"));
@@ -252,6 +273,7 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       return toBooking(row as Row);
     }).catch(overlapAsNull);
     if (!created) return c.json({ error: "Это время только что заняли. Выберите другое." }, 409);
+    void notifyAll(sql, newBookingPush(created)).catch((e) => console.error("push", e));
     return c.json({ booking: created }, 201);
   });
 

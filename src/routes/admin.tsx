@@ -1,3 +1,4 @@
+import { CRM_PWA_LINKS, CRM_PWA_META } from "@/lib/crm/pwa-head";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AdminEntry } from "@/components/crm/AdminEntry";
 import { getAppHost } from "@/lib/crm/host.functions";
@@ -17,7 +18,9 @@ export const Route = createFileRoute("/admin")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
+      ...CRM_PWA_META,
     ],
+    links: CRM_PWA_LINKS,
   }),
   component: AdminEntry,
 });

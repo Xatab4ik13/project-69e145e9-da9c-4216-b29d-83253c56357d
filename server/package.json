@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "hono": "^4.6.0",
+    "web-push": "3",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/web-push": "^3.6.4"
   }
 }

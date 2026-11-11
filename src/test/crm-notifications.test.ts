@@ -1,23 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { audienceClients, expiringBonuses, pushError } from "@/lib/crm/notifications";
-import type { LoyaltyClient } from "@/lib/crm/loyalty";
+import { isReminderDue, REMINDER_LEAD_MIN } from "@/lib/crm/crm-push";
 
-const c = (id: string, activated: boolean, expiresAt: string): LoyaltyClient => ({
-  id, phone: "9000000000", activated, visits: 1, totalSpent: 0, lastVisit: null,
-  transactions: [{ id: id + "t", type: "accrual", amount: 100, date: "2025-12-01", description: "", expiresAt }],
-});
-const today = "2026-11-11";
+const b = (over: Partial<Parameters<typeof isReminderDue>[0]> = {}) =>
+  ({ date: "2026-11-11", start: 12 * 60, confirmed: false, wash: "scheduled" as const, reminded: false, ...over });
 
-describe("push audience", () => {
-  it("sends only to clients with the app", () => {
-    expect(audienceClients([c("a", true, "2027-05-01"), c("b", false, "2027-05-01")], "all", today).map((x) => x.id)).toEqual(["a"]);
-  });
-  it("expiring = bonuses burning within 30 days", () => {
-    expect(expiringBonuses(c("a", true, "2026-12-01"), today)).toBe(100);
-    expect(expiringBonuses(c("a", true, "2026-12-20"), today)).toBe(0);
-  });
-  it("requires title and text", () => {
-    expect(pushError("", "x")).not.toBeNull();
-    expect(pushError("Акция", "Текст")).toBeNull();
-  });
+describe("«Подтвердите запись» за 20 минут", () => {
+  it("lead time is 20 minutes", () => expect(REMINDER_LEAD_MIN).toBe(20));
+  it("due exactly 20 minutes before the start", () => expect(isReminderDue(b(), "2026-11-11", 11 * 60 + 40)).toBe(true));
+  it("not yet 21 minutes before", () => expect(isReminderDue(b(), "2026-11-11", 11 * 60 + 39)).toBe(false));
+  it("skips confirmed bookings", () => expect(isReminderDue(b({ confirmed: true }), "2026-11-11", 11 * 60 + 50)).toBe(false));
+  it("skips already reminded bookings", () => expect(isReminderDue(b({ reminded: true }), "2026-11-11", 11 * 60 + 50)).toBe(false));
+  it("skips cancelled bookings", () => expect(isReminderDue(b({ wash: "cancelled" }), "2026-11-11", 11 * 60 + 50)).toBe(false));
+  it("skips other days", () => expect(isReminderDue(b({ date: "2026-11-12" }), "2026-11-11", 11 * 60 + 50)).toBe(false));
 });
