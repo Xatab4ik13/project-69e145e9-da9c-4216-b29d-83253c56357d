@@ -7,9 +7,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, Di
 import { CrmPagination } from "@/components/crm/CrmPagination";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { fmtDateShort, fmtPhone, rub } from "@/lib/crm/logic";
-import { DEMO_TODAY, MOCK_BOOKINGS } from "@/lib/crm/mock";
-import { MOCK_LOYALTY_CLIENTS } from "@/lib/crm/loyalty-mock";
-import { MOCK_CLIENT_CARS, MOCK_CLIENT_FIRST_CONTACT } from "@/lib/crm/clients-mock";
+import type { Booking } from "@/lib/crm/types";
 import {
   buildClients, carClassRoman, clientMetrics, filterClients, paginateClients,
   type ClientFilter, type ClientVisitStatus, type CrmClient,
@@ -43,11 +41,11 @@ export function AdminClients({
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const clients = useMemo(
-    () => buildClients(MOCK_LOYALTY_CLIENTS, MOCK_BOOKINGS, MOCK_CLIENT_CARS, DEMO_TODAY, MOCK_CLIENT_FIRST_CONTACT),
+    () => clientsFromBookings(bookings, today),
     [],
   );
-  const metrics = useMemo(() => clientMetrics(clients, DEMO_TODAY), [clients]);
-  const visible = useMemo(() => filterClients(clients, query, filter, DEMO_TODAY), [clients, filter, query]);
+  const metrics = useMemo(() => clientMetrics(clients, today), [clients]);
+  const visible = useMemo(() => filterClients(clients, query, filter, today), [clients, filter, query]);
   const pagination = useMemo(() => paginateClients(visible, page), [page, visible]);
   const openClient = useCallback((id: string) => setSelectedId(id), []);
   const selected = clients.find((client) => client.id === selectedId) ?? null;

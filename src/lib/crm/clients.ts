@@ -1,7 +1,8 @@
 import type { Booking } from "./types";
 import { fmtTime, total } from "./logic";
 import type { LoyaltyClient } from "./loyalty";
-import { loyaltyBalance } from "./loyalty";
+import { loyaltyBalance, loyaltyFromBookings } from "./loyalty";
+import { carClass } from "./car-class";
 import type { CarClass } from "./services";
 
 export type ClientFilter = "all" | "new" | "repeat" | "no_app" | "inactive";
@@ -43,7 +44,7 @@ export interface CrmClient {
 const PAYMENT_LABELS = { cash: "Наличные", terminal: "Терминал", app: "Приложение" } as const;
 
 function visitFromBooking(booking: Booking): ClientVisit {
-  const status: ClientVisitStatus = booking.wash === "done"
+  const status: ClientVisitStatus = booking.wash === "cancelled" ? "cancelled" : booking.wash === "done"
     ? "completed"
     : booking.wash === "in_progress"
       ? "in_progress"
@@ -156,4 +157,35 @@ export function carClassRoman(carClass: CarClass): string {
 
 export function carTypeForClass(carClass: CarClass): string {
   return (["", "Седан / хэтчбек", "Небольшой кроссовер", "Внедорожник", "Минивэн"] as const)[carClass];
+}
+
+function classFromCarType(carType: string): CarClass {
+  const t = carType.toLocaleLowerCase("ru");
+  if (/минив|микроав/.test(t)) return 4;
+  if (/внедорож/.test(t)) return 3;
+  if (/кроссов/.test(t)) return 2;
+  return carClass(carType, null);
+}
+
+/** Real CRM clients: one per phone from all bookings; bonuses from paid washes only. */
+export function clientsFromBookings(bookings: Booking[], today: string): CrmClient[] {
+  const withPhone = bookings
+    .map((b) => ({ ...b, phone: (b.phone ?? "").replace(/\D/g, "").slice(-10) }))
+    .filter((b) => b.phone.length === 10);
+  const accounts = new Map(loyaltyFromBookings(withPhone).map((a) => [a.phone, a]));
+  const phones = [...new Set(withPhone.map((b) => b.phone))];
+  const all: LoyaltyClient[] = phones.map((phone) => accounts.get(phone)
+    ?? { id: phone, phone, activated: false, visits: 0, totalSpent: 0, lastVisit: null, transactions: [] });
+  const cars: Record<string, ClientCar[]> = {};
+  const first: Record<string, string> = {};
+  for (const b of [...withPhone].sort((a, c) => `${c.date}${c.start}`.localeCompare(`${a.date}${a.start}`))) {
+    const list = (cars[b.phone] ??= []);
+    const name = b.car.trim();
+    if (name && !list.some((c) => c.name.toLocaleLowerCase("ru") === name.toLocaleLowerCase("ru"))) {
+      list.push({ id: `${b.phone}-${list.length}`, name, carClass: classFromCarType(b.carType ?? ""), primary: list.length === 0 });
+    }
+    first[b.phone] = b.date;
+  }
+  return buildClients(all, withPhone, cars, today, first)
+    .sort((a, b) => `${b.history[0]?.date ?? ""}`.localeCompare(`${a.history[0]?.date ?? ""}`));
 }

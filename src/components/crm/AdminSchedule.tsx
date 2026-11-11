@@ -58,7 +58,7 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
     const live = new Set(bookings.map((b) => b.id));
     return [...history.filter((b) => !live.has(b.id)), ...bookings];
   }, [history, bookings]);
-  const ownerScreen = section === "dashboard" || section === "finance" || section === "washers" || section === "loyalty";
+  const ownerScreen = section === "dashboard" || section === "finance" || section === "washers" || section === "loyalty" || section === "clients";
   useEffect(() => {
     if (!ownerScreen) return;
     let alive = true;
@@ -132,6 +132,8 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
       <Sidebar section={section} onChange={changeSection} role={role} onLogout={onLogout} />
       {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={today} /> : section === "finance" ? null : section === "notifications" ? <AdminNotifications today={DEMO_TODAY} /> : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={today} /> : section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
+          bookings={financeBookings}
+          today={today}
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
           onNewBooking={(client) => {
             const car = client.cars.find((item) => item.primary) ?? client.cars[0];
