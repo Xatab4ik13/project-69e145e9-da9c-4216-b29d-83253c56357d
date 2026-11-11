@@ -21,7 +21,7 @@ import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
 import { api, bookingPatch, type ApiError, type CarHit, type NewBooking } from "@/lib/crm/api";
-import { classPrice } from "@/lib/crm/booking-rules";
+import { MIN_WASH_MIN, catalogDuration, classPrice } from "@/lib/crm/booking-rules";
 import { CLASS_LABEL } from "@/lib/crm/car-class";
 import type { CatalogService } from "@/lib/crm/services";
 import { useWashClock } from "@/lib/crm/use-wash-clock";
@@ -29,7 +29,7 @@ import { WASHERS, type FinOp, type PlanOverrides } from "@/lib/crm/finance";
 import { DEMO_OPS } from "@/lib/crm/finance-mock";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
-  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, freeSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
+  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, smartSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
   bookingState, STATE_LABEL, STATE_ACTION, isPastSlot, CUSTOM_PACKAGE_NAME, customServiceDetails, receivePayment,
 } from "@/lib/crm/logic";
 
@@ -703,8 +703,8 @@ function NewBookingDialog({
     ? [{ name: `Комплекс «${pkg.name}»`, price: classPrice(catalog, pkg.name, cls, pkg.price) },
       ...chosenExtras.map(({ name, price }) => ({ name, price: classPrice(catalog, name, cls, price) }))]
     : [];
-  const duration = isCustom ? custom.duration : bookingDuration(SLOT_MIN, chosenExtras.map((e) => e.minutes));
-  const slots = duration > 0 ? freeSlots(bookings, date, duration, 60, today, nowMin) : [];
+  const duration = isCustom ? custom.duration : pkg ? catalogDuration(catalog, pkg.name, chosenExtras.map((e) => e.name), cls) : 0;
+  const slots = duration > 0 ? smartSlots(bookings, date, duration, today, nowMin, MIN_WASH_MIN) : [];
   const picked = slots.find((s) => s.start === slot);
 
   const submit = () => {

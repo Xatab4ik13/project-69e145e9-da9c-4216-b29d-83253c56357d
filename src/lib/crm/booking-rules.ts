@@ -38,3 +38,19 @@ export function classPrice(
   const id = ITEM_CATALOG_ID[name];
   return catalog?.find((s) => s.id === id)?.classes[cls]?.price ?? fallback;
 }
+
+/** Shortest wash in the price list: a free window shorter than this can never be sold. */
+export const MIN_WASH_MIN = 40;
+
+type CatalogLike = { id: string; classes: Record<number, { minutes: number | null }> }[] | null;
+
+/** Reserved minutes = package time for the car class + add-on times for that class (same as shown to the client). */
+export function catalogDuration(catalog: CatalogLike, pkgName: string, extraNames: string[], cls: 1 | 2 | 3 | 4): number {
+  const mins = (name: string, fallback: number) => {
+    const id = ITEM_CATALOG_ID[name];
+    return catalog?.find((s) => s.id === id)?.classes[cls]?.minutes ?? fallback;
+  };
+  const pkg = PACKAGES.find((p) => p.name === pkgName);
+  const base = pkg ? mins(pkg.name, SLOT_MIN) : SLOT_MIN;
+  return base + extraNames.reduce((a, n) => a + mins(n, EXTRAS.find((e) => e.name === n)?.minutes ?? 0), 0);
+}
