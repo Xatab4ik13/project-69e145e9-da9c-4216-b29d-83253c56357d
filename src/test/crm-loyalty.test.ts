@@ -57,8 +57,8 @@ describe("loyalty from real bookings (no app yet)", () => {
   it("accrues 5% only for paid washes, per phone, without welcome bonus", () => {
     const list = fromBookings([b("1", "+7 921 345-67-89", "paid"), b("2", "9213456789", "unpaid"), b("3", "9213456789", "paid", "cancelled")]);
     expect(list).toHaveLength(1);
-    expect(list[0].activated).toBe(false);
-    expect(list[0].transactions.map((t) => t.amount)).toEqual([100]);
-    expect(list[0].transactions[0].expiresAt).toBe("2027-11-10");
+    expect(list[0]!.activated).toBe(false);
+    expect(list[0]!.transactions.map((t) => t.amount)).toEqual([100]);
+    expect(list[0]!.transactions[0].expiresAt).toBe("2027-11-10");
   });
 });

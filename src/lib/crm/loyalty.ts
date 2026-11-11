@@ -90,11 +90,11 @@ export function formatBonuses(value: number): string {
  * no redemptions), and each paid wash accrues 5% of its check for 12 months.
  */
 export function loyaltyFromBookings(
-  bookings: { id: string; date: string; phone: string; wash: string; payment: PaymentStatus; services: { price: number }[] }[],
+  bookings: { id: string; date: string; phone?: string; wash: string; payment: PaymentStatus; services: { price: number }[] }[],
 ): LoyaltyClient[] {
   const byPhone = new Map<string, LoyaltyClient>();
   for (const b of bookings) {
-    const phone = b.phone.replace(/\D/g, "").slice(-10);
+    const phone = (b.phone ?? "").replace(/\D/g, "").slice(-10);
     if (phone.length !== 10 || b.wash === "cancelled" || b.payment !== "paid") continue;
     const paid = b.services.reduce((s, l) => s + l.price, 0);
     const client = byPhone.get(phone) ?? { id: phone, phone, activated: false, visits: 0, totalSpent: 0, lastVisit: null, transactions: [] };
