@@ -265,7 +265,16 @@ function scrollToNav(e: { preventDefault: () => void }, name: string) {
 }
 
 function Index() {
-  const [headerBooking, setHeaderBooking] = useState(false);
+  const headerBooking = Route.useSearch().booking === 1;
+  const navigate = Route.useNavigate();
+  const setHeaderBooking = (open: boolean) => {
+    void navigate({
+      to: "/",
+      search: (previous) => ({ ...previous, booking: open ? 1 : undefined }),
+      replace: !open,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="relative mx-auto flex max-w-6xl items-center justify-between gap-6 border-b border-border px-6 py-3 max-md:gap-3 max-md:px-4 max-md:border-b-0">
