@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trash2, X } from "lucide-react";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { addDays, fmtDateLong, fmtDateShort, fmtTime, rub, total } from "@/lib/crm/logic";
 import {
   WASHERS, VARIABLE_ARTICLES, articleStatus, daysInMonth, paidIn, summarize, washerLedger,
