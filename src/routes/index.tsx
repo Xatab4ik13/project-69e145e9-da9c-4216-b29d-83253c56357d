@@ -546,6 +546,10 @@ function Configurator() {
             pkgName={pkg.name}
             extras={[...(ph ? [ph.label] : []), ...chosen.map((c) => c.name)]}
             extraPrices={[...(ph ? [ph.price] : []), ...chosen.map((c) => c.price)]}
+        extraIds={[...(ph ? [PHASE_IDS[ph.id] ?? ""] : []), ...chosen.map((c) => c.id)]}
+        pkgId={PKG_IDS[pkg.name]}
+            extraIds={[...(ph ? [PHASE_IDS[ph.id] ?? ""] : []), ...chosen.map((c) => c.id)]}
+            pkgId={PKG_IDS[pkg.name]}
             basePrice={total}
             time={[tMin, tMax]}
           />
@@ -589,6 +593,8 @@ function HeaderBooking({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         pkgName={pkg.name}
         extras={[...(ph ? [ph.label] : []), ...chosen.map((c) => c.name)]}
         extraPrices={[...(ph ? [ph.price] : []), ...chosen.map((c) => c.price)]}
+        extraIds={[...(ph ? [PHASE_IDS[ph.id] ?? ""] : []), ...chosen.map((c) => c.id)]}
+        pkgId={PKG_IDS[pkg.name]}
         basePrice={total}
         time={[tMin, tMax]}
       />
