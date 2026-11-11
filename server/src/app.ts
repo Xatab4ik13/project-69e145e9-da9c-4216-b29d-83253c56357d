@@ -2,8 +2,8 @@ import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { z } from "zod";
 import type { SQL } from "bun";
-import { CLOSE_MIN, OPEN_MIN, addDays, findConflict, freeSlots, isPastSlot, withinHours } from "../../src/lib/crm/logic";
-import { durationForExtras } from "../../src/lib/crm/booking-rules";
+import { CLOSE_MIN, OPEN_MIN, addDays, isPastSlot, smartSlots, withinHours } from "../../src/lib/crm/logic";
+import { MIN_WASH_MIN, catalogDuration } from "../../src/lib/crm/booking-rules";
 import { DEFAULT_SERVICE_CATALOG } from "../../src/lib/crm/services";
 import { washNow } from "../../src/lib/crm/clock";
 import { carInfo, logoFile, searchCars } from "./carsbase";
@@ -47,6 +47,7 @@ const siteBookingSchema = z.object({
   packageName: z.string().trim().min(1).max(120),
   services: z.array(serviceLine).min(1).max(20),
   extras: z.array(z.string().max(120)).max(20).default([]),
+  cls: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).default(1),
 });
 
 const crmBookingSchema = z.object({
@@ -118,6 +119,11 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
   const dayBookings = async (tx: SQL, date: string) =>
     ((await tx`select * from bookings where date = ${date} and wash <> 'cancelled'`) as Row[]).map(toBooking);
 
+  const loadCatalog = async () => {
+    const [row] = await sql`select data from price_catalog where id = 1`;
+    return row ? (typeof row.data === "string" ? JSON.parse(row.data) : row.data) : DEFAULT_SERVICE_CATALOG;
+  };
+
   // ---------- public ----------
   app.get("/health", (c) => c.json({ ok: true }));
 
@@ -147,10 +153,12 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     const date = dateSchema.safeParse(c.req.query("date"));
     if (!date.success) return c.json({ error: "Неверная дата" }, 400);
     const extras = (c.req.query("extras") ?? "").split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20);
-    const duration = durationForExtras(extras);
+    const clsNum = Number(c.req.query("cls") ?? 1);
+    const cls = ([1, 2, 3, 4] as const).find((n) => n === clsNum) ?? 1;
+    const duration = catalogDuration(await loadCatalog(), c.req.query("pkg") ?? "", extras, cls);
     const { today, nowMin } = now();
     if (date.data < today || date.data > addDays(today, BOOK_AHEAD_DAYS)) return c.json({ duration, slots: [] });
-    const slots = freeSlots(await dayBookings(sql, date.data), date.data, duration, 60, today, nowMin);
+    const slots = smartSlots(await dayBookings(sql, date.data), date.data, duration, today, nowMin, MIN_WASH_MIN);
     return c.json({ duration, slots: slots.map((s) => s.start) });
   });
 
@@ -158,14 +166,14 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     if (!bookingLimit(ip(c))) return c.json({ error: "Слишком много записей. Позвоните нам." }, 429);
     const data = await body(c, siteBookingSchema);
     if (!data) return c.json({ error: "Проверьте данные записи" }, 400);
-    const duration = durationForExtras(data.extras);
+    const duration = catalogDuration(await loadCatalog(), data.packageName, data.extras, data.cls);
     const { today, nowMin } = now();
     if (data.date > addDays(today, BOOK_AHEAD_DAYS) || isPastSlot(data.date, data.start, today, nowMin) || !withinHours(data.start, duration))
       return c.json({ error: "Это время недоступно" }, 409);
     const created = await sql.begin(async (tx) => {
       await tx`select pg_advisory_xact_lock(hashtext(${data.date}))`;
       const list = await dayBookings(tx, data.date);
-      const box = ([1, 2] as const).find((bx) => !findConflict(list, { date: data.date, box: bx, start: data.start, duration }));
+      const box = smartSlots(list, data.date, duration, today, nowMin, MIN_WASH_MIN).find((sl) => sl.start === data.start)?.box;
       if (!box) return null;
       const [row] = await tx`insert into bookings (date, box, start_min, duration, car, car_type, phone, source, package_name, services)
         values (${data.date}, ${box}, ${data.start}, ${duration}, ${data.car}, ${data.carType}, ${data.phone}, 'site', ${data.packageName}, ${JSON.stringify(data.services)}::text::jsonb)

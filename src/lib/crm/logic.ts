@@ -167,6 +167,35 @@ export function freeSlots(
   return out;
 }
 
+/**
+ * Smart start times: every 15 minutes plus the exact end of each booking, so a box frees up
+ * right after a wash (12:15 + 40 min → 12:55). Times that leave a window shorter than the
+ * shortest wash before or after another booking in that box are hidden.
+ */
+export function smartSlots(
+  list: Booking[], date: string, duration: number, today?: string, nowMin = 0, minGap = 40, step = 15,
+): { start: number; box: 1 | 2 }[] {
+  const day = list.filter((b) => b.date === date && b.wash !== "cancelled");
+  const starts = new Set<number>();
+  for (let s = OPEN_MIN; s <= CLOSE_MIN; s += step) starts.add(s);
+  day.forEach((b) => starts.add(b.start + b.duration));
+  const fits = (box: 1 | 2, s: number) => {
+    const inBox = day.filter((b) => b.box === box);
+    if (findConflict(inBox, { date, box, start: s, duration })) return false;
+    const prevEnd = Math.max(-1, ...inBox.map((b) => b.start + b.duration).filter((e) => e <= s));
+    const nextStart = Math.min(Infinity, ...inBox.map((b) => b.start).filter((st) => st >= s + duration));
+    const before = prevEnd < 0 ? 0 : s - prevEnd;
+    const after = nextStart === Infinity ? 0 : nextStart - (s + duration);
+    return !(before > 0 && before < minGap) && !(after > 0 && after < minGap);
+  };
+  return [...starts].sort((a, b) => a - b).flatMap((s) => {
+    if (s < OPEN_MIN || s + duration > CLOSE_MIN) return [];
+    if (today && isPastSlot(date, s, today, nowMin)) return [];
+    const box = ([1, 2] as const).find((bx) => fits(bx, s));
+    return box ? [{ start: s, box }] : [];
+  });
+}
+
 /** App client: one action marks the car ready and issues the in-app invoice (push in future). */
 export function readyAndInvoice(b: Booking): Booking {
   if (b.wash !== "in_progress") return b;
