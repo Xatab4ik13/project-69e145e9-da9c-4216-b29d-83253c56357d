@@ -43,11 +43,11 @@ export function AdminWeekSchedule({ date, bookings, today, nowMin, onDateChange,
           <button type="button" aria-pressed="false" onClick={() => onViewChange("day")} className="min-h-11 flex-1 rounded-md px-5 font-medium text-muted-foreground sm:flex-none">День</button>
           <button type="button" aria-pressed="true" className="min-h-11 flex-1 rounded-md bg-crm px-5 font-medium text-crm-foreground sm:flex-none">Неделя</button>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:w-auto">
           <button type="button" aria-label="Предыдущая неделя" onClick={() => onDateChange(addDays(date, -7))} className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background"><ChevronLeft className="h-5 w-5" /></button>
-          <span className="min-w-64 text-center text-lg font-semibold">{title}</span>
+          <span className="min-w-0 text-center text-base font-semibold sm:min-w-64 sm:text-lg">{title}</span>
           <button type="button" aria-label="Следующая неделя" onClick={() => onDateChange(addDays(date, 7))} className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background"><ChevronRight className="h-5 w-5" /></button>
-          <button type="button" onClick={() => onDateChange(today)} className="min-h-11 rounded-lg border border-border bg-background px-4 font-medium">Текущая неделя</button>
+          <button type="button" onClick={() => onDateChange(today)} className="col-span-3 min-h-11 rounded-lg border border-border bg-background px-4 font-medium sm:col-auto">Текущая неделя</button>
         </div>
       </div>
 
