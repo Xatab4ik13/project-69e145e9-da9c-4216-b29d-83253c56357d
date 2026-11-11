@@ -68,11 +68,11 @@ describe("summarize", () => {
 
   it("charges USN 6% on terminal and app payments, but not on cash", () => {
     expect(s.tax).toBeCloseTo((2000 + 5000) * 0.06, 5);
-    expect(summarize([list[0]], oneDay, "2026-10-05").tax).toBe(0);
+    expect(summarize([list[0]!], oneDay, "2026-10-05").tax).toBe(0);
   });
 
   it("uses a zero tax rate for cash in the breakeven calculation", () => {
-    const cashOnly = summarize([list[0]], oneDay, "2026-10-05");
+    const cashOnly = summarize([list[0]!], oneDay, "2026-10-05");
     expect(cashOnly.month.target).toBeCloseTo(109905.5 / 0.7, 5);
   });
 
