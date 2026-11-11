@@ -24,7 +24,7 @@ d("Aquarius API", () => {
 
   beforeAll(async () => {
     await sql.unsafe("drop schema public cascade; create schema public;");
-    await sql.unsafe(readFileSync(join(import.meta.dir, "..", "migrations", "001_init.sql"), "utf8"));
+    for (const f of ["001_init.sql", "002_no_overlap.sql"]) await sql.unsafe(readFileSync(join(import.meta.dir, "..", "migrations", f), "utf8"));
     const hash = await Bun.password.hash("secret123");
     await sql`insert into users (login, password_hash, role) values ('owner', ${hash}, 'owner'), ('admin', ${hash}, 'admin')`;
   });
@@ -83,4 +83,21 @@ d("Aquarius API", () => {
     const list = await (await later.request("/api/v1/crm/bookings?from=2026-11-11&to=2026-11-11", { headers: { cookie } })).json();
     expect(list.bookings.find((b: { id: string }) => b.id === booking.id).wash).toBe("in_progress");
   });
+  test("ten simultaneous bookings for one time: at most one per box", async () => {
+    const results = await Promise.all(Array.from({ length: 10 }, () => call("/bookings", { method: "POST", body: JSON.stringify({
+      date: "2026-11-13", start: 15 * 60, car: "Kia Rio", carType: "седан", phone: "9001112233", packageName: "Комфорт",
+      services: [{ name: "x", price: 1 }], extras: [] }) })));
+    expect(results.filter((r) => r.status === 201).length).toBe(2);
+    expect(results.filter((r) => r.status === 409).length).toBe(8);
+  });
+
+  test("database refuses an overlapping booking in one box even past the app checks", async () => {
+    const row = { date: "2026-11-14", box: 1, start_min: 600, duration: 60, car: "a", source: "admin", package_name: "x", services: "[]" };
+    await sql`insert into bookings ${sql(row)}`;
+    let code = "";
+    try { await sql`insert into bookings ${sql({ ...row, start_min: 630 })}`; } catch (e) { code = (e as { errno?: string }).errno ?? ""; }
+    expect(code).toBe("23P01");
+    await sql`insert into bookings ${sql({ ...row, start_min: 660 })}`;
+  });
 });
+
