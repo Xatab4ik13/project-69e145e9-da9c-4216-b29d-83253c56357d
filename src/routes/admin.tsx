@@ -1,7 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AdminSchedule } from "@/components/crm/AdminSchedule";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { AdminEntry } from "@/components/crm/AdminEntry";
+import { getAppHost } from "@/lib/crm/host.functions";
 
 export const Route = createFileRoute("/admin")({
+  loader: async () => {
+    const host = await getAppHost();
+    if (host === "crm") throw redirect({ to: "/" });
+    if (host === "site") throw redirect({ href: "https://crm.aquariuswash.ru/" });
+  },
   head: () => ({
     meta: [
       { title: "Расписание — CRM Aquarius" },
@@ -13,5 +19,5 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AdminSchedule,
+  component: AdminEntry,
 });
