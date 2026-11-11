@@ -131,8 +131,7 @@ describe("умные слоты записи", () => {
   const busy = (start: number, duration: number, box: 1 | 2 = 1) =>
     ({ id: `b${start}${box}`, date: "2026-12-01", box, start, duration, wash: "scheduled" }) as unknown as Parameters<typeof smartSlots>[0][number];
   it("после записи 12:15 на 40 минут бокс свободен с 12:55", () => {
-    const list = [busy(10 * 60, 12 * 60 - 10 * 60 + 15 - 0 + 120), busy(12 * 60 + 15, 40)].slice(1);
-    const both = [...list, busy(OPEN, 12 * 60 * 1 - OPEN + 15, 2)];
+    const both = [busy(12 * 60 + 15, 40), busy(OPEN, CLOSE - OPEN, 2)];
     expect(smartSlots(both, "2026-12-01", 40).some((s) => s.start === 12 * 60 + 55 && s.box === 1)).toBe(true);
   });
   it("шаг начала — 15 минут", () => {
