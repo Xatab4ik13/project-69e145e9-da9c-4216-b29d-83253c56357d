@@ -114,7 +114,7 @@ export function AdminSchedule() {
       ) : section === "loyalty" ? <AdminLoyalty initialClientId={loyaltyClientId} /> : scheduleView === "week" ? (
         <AdminWeekSchedule
           date={date}
-          bookings={bookings}
+          bookings={financeBookings}
           today={DEMO_TODAY}
           nowMin={DEMO_NOW_MIN}
           onDateChange={setDate}
