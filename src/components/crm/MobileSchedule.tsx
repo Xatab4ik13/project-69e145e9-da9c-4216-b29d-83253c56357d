@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   Bell, Building2, CalendarDays, ChevronLeft, ChevronRight, HandCoins, LayoutDashboard, Menu, Plus, Search, Star, User, Wallet, Wrench,
+  LogOut,
 } from "lucide-react";
 import { aquarius_logo as logo } from "@/assets/images";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
@@ -46,10 +47,6 @@ const MORE: Record<CrmRole, SheetItem[]> = {
   ],
 };
 
-const ROLE_ITEMS: { id: CrmRole; label: string; Icon: typeof User }[] = [
-  { id: "admin", label: "Управляющий", Icon: User },
-  { id: "owner", label: "Владелец", Icon: Building2 },
-];
 
 export function MobileAdminHeader({ role = "admin" }: { role?: CrmRole }) {
   return (
