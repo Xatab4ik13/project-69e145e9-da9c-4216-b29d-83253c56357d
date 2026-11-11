@@ -39,6 +39,7 @@ export function AdminFinance(props: Props) {
   const [month, setMonth] = useState(today.slice(0, 7));
   const [day, setDay] = useState(today);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [deleteOp, setDeleteOp] = useState<FinOp | null>(null);
 
   const isCurrent = month === today.slice(0, 7);
   const isFuture = month > today.slice(0, 7);
