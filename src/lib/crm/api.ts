@@ -33,7 +33,13 @@ export type NewBooking = Pick<Booking, "date" | "box" | "start" | "duration" | "
 export type BookingPatch = Partial<Pick<Booking, "wash" | "confirmed" | "payment">> & { paymentMethod?: Booking["paymentMethod"] | null; washer?: string | null };
 export type SiteBooking = { date: string; start: number; car: string; carType: string; phone: string; packageName: string; services: Booking["services"]; extras: string[] };
 
+export type CarHit = { modelId: string; markId: string; name: string };
+export type CarInfo = { cls: 1 | 2 | 3 | 4; body: string };
+export const carLogoUrl = (markId: string) => `${BASE}/cars/logo/${encodeURIComponent(markId)}`;
+
 export const api = {
+  searchCars: (q: string) => request<{ cars: CarHit[] }>(`/cars/search?q=${encodeURIComponent(q)}`).then((r) => r.cars),
+  carInfo: (modelId: string) => request<CarInfo>(`/cars/info?model=${encodeURIComponent(modelId)}`),
   login: (login: string, password: string) => request<CrmUser>("/auth/login", json("POST", { login, password })),
   logout: () => request<{ ok: true }>("/auth/logout", { method: "POST" }),
   me: () => request<CrmUser>("/auth/me"),

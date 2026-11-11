@@ -4,23 +4,17 @@ import { aquarius_logo as logoAsset } from "@/assets/images";
 import { ArrowUpRight } from "lucide-react";
 import { ArrowLeft, ArrowRight, CalendarDays, CalendarClock, Car, Check, ChevronDown, ChevronRight, Clock, MapPin, Phone, Search, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { api } from "@/lib/crm/api";
+import { api, carLogoUrl, type CarHit } from "@/lib/crm/api";
+import type { CarClass, CatalogService } from "@/lib/crm/services";
 
-type CarItem = { name: string; body: string; cls: 1 | 2 | 3 };
-// Класс автомобиля влияет на цену и время. Kia Rio — I класс (как на макете).
-const CARS: CarItem[] = [
-  { name: "Kia Rio", body: "седан", cls: 1 },
-  { name: "Hyundai Solaris", body: "седан", cls: 1 },
-  { name: "Volkswagen Polo", body: "седан", cls: 1 },
-  { name: "Skoda Octavia", body: "лифтбек", cls: 2 },
-  { name: "Toyota Camry", body: "седан", cls: 2 },
-  { name: "Volkswagen Passat", body: "универсал", cls: 2 },
-  { name: "Kia Sportage", body: "кроссовер", cls: 2 },
-  { name: "Toyota RAV4", body: "кроссовер", cls: 2 },
-  { name: "BMW X5", body: "внедорожник", cls: 3 },
-  { name: "Toyota Land Cruiser", body: "внедорожник", cls: 3 },
-];
-const CLASS_K = { 1: 1, 2: 1.2, 3: 1.4 } as const;
+type CarItem = { name: string; body: string; cls: CarClass; markId: string };
+
+/** Логотип марки из Cars Base; если его нет — обычный значок машины. */
+function CarMark({ markId, className }: { markId: string; className: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <Car className={className} strokeWidth={1.5} />;
+  return <img src={carLogoUrl(markId)} alt="" className={`${className} object-contain`} onError={() => setFailed(true)} />;
+}
 const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const WD = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
@@ -94,6 +88,8 @@ export function BookingModal({
   time,
   onBack,
   extraPrices = [],
+  extraIds = [],
+  pkgId,
   embedded = false,
   onDoneChange,
 }: {
@@ -101,6 +97,9 @@ export function BookingModal({
   onDoneChange?: (d: boolean) => void;
   onBack?: () => void;
   extraPrices?: number[];
+  /** id услуг прайса: по ним цена считается для класса автомобиля. */
+  extraIds?: string[];
+  pkgId?: string | undefined;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   pkgName: string;
@@ -127,9 +126,30 @@ export function BookingModal({
     return Array.from({ length: 7 }, (_, i) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1 + i));
   }, []);
   const day = days[dayIdx]!;
-  const matches = CARS.filter((c) => `${c.name} ${c.body}`.toLowerCase().includes(query.trim().toLowerCase()));
+  const [matches, setMatches] = useState<CarHit[] | null>(null);
+  const [carError, setCarError] = useState("");
+  const [picking, setPicking] = useState(false);
+  const [catalog, setCatalog] = useState<CatalogService[] | null>(null);
+  useEffect(() => { if (open && !catalog) api.prices().then(setCatalog, () => {}); }, [open, catalog]);
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setMatches(null); return; }
+    let alive = true;
+    const t = setTimeout(() => api.searchCars(q).then(
+      (r) => { if (alive) { setMatches(r); setCarError(""); } },
+      (e: Error) => alive && setCarError(e.message),
+    ), 250);
+    return () => { alive = false; clearTimeout(t); };
+  }, [query]);
 
-  const price = car ? Math.round((basePrice * CLASS_K[car.cls]) / 100) * 100 : basePrice;
+  // Цена для класса машины — из прайса; если прайс не загрузился, показываем цену I класса.
+  const classPriceOf = (id: string | undefined, fallback: number) => {
+    const v = car && id ? catalog?.find((x) => x.id === id)?.classes[car.cls].price : null;
+    return v ?? fallback;
+  };
+  const pkgPrice = classPriceOf(pkgId, basePrice - extraPrices.reduce((a, b) => a + b, 0));
+  extraPrices = extraPrices.map((p, i) => classPriceOf(extraIds[i], p));
+  const price = pkgPrice + extraPrices.reduce((a, b) => a + b, 0);
   const minutes = car ? (car.cls === 1 ? time[0] : time[1]) : null;
   const timeLabel = minutes ?? (time[0] === time[1] ? time[0] : `${time[0]}–${time[1]}`);
   const range = slot && minutes ? `${slot}–${addMin(slot, minutes)}` : "";
@@ -137,8 +157,7 @@ export function BookingModal({
   const canConfirm = phone.length === 10 && agree;
 
   // Строки «Ваша мойка»: комплекс = вся цена без допов, дальше каждый доп со своей ценой.
-  const extrasSum = extraPrices.reduce((a, b) => a + b, 0);
-  const washLines = [[`Комплекс «${pkgName}»`, price - extrasSum] as const, ...extras.map((e, i) => [e, extraPrices[i] ?? 0] as const)];
+  const washLines = [[`Комплекс «${pkgName}»`, pkgPrice] as const, ...extras.map((e, i) => [e, extraPrices[i] ?? 0] as const)];
 
   const close = () => {
     onOpenChange(false);
@@ -173,10 +192,14 @@ export function BookingModal({
     ).finally(() => setSending(false));
   };
 
-  const pickCar = (c: CarItem) => {
-    setCar(c);
-    setQuery("");
-    setListOpen(false);
+  const pickCar = (c: CarHit) => {
+    if (picking) return;
+    setPicking(true);
+    setCarError("");
+    api.carInfo(c.modelId).then(
+      (info) => { setCar({ name: c.name, body: info.body, cls: info.cls, markId: c.markId }); setQuery(""); setListOpen(false); },
+      (e: Error) => setCarError(e.message),
+    ).finally(() => setPicking(false));
   };
 
   useEffect(() => { onDoneChange?.(done); }, [done, onDoneChange]);
@@ -220,7 +243,7 @@ export function BookingModal({
             </div>
             <div className="mt-5 rounded-2xl bg-muted px-5 py-4">
               <p className="text-sm uppercase">Ваша мойка</p>
-              <p className="mt-1 flex items-center gap-3 border-b border-foreground/20 pb-3"><Car className="h-6 w-8" strokeWidth={1.5} /> {car.name} · {car.body}</p>
+              <p className="mt-1 flex items-center gap-3 border-b border-foreground/20 pb-3"><CarMark markId={car.markId} className="h-6 w-8" /> {car.name} · {car.body}</p>
               <div className="space-y-2 border-b border-foreground/20 py-3">
                 {washLines.map(([n, p]) => (
                   <div key={n} className="flex items-center gap-3">
@@ -304,7 +327,7 @@ export function BookingModal({
                 <div className="flex items-center gap-5 border-t border-foreground/20 pt-4 text-lg">
                   <span className="flex items-center gap-3"><Clock className="h-6 w-6 shrink-0" strokeWidth={1.5} /> {minutes} минут</span>
                   <span className="h-6 border-l border-foreground/30" />
-                  <span className="flex items-center gap-3"><Car className="h-6 w-8 shrink-0" strokeWidth={1.5} /> {car.name} · {car.body}</span>
+                  <span className="flex items-center gap-3"><CarMark markId={car.markId} className="h-6 w-8 shrink-0" /> {car.name} · {car.body}</span>
                 </div>
               </div>
 
@@ -409,8 +432,12 @@ export function BookingModal({
           )}
           {step === 2 && car && slot && (
             <div className="mt-4 space-y-3 border-t border-foreground/20 pt-4">
+              <div className="flex items-center gap-4">
+                <CarMark markId={car.markId} className="h-7 w-10" />
+                <span className="h-7 border-l border-foreground/30" />
+                <span>{car.name} · {car.body}</span>
+              </div>
               {[
-                [Car, `${car.name} · ${car.body}`],
                 [CalendarDays, `${WD_FULL[day.getDay()]}, ${day.getDate()} ${MONTHS_GEN[day.getMonth()]} · ${range}`],
                 [MapPin, "Большевиков, 18к2 · Паркинг, 4-й уровень"],
               ].map(([Icon, text], i) => {
@@ -433,7 +460,7 @@ export function BookingModal({
               <p className="font-display text-2xl">Ваш автомобиль</p>
               {car ? (
                 <div className="mt-3 flex items-center gap-4 rounded-lg border border-foreground/40 px-5 py-3">
-                  <Car className="h-7 w-10" />
+                  <CarMark markId={car.markId} className="h-7 w-10" />
                   <span className="h-7 border-l border-foreground/30" />
                   <span className="flex-1 text-lg">{car.name} · {car.body}</span>
                   <button type="button" onClick={() => { setCar(null); setSlot(null); setListOpen(true); }} className="text-sm underline underline-offset-4">Изменить</button>
@@ -455,10 +482,13 @@ export function BookingModal({
                   </div>
                   {listOpen && (
                     <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-background shadow-lg">
-                      {matches.length ? matches.map((c) => (
-                        <li key={c.name}>
-                          <button type="button" onClick={() => pickCar(c)} className="w-full px-5 py-2.5 text-left hover:bg-muted">
-                            {c.name} · {c.body}
+                      {carError ? <li className="px-5 py-2.5 text-destructive">{carError}</li>
+                        : picking ? <li className="px-5 py-2.5 text-muted-foreground">Определяем класс автомобиля…</li>
+                        : matches === null ? <li className="px-5 py-2.5 text-muted-foreground">Введите марку или модель</li>
+                        : matches.length ? matches.map((c) => (
+                        <li key={c.modelId}>
+                          <button type="button" onClick={() => pickCar(c)} className="flex w-full items-center gap-3 px-5 py-2.5 text-left hover:bg-muted">
+                            <CarMark markId={c.markId} className="h-6 w-8 shrink-0" /> {c.name}
                           </button>
                         </li>
                       )) : <li className="px-5 py-2.5 text-muted-foreground">Ничего не найдено</li>}

@@ -35,3 +35,4 @@ use the editor.
 - CRM roles (owner, admin) and sessions are checked by the server on every /crm endpoint; the UI never decides access from local storage.
 - The owner demo month in src/lib/crm/mock.ts is generated from a fixed seed: keep it deterministic, because finance tests and the owner dashboard read its totals.
 - Production host routing serves the public site on aquariuswash.ru and the CRM at the root of crm.aquariuswash.ru; /admin remains the preview fallback so the future installed PWA opens only the CRM.
+- Car catalog comes live from Cars Base via server/src/carsbase.ts (token only in server env, in-memory 24h cache, brand logos unpacked once to CARSBASE_LOGO_DIR); class rules are pure in src/lib/crm/car-class.ts so site, CRM and tests share them.
