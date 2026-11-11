@@ -20,7 +20,10 @@ import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
-import { api, bookingPatch, type ApiError, type NewBooking } from "@/lib/crm/api";
+import { api, bookingPatch, type ApiError, type CarHit, type NewBooking } from "@/lib/crm/api";
+import { classPrice } from "@/lib/crm/booking-rules";
+import { CLASS_LABEL } from "@/lib/crm/car-class";
+import type { CatalogService } from "@/lib/crm/services";
 import { useWashClock } from "@/lib/crm/use-wash-clock";
 import { WASHERS, type FinOp, type PlanOverrides } from "@/lib/crm/finance";
 import { DEMO_OPS } from "@/lib/crm/finance-mock";
@@ -659,6 +662,9 @@ function NewBookingDialog({
   const [busy, setBusy] = useState(false);
   const [phone, setPhone] = useState("");
   const [car, setCar] = useState("");
+  const [carPick, setCarPick] = useState<{ cls: 1 | 2 | 3 | 4; body: string } | null>(null);
+  const [hits, setHits] = useState<CarHit[] | null>(null);
+  const [catalog, setCatalog] = useState<CatalogService[] | null>(null);
   const [pkgName, setPkgName] = useState("Комфорт");
   const [extras, setExtras] = useState<string[]>([]);
   const [customName, setCustomName] = useState("");
@@ -671,9 +677,22 @@ function NewBookingDialog({
     if (open) {
       setSlot(null);
       setPhone(initial?.phone ?? ""); setCar(initial?.car ?? ""); setPkgName("Комфорт"); setExtras([]);
-      setCustomName(""); setCustomPrice(""); setCustomMinutes(""); setError("");
+      setCustomName(""); setCustomPrice(""); setCustomMinutes(""); setError(""); setCarPick(null); setHits(null);
     }
   }, [open, initial]);
+  useEffect(() => { if (open && !catalog) api.prices().then(setCatalog, () => {}); }, [open, catalog]);
+  useEffect(() => {
+    const q = car.trim();
+    if (!open || carPick || q.length < 2) { setHits(null); return; }
+    let alive = true;
+    const t = setTimeout(() => api.searchCars(q).then((r) => alive && setHits(r), () => alive && setHits([])), 250);
+    return () => { alive = false; clearTimeout(t); };
+  }, [car, carPick, open]);
+  const pickCar = (h: CarHit) => {
+    setHits(null); setCar(h.name);
+    api.carInfo(h.modelId).then((i) => setCarPick(i), () => setError("Не удалось определить класс машины."));
+  };
+  const cls = carPick?.cls ?? 1;
 
   const isCustom = pkgName === CUSTOM_PACKAGE_NAME;
   const pkg = PACKAGES.find((p) => p.name === pkgName);
@@ -681,14 +700,15 @@ function NewBookingDialog({
   const customPriceValue = Number(customPrice);
   const custom = customServiceDetails(customName, customPriceValue, Number(customMinutes));
   const services = isCustom ? custom.services : pkg
-    ? [{ name: `Комплекс «${pkg.name}»`, price: pkg.price }, ...chosenExtras.map(({ name, price }) => ({ name, price }))]
+    ? [{ name: `Комплекс «${pkg.name}»`, price: classPrice(catalog, pkg.name, cls, pkg.price) },
+      ...chosenExtras.map(({ name, price }) => ({ name, price: classPrice(catalog, name, cls, price) }))]
     : [];
   const duration = isCustom ? custom.duration : bookingDuration(SLOT_MIN, chosenExtras.map((e) => e.minutes));
   const slots = duration > 0 ? freeSlots(bookings, date, duration, 60, today, nowMin) : [];
   const picked = slots.find((s) => s.start === slot);
 
   const submit = () => {
-    if (!car.trim()) return setError("Укажите автомобиль.");
+    if (!car.trim() || !carPick) return setError("Выберите автомобиль из списка.");
     if (phone.length !== 10) return setError("Введите номер телефона полностью: +7 (___) ___-__-__.");
     if (isCustom && !customName.trim()) return setError("Укажите название услуги.");
     if (isCustom && (!Number.isInteger(customPriceValue) || customPriceValue <= 0)) return setError("Укажите цену услуги в рублях.");
@@ -697,7 +717,7 @@ function NewBookingDialog({
     setBusy(true);
     setError("");
     onCreate({
-      date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: initial?.carType ?? "Седан",
+      date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: carPick.body,
       phone, packageName: isCustom ? custom.packageName : pkg?.name ?? "", services,
     }).catch((e: Error) => setError(e.message)).finally(() => setBusy(false));
   };
@@ -718,9 +738,20 @@ function NewBookingDialog({
               const d = raw.length < fmtPhone(phone).length && phoneDigits(raw) === phone ? phone.slice(0, -1) : phoneDigits(raw);
               setPhone(d);
             }} />
-          <input aria-label="Автомобиль" className={field} placeholder="Автомобиль" value={car} onChange={(e) => setCar(e.target.value)} />
+          <div className="relative">
+            <input aria-label="Автомобиль" className={field} placeholder="Марка или модель" value={car}
+              onChange={(e) => { setCar(e.target.value); setCarPick(null); }} />
+            {carPick && <p className="mt-1 text-muted-foreground">{carPick.body} · {CLASS_LABEL[carPick.cls]} класс</p>}
+            {hits && (
+              <ul className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-border bg-background shadow-lg sm:rounded-lg">
+                {hits.length === 0 ? <li className="px-4 py-3 text-muted-foreground sm:px-3 sm:py-2">Ничего не найдено</li> : hits.map((h) => (
+                  <li key={h.modelId}><button type="button" onClick={() => pickCar(h)} className="min-h-12 w-full px-4 py-3 text-left hover:bg-muted sm:min-h-0 sm:px-3 sm:py-2">{h.name}</button></li>
+                ))}
+              </ul>
+            )}
+          </div>
           <select aria-label="Комплекс мойки" className={field} value={pkgName} onChange={(e) => { setPkgName(e.target.value); setSlot(null); }}>
-            {PACKAGES.map((p) => <option key={p.name} value={p.name}>{p.name} · {rub(p.price)}</option>)}
+            {PACKAGES.map((p) => <option key={p.name} value={p.name}>{p.name} · {rub(classPrice(catalog, p.name, cls, p.price))}</option>)}
             <option value={CUSTOM_PACKAGE_NAME}>{CUSTOM_PACKAGE_NAME}</option>
           </select>
           {isCustom ? (
@@ -759,7 +790,7 @@ function NewBookingDialog({
                 return (
                   <button key={e.name} type="button" onClick={() => { setSlot(null); setExtras((l) => on ? l.filter((x) => x !== e.name) : [...l, e.name]); }}
                     className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm sm:min-h-0 sm:rounded-full sm:px-3 sm:py-1 sm:text-xs ${on ? "border-crm bg-crm-soft text-crm" : "border-border"}`}>
-                    {e.name} · {rub(e.price)}{e.minutes ? ` +${e.minutes} мин` : ""}
+                    {e.name} · {rub(classPrice(catalog, e.name, cls, e.price))}{e.minutes ? ` +${e.minutes} мин` : ""}
                   </button>
                 );
               })}
