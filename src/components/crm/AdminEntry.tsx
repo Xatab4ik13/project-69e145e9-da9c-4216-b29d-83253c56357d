@@ -1,29 +1,20 @@
 import { useEffect, useState } from "react";
 import { AdminLogin } from "@/components/crm/AdminLogin";
 import { AdminSchedule } from "@/components/crm/AdminSchedule";
-
-const MOCK_AUTH_KEY = "aquarius.crm.mock-auth";
+import { api, type CrmUser } from "@/lib/crm/api";
 
 export function AdminEntry() {
-  const [status, setStatus] = useState<"loading" | "guest" | "authenticated">("loading");
+  const [user, setUser] = useState<CrmUser | null | "loading">("loading");
 
   useEffect(() => {
-    try {
-      setStatus(window.localStorage.getItem(MOCK_AUTH_KEY) === "1" ? "authenticated" : "guest");
-    } catch {
-      setStatus("guest");
-    }
+    api.me().then(setUser, () => setUser(null));
   }, []);
 
-  const login = () => {
-    try {
-      window.localStorage.setItem(MOCK_AUTH_KEY, "1");
-    } catch {
-      // The mock session still works until this tab is closed.
-    }
-    setStatus("authenticated");
+  const logout = async () => {
+    await api.logout().catch(() => undefined);
+    setUser(null);
   };
 
-  if (status === "loading") return <main className="min-h-screen bg-background" />;
-  return status === "authenticated" ? <AdminSchedule /> : <AdminLogin onLogin={login} />;
+  if (user === "loading") return <main className="min-h-screen bg-background" />;
+  return user ? <AdminSchedule role={user.role} onLogout={logout} /> : <AdminLogin onLogin={setUser} />;
 }
