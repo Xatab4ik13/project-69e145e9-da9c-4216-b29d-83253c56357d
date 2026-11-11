@@ -190,7 +190,7 @@ export function AdminFinance(props: Props) {
             <button type="button" onClick={() => openDay(o.date)} className="hidden w-20 shrink-0 whitespace-nowrap text-left tabular-nums text-muted-foreground underline-offset-2 hover:underline md:block">{fmtDateShort(o.date)}</button>
             <span className="min-w-0 flex-1"><span className="block truncate">{o.name}</span><span className="block text-xs text-muted-foreground"><span className="md:hidden">{fmtDateShort(o.date)} · </span>{o.kind === "payout" ? "мойщику" : o.article && articles.some((a) => a.id === o.article) ? "постоянная статья" : "по счёту"}</span></span>
             <span className="font-semibold tabular-nums">{money(o.amount)}</span>
-            <button type="button" aria-label={`Удалить ${o.name}`} onClick={() => props.onRemoveOp(o.id)} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
+            <button type="button" aria-label={`Удалить ${o.name}`} onClick={() => setDeleteOp(o)} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
       </section>
