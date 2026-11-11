@@ -11,6 +11,7 @@ import { AdminClients } from "@/components/crm/AdminClients";
 import { AdminDashboard, MobileDashboard } from "@/components/crm/AdminDashboard";
 import { AdminFinance } from "@/components/crm/AdminFinance";
 import { AdminWashers } from "@/components/crm/AdminWashers";
+import { AdminWeekSchedule } from "@/components/crm/AdminWeekSchedule";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { MobileAdminHeader, MobileAdminNavigation, MobileSchedule } from "@/components/crm/MobileSchedule";
 import { TONE } from "@/components/crm/booking-tone";
@@ -40,6 +41,7 @@ export function AdminSchedule() {
   const [source, setSource] = useState<"all" | BookingSource>("all");
   const [newOpen, setNewOpen] = useState<NewBookingInitial | null>(null);
   const [section, setSection] = useState<AdminSection>("schedule");
+  const [scheduleView, setScheduleView] = useState<"day" | "week">("day");
   const [loyaltyClientId, setLoyaltyClientId] = useState<string | null>(null);
   const [role, setRole] = useState<CrmRole>("admin");
   /** Owner screens add up the demo month plus whatever happens in the live schedule. */
@@ -89,6 +91,11 @@ export function AdminSchedule() {
     setLoyaltyClientId(null);
     setSection(next === "owner" ? "dashboard" : "schedule");
   };
+  const changeScheduleView = (next: "day" | "week") => {
+    setScheduleView(next);
+    setSelectedId(null);
+    setMobileOrderOpen(false);
+  };
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
@@ -104,7 +111,17 @@ export function AdminSchedule() {
             setNewOpen({ box: 1, start: 12 * 60, phone: client.phone, car: car?.name ?? "", carType: car ? carTypeForClass(car.carClass) : "Седан" });
           }}
         />
-      ) : section === "loyalty" ? <AdminLoyalty initialClientId={loyaltyClientId} /> : <main className="hidden min-w-0 flex-1 flex-col px-6 pb-4 pt-5 md:flex">
+      ) : section === "loyalty" ? <AdminLoyalty initialClientId={loyaltyClientId} /> : scheduleView === "week" ? (
+        <AdminWeekSchedule
+          date={date}
+          bookings={bookings}
+          today={DEMO_TODAY}
+          nowMin={DEMO_NOW_MIN}
+          onDateChange={setDate}
+          onOpenDay={(nextDate) => { setDate(nextDate); changeScheduleView("day"); }}
+          onViewChange={changeScheduleView}
+        />
+      ) : <main className="hidden min-w-0 flex-1 flex-col px-6 pb-4 pt-5 md:flex">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold tracking-tight">Расписание</h1>
           <label className="ml-auto flex w-80 items-center gap-2 rounded-lg border border-border px-3 py-2">
@@ -127,8 +144,8 @@ export function AdminSchedule() {
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <Legend />
           <div className="ml-auto flex rounded-lg bg-muted p-0.5">
-            <span className="rounded-md bg-crm px-4 py-1.5 font-medium text-crm-foreground">День</span>
-            <span className="cursor-not-allowed px-4 py-1.5 text-muted-foreground" title="Скоро">Неделя</span>
+            <button type="button" aria-pressed="true" onClick={() => changeScheduleView("day")} className="rounded-md bg-crm px-4 py-1.5 font-medium text-crm-foreground">День</button>
+            <button type="button" aria-pressed="false" onClick={() => changeScheduleView("week")} className="rounded-md px-4 py-1.5 font-medium text-muted-foreground">Неделя</button>
           </div>
           <div className="relative">
             <select value={source} onChange={(e) => setSource(e.target.value as typeof source)} className="appearance-none rounded-lg border border-border bg-background py-2 pl-3 pr-9">
@@ -150,7 +167,7 @@ export function AdminSchedule() {
         />
       </main>}
 
-      {section === "schedule" && (
+      {section === "schedule" && scheduleView === "day" && (
         <MobileSchedule
           date={date}
           bookings={visible}
@@ -159,6 +176,7 @@ export function AdminSchedule() {
           onPreviousDay={() => setDate(addDays(date, -1))}
           onNextDay={() => setDate(addDays(date, 1))}
           onToday={() => setDate(DEMO_TODAY)}
+          onShowWeek={() => changeScheduleView("week")}
           onSelect={(id) => { setSelectedId(id); setMobileOrderOpen(true); }}
           onFindFree={(box) => setNewOpen({ box, start: 12 * 60 })}
         />

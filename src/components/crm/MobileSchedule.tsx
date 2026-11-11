@@ -145,6 +145,7 @@ export function MobileSchedule({
   onPreviousDay,
   onNextDay,
   onToday,
+  onShowWeek,
   onSelect,
   onFindFree,
 }: {
@@ -155,6 +156,7 @@ export function MobileSchedule({
   onPreviousDay: () => void;
   onNextDay: () => void;
   onToday: () => void;
+  onShowWeek: () => void;
   onSelect: (id: string) => void;
   onFindFree: (box: 1 | 2) => void;
 }) {
@@ -170,6 +172,11 @@ export function MobileSchedule({
   return (
     <main className="min-h-0 flex-1 overflow-y-auto bg-crm-surface px-4 py-4 md:hidden">
       <h1 className="text-2xl font-bold tracking-tight">Расписание</h1>
+
+      <div className="mt-3 flex rounded-lg bg-muted p-0.5">
+        <button type="button" aria-pressed="true" className="min-h-11 flex-1 rounded-md bg-crm px-4 font-medium text-crm-foreground">День</button>
+        <button type="button" aria-pressed="false" onClick={onShowWeek} className="min-h-11 flex-1 rounded-md px-4 font-medium text-muted-foreground">Неделя</button>
+      </div>
 
       <div className="mt-4 grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2">
         <button type="button" aria-label="Предыдущий день" onClick={onPreviousDay} className="rounded-lg border border-border bg-background p-2.5">
