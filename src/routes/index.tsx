@@ -3,7 +3,7 @@ import { AdminEntry } from "@/components/crm/AdminEntry";
 import { api } from "@/lib/crm/api";
 import { getAppHost } from "@/lib/crm/host.functions";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookingModal, MobileBookingBar, MOBILE_SHEET } from "@/components/BookingModal";
 import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronRight, Clock, Copy, CornerUpRight, MapPin, Phone, Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
