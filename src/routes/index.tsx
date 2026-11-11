@@ -270,7 +270,7 @@ function Index() {
   const setHeaderBooking = (open: boolean) => {
     void navigate({
       to: "/",
-      search: (previous) => ({ ...previous, booking: open ? 1 : undefined }),
+      search: (previous) => open ? { ...previous, booking: 1 as const } : {},
       replace: !open,
     });
   };
