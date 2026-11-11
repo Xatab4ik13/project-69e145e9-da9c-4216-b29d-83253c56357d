@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  Bell, Building2, CalendarDays, ChevronLeft, ChevronRight, LayoutDashboard, Menu, Plus, Search, Star, User, Wallet, Wrench,
+  Bell, Building2, CalendarDays, ChevronLeft, ChevronRight, HandCoins, LayoutDashboard, Menu, Plus, Search, Star, User, Wallet, Wrench,
 } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
@@ -11,7 +11,7 @@ import { SOURCE_LABEL, type Booking, type CrmRole } from "@/lib/crm/types";
 import { STATE_LABEL } from "@/lib/crm/logic";
 
 export type MobileAdminSection =
-  | "schedule" | "clients" | "services" | "loyalty" | "dashboard" | "finance" | "notifications";
+  | "schedule" | "clients" | "services" | "loyalty" | "washers" | "dashboard" | "finance" | "notifications";
 
 type NavItem = { id: MobileAdminSection | "more"; label: string; Icon: typeof CalendarDays };
 type SheetItem = { id: MobileAdminSection; label: string; Icon: typeof CalendarDays; soon?: boolean };
@@ -33,8 +33,12 @@ const NAV: Record<CrmRole, NavItem[]> = {
 };
 
 const MORE: Record<CrmRole, SheetItem[]> = {
-  admin: [{ id: "services", label: "Услуги", Icon: Wrench }],
+  admin: [
+    { id: "washers", label: "Мойщики", Icon: HandCoins },
+    { id: "services", label: "Услуги", Icon: Wrench },
+  ],
   owner: [
+    { id: "washers", label: "Мойщики", Icon: HandCoins },
     { id: "loyalty", label: "Лояльность", Icon: Star },
     { id: "services", label: "Услуги", Icon: Wrench },
     { id: "finance", label: "Финансы", Icon: Wallet },

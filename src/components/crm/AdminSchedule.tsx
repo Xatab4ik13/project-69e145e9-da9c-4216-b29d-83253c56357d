@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight, Banknote, Bell, Building2, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
-  Clock, CreditCard, LayoutDashboard, Phone, Plus, Search, Smartphone, Star, User, Wallet, Wrench, X,
+  Clock, CreditCard, HandCoins, LayoutDashboard, Phone, Plus, Search, Smartphone, Star, User, Wallet, Wrench, X,
 } from "lucide-react";
 import logo from "@/assets/aquarius-logo.webp.asset.json";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,6 +10,7 @@ import { AdminLoyalty } from "@/components/crm/AdminLoyalty";
 import { AdminClients } from "@/components/crm/AdminClients";
 import { AdminDashboard, MobileDashboard } from "@/components/crm/AdminDashboard";
 import { AdminFinance } from "@/components/crm/AdminFinance";
+import { AdminWashers } from "@/components/crm/AdminWashers";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { MobileAdminHeader, MobileAdminNavigation, MobileSchedule } from "@/components/crm/MobileSchedule";
 import { TONE } from "@/components/crm/booking-tone";
@@ -93,7 +94,7 @@ export function AdminSchedule() {
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
       <MobileAdminHeader role={role} />
       <Sidebar section={section} onChange={changeSection} role={role} onRoleChange={changeRole} />
-      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={DEMO_TODAY} /> : section === "finance" ? null : section === "services" ? <AdminServices /> : section === "clients" ? (
+      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={DEMO_TODAY} /> : section === "finance" ? null : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={DEMO_TODAY} /> : section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
           onNewBooking={(client) => {
@@ -219,12 +220,13 @@ export function AdminSchedule() {
 
 const FIN_KEY = "aquarius-crm-finance";
 
-type AdminSection = "schedule" | "clients" | "services" | "loyalty" | "dashboard" | "finance" | "notifications";
+type AdminSection = "schedule" | "clients" | "services" | "loyalty" | "washers" | "dashboard" | "finance" | "notifications";
 
 /** Owner sees everything the manager sees, plus his own screens (Уведомления — soon). */
 const SECTION_ITEMS: Record<CrmRole, { label: string; icon: typeof CalendarDays; target?: AdminSection }[]> = {
   admin: [
     { label: "Расписание", icon: CalendarDays, target: "schedule" },
+    { label: "Мойщики", icon: HandCoins, target: "washers" },
     { label: "Клиенты", icon: User, target: "clients" },
     { label: "Лояльность", icon: Star, target: "loyalty" },
     { label: "Услуги", icon: Wrench, target: "services" },
@@ -232,6 +234,7 @@ const SECTION_ITEMS: Record<CrmRole, { label: string; icon: typeof CalendarDays;
   owner: [
     { label: "Дашборд", icon: LayoutDashboard, target: "dashboard" },
     { label: "Расписание", icon: CalendarDays, target: "schedule" },
+    { label: "Мойщики", icon: HandCoins, target: "washers" },
     { label: "Клиенты", icon: User, target: "clients" },
     { label: "Лояльность", icon: Star, target: "loyalty" },
     { label: "Услуги", icon: Wrench, target: "services" },
