@@ -6,6 +6,7 @@ import { CLOSE_MIN, OPEN_MIN, addDays, findConflict, freeSlots, isPastSlot, with
 import { durationForExtras } from "../../src/lib/crm/booking-rules";
 import { DEFAULT_SERVICE_CATALOG } from "../../src/lib/crm/services";
 import { washNow } from "../../src/lib/crm/clock";
+import { carInfo, logoFile, searchCars } from "./carsbase";
 import type { Booking } from "../../src/lib/crm/types";
 
 const COOKIE = "aq_session";
@@ -123,6 +124,23 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
   app.get("/prices", async (c) => {
     const [row] = await sql`select data from price_catalog where id = 1`;
     return c.json({ catalog: row ? (typeof row.data === "string" ? JSON.parse(row.data) : row.data) : DEFAULT_SERVICE_CATALOG });
+  });
+
+  // ---------- автомобили (Cars Base) ----------
+  app.get("/cars/search", async (c) => {
+    const q = (c.req.query("q") ?? "").trim().slice(0, 60);
+    if (q.length < 2) return c.json({ cars: [] });
+    try { return c.json({ cars: await searchCars(q) }); } catch (e) { console.error(e); return c.json({ error: "Каталог автомобилей недоступен" }, 502); }
+  });
+  app.get("/cars/info", async (c) => {
+    const model = c.req.query("model") ?? "";
+    if (!/^[A-Z0-9_-]{1,80}$/i.test(model)) return c.json({ error: "Неверная модель" }, 400);
+    try { return c.json(await carInfo(model)); } catch (e) { console.error(e); return c.json({ error: "Каталог автомобилей недоступен" }, 502); }
+  });
+  app.get("/cars/logo/:mark", async (c) => {
+    const file = await logoFile(c.req.param("mark")).catch((e) => { console.error(e); return null; });
+    if (!file) return c.body(null, 404);
+    return new Response(Bun.file(file), { headers: { "content-type": "image/png", "cache-control": "public, max-age=2592000" } });
   });
 
   app.get("/slots", async (c) => {
