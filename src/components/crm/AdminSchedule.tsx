@@ -11,6 +11,7 @@ import { AdminClients } from "@/components/crm/AdminClients";
 import { AdminDashboard, MobileDashboard } from "@/components/crm/AdminDashboard";
 import { AdminFinance } from "@/components/crm/AdminFinance";
 import { AdminWashers } from "@/components/crm/AdminWashers";
+import { AdminNotifications } from "@/components/crm/AdminNotifications";
 import { AdminWeekSchedule } from "@/components/crm/AdminWeekSchedule";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { MobileAdminHeader, MobileAdminNavigation, MobileSchedule } from "@/components/crm/MobileSchedule";
@@ -101,7 +102,7 @@ export function AdminSchedule() {
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
       <MobileAdminHeader role={role} />
       <Sidebar section={section} onChange={changeSection} role={role} onRoleChange={changeRole} />
-      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={DEMO_TODAY} /> : section === "finance" ? null : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={DEMO_TODAY} /> : section === "services" ? <AdminServices /> : section === "clients" ? (
+      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={DEMO_TODAY} /> : section === "finance" ? null : section === "notifications" ? <AdminNotifications today={DEMO_TODAY} /> : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={DEMO_TODAY} /> : section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
           onNewBooking={(client) => {
@@ -257,7 +258,7 @@ const SECTION_ITEMS: Record<CrmRole, { label: string; icon: typeof CalendarDays;
     { label: "Лояльность", icon: Star, target: "loyalty" },
     { label: "Услуги", icon: Wrench, target: "services" },
     { label: "Финансы", icon: Wallet, target: "finance" },
-    { label: "Уведомления", icon: Bell },
+    { label: "Уведомления", icon: Bell, target: "notifications" },
   ],
 };
 
