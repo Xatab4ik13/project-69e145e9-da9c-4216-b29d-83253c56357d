@@ -157,9 +157,9 @@ export function boxLoad(list: Booking[], p: Period) {
   return { box1, box2, overall: (box1 + box2) / 2, days };
 }
 
-/** Revenue that covers the fixed plan: after tax, washer share and payment fees. */
-export function breakevenRevenue(monthFixed: number, feeRate: number) {
-  const contribution = 1 - TAX_RATE - WASHER_SHARE - feeRate;
+/** Revenue that covers the fixed plan after the actual tax mix, washer share and payment fees. */
+export function breakevenRevenue(monthFixed: number, feeRate: number, taxRate = TAX_RATE) {
+  const contribution = 1 - taxRate - WASHER_SHARE - feeRate;
   return contribution > 0 ? monthFixed / contribution : Number.POSITIVE_INFINITY;
 }
 
@@ -220,7 +220,7 @@ export function summarize(
   const payroll = revenue * WASHER_SHARE;
   const acquiring = methods.terminal * ACQUIRING_FEE;
   const sbp = methods.app * SBP_FEE;
-  const tax = revenue * TAX_RATE;
+  const tax = (methods.terminal + methods.app) * TAX_RATE;
   const fixed = fixedForPeriod(p, ops, overrides);
   const expenses = fixed + payroll + acquiring + sbp + tax;
 
@@ -229,9 +229,11 @@ export function summarize(
   const monthRevenue = revenueOf(monthPaid);
   const monthMethods = byMethod(list, monthPeriod);
   const monthFees = monthMethods.terminal * ACQUIRING_FEE + monthMethods.app * SBP_FEE;
+  const monthTax = (monthMethods.terminal + monthMethods.app) * TAX_RATE;
   const feeRate = monthRevenue ? monthFees / monthRevenue : 0;
+  const taxRate = monthRevenue ? monthTax / monthRevenue : 0;
   const monthFixed = monthlyFixedTotal(planFor(today.slice(0, 7), overrides));
-  const target = breakevenRevenue(monthFixed, feeRate);
+  const target = breakevenRevenue(monthFixed, feeRate, taxRate);
 
   return {
     period: p,

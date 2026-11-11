@@ -60,16 +60,20 @@ describe("summarize", () => {
     expect(s.avgCheck).toBeCloseTo(8000 / 3, 5);
   });
 
-  it("charges washer share, both commissions and USN 6%", () => {
+  it("charges washer share and both commissions", () => {
     expect(s.payroll).toBeCloseTo(2400, 5);
     expect(s.acquiring).toBeCloseTo(51.2, 5);
     expect(s.sbp).toBeCloseTo(20, 5);
-    expect(s.tax).toBeCloseTo(480, 5);
+  });
+
+  it("charges USN 6% on terminal and app payments, but not on cash", () => {
+    expect(s.tax).toBeCloseTo((2000 + 5000) * 0.06, 5);
+    expect(summarize([list[0]], oneDay, "2026-10-05").tax).toBe(0);
   });
 
   it("a mid-month day carries no stable articles", () => {
     expect(s.fixed).toBe(0);
-    expect(s.profit).toBeCloseTo(8000 - (2400 + 51.2 + 20 + 480), 5);
+    expect(s.profit).toBeCloseTo(8000 - (2400 + 51.2 + 20 + 420), 5);
   });
 
   it("splits money by payment method and by washer", () => {
