@@ -99,7 +99,7 @@ export function BookingModal({
   extraPrices?: number[];
   /** id услуг прайса: по ним цена считается для класса автомобиля. */
   extraIds?: string[];
-  pkgId?: string;
+  pkgId?: string | undefined;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   pkgName: string;
@@ -157,7 +157,6 @@ export function BookingModal({
   const canConfirm = phone.length === 10 && agree;
 
   // Строки «Ваша мойка»: комплекс = вся цена без допов, дальше каждый доп со своей ценой.
-  const extrasSum = extraPrices.reduce((a, b) => a + b, 0);
   const washLines = [[`Комплекс «${pkgName}»`, pkgPrice] as const, ...extras.map((e, i) => [e, extraPrices[i] ?? 0] as const)];
 
   const close = () => {
