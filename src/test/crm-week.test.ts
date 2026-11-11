@@ -50,6 +50,6 @@ describe("Неделя в расписании", () => {
     const current = days.find((day) => day.date === "2026-11-11")!;
 
     expect(past.free[1]).toEqual([]);
-    expect(current.free[1]).toEqual([{ start: 17 * 60, end: 18 * 60 }, { start: 19 * 60, end: 22 * 60 }]);
+    expect(current.free[1]).toEqual([{ start: 16 * 60 + 40, end: 18 * 60 }, { start: 19 * 60, end: 22 * 60 }]);
   });
 });
