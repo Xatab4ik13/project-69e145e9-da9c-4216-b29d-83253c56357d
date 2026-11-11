@@ -162,6 +162,12 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     return c.json({ duration, slots: slots.map((s) => s.start) });
   });
 
+  /** The bookings_no_overlap constraint fired: treat it exactly like a taken slot. */
+  const overlapAsNull = (e: unknown) => {
+    if ((e as { errno?: string; code?: string })?.errno === "23P01" || (e as { code?: string })?.code === "23P01") return null;
+    throw e;
+  };
+
   app.post("/bookings", async (c) => {
     if (!bookingLimit(ip(c))) return c.json({ error: "Слишком много записей. Позвоните нам." }, 429);
     const data = await body(c, siteBookingSchema);
@@ -179,8 +185,8 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
         values (${data.date}, ${box}, ${data.start}, ${duration}, ${data.car}, ${data.carType}, ${data.phone}, 'site', ${data.packageName}, ${JSON.stringify(data.services)}::text::jsonb)
         returning *`;
       return toBooking(row as Row);
-    });
-    if (!created) return c.json({ error: "Это время уже заняли. Выберите другое." }, 409);
+    }).catch(overlapAsNull);
+    if (!created) return c.json({ error: "Это время только что заняли. Выберите другое." }, 409);
     return c.json({ id: created.id, date: created.date, start: created.start, duration: created.duration }, 201);
   });
 
@@ -244,8 +250,8 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
         values (${data.date}, ${data.box}, ${data.start}, ${data.duration}, ${data.car}, ${data.carType}, ${data.phone}, 'admin', ${data.packageName}, ${JSON.stringify(data.services)}::text::jsonb)
         returning *`;
       return toBooking(row as Row);
-    });
-    if (!created) return c.json({ error: "Это время уже занято" }, 409);
+    }).catch(overlapAsNull);
+    if (!created) return c.json({ error: "Это время только что заняли. Выберите другое." }, 409);
     return c.json({ booking: created }, 201);
   });
 
