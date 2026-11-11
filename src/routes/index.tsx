@@ -210,8 +210,8 @@ function AppPromo() {
 
 type IndexSearch = { booking?: 1 };
 
-function validateIndexSearch(search: Record<string, unknown>): IndexSearch {
-  return search.booking === "1" || search.booking === 1 ? { booking: 1 } : {};
+export function validateIndexSearch(search: Record<string, unknown>): IndexSearch {
+  return search["booking"] === "1" || search["booking"] === 1 ? { booking: 1 } : {};
 }
 
 export const Route = createFileRoute("/")({
