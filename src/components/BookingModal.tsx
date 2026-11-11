@@ -119,6 +119,7 @@ export function BookingModal({
   const [done, setDone] = useState(false);
   const [slots, setSlots] = useState<string[] | null>(null);
   const [slotsError, setSlotsError] = useState("");
+  const [slotsTick, setSlotsTick] = useState(0);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
 
@@ -178,7 +179,7 @@ export function BookingModal({
     );
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, car, dayIso, extrasKey, done, pkgName]);
+  }, [open, car, dayIso, extrasKey, done, pkgName, slotsTick]);
 
   const confirm = () => {
     if (!car || !slot || sending) return;
@@ -190,7 +191,11 @@ export function BookingModal({
       services: washLines.map(([name, price]) => ({ name, price })), extras, cls: car.cls,
     }).then(
       () => setDone(true),
-      (e: Error) => setSendError(e.message),
+      (e: Error & { status?: number }) => {
+        setSendError(e.message);
+        // Someone took this time a moment earlier: drop the choice and show fresh free times.
+        if (e.status === 409) { setSlot(null); setSlotsTick((t) => t + 1); }
+      },
     ).finally(() => setSending(false));
   };
 
