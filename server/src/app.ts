@@ -275,6 +275,58 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     return c.json({ booking: toBooking(row as Row) });
   });
 
+  // ---------- finance (dashboard, finance, washers) ----------
+  type OpRow = { id: string; date: string; kind: "expense" | "payout"; article: string | null; washer: string | null; name: string; amount: string };
+  const toOp = (r: OpRow) => ({
+    id: r.id, date: r.date, kind: r.kind, name: r.name, amount: Number(r.amount),
+    ...(r.article ? { article: r.article } : {}), ...(r.washer ? { washer: r.washer } : {}),
+  });
+  const ownerOnly = (c: Context<Env>) => (c.get("user").role === "owner" ? null : c.json({ error: "Это может только владелец" }, 403));
+
+  app.get("/crm/finance", async (c) => {
+    const ops = (await sql`select * from finance_ops order by date, created_at`) as OpRow[];
+    const plan = (await sql`select month, article, amount from plan_overrides`) as { month: string; article: string; amount: string }[];
+    const overrides: Record<string, Record<string, number>> = {};
+    for (const r of plan) (overrides[r.month] ??= {})[r.article] = Number(r.amount);
+    return c.json({ ops: ops.map(toOp), overrides });
+  });
+
+  app.post("/crm/finance/ops", async (c) => {
+    const denied = ownerOnly(c);
+    if (denied) return denied;
+    const data = await body(c, z.object({
+      date: dateSchema,
+      kind: z.enum(["expense", "payout"]),
+      article: z.string().trim().min(1).max(60).optional(),
+      washer: z.string().trim().min(1).max(60).optional(),
+      name: z.string().trim().min(1).max(300),
+      amount: z.number().positive().max(100_000_000),
+    }));
+    if (!data) return c.json({ error: "Проверьте сумму и дату" }, 400);
+    const [row] = await sql`insert into finance_ops (date, kind, article, washer, name, amount)
+      values (${data.date}, ${data.kind}, ${data.article ?? null}, ${data.washer ?? null}, ${data.name}, ${data.amount}) returning *`;
+    return c.json({ op: toOp(row as OpRow) }, 201);
+  });
+
+  app.delete("/crm/finance/ops/:id", async (c) => {
+    const denied = ownerOnly(c);
+    if (denied) return denied;
+    const id = z.string().uuid().safeParse(c.req.param("id"));
+    if (!id.success) return c.json({ error: "Неверный платёж" }, 400);
+    await sql`delete from finance_ops where id = ${id.data}`;
+    return c.json({ ok: true });
+  });
+
+  app.put("/crm/finance/plan", async (c) => {
+    const denied = ownerOnly(c);
+    if (denied) return denied;
+    const data = await body(c, z.object({ month: z.string().regex(/^\d{4}-\d{2}$/), article: z.string().trim().min(1).max(60), amount: z.number().min(0).max(100_000_000) }));
+    if (!data) return c.json({ error: "Проверьте сумму" }, 400);
+    await sql`insert into plan_overrides (month, article, amount) values (${data.month}, ${data.article}, ${data.amount})
+      on conflict (month, article) do update set amount = excluded.amount`;
+    return c.json({ ok: true });
+  });
+
   app.put("/crm/prices", async (c) => {
     if (c.get("user").role !== "owner") return c.json({ error: "Сохранять прайс может только владелец" }, 403);
     const data = await body(c, z.object({ catalog: catalogSchema }));
