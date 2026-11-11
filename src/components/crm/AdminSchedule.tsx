@@ -58,7 +58,7 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
     const live = new Set(bookings.map((b) => b.id));
     return [...history.filter((b) => !live.has(b.id)), ...bookings];
   }, [history, bookings]);
-  const ownerScreen = section === "dashboard" || section === "finance" || section === "washers";
+  const ownerScreen = section === "dashboard" || section === "finance" || section === "washers" || section === "loyalty";
   useEffect(() => {
     if (!ownerScreen) return;
     let alive = true;
@@ -140,7 +140,7 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
             setNewOpen({ box: 1, start: 12 * 60, phone: client.phone, car: car?.name ?? "", carType: car ? carTypeForClass(car.carClass) : "Седан" });
           }}
         />
-      ) : section === "loyalty" ? <AdminLoyalty initialClientId={loyaltyClientId} /> : scheduleView === "week" ? (
+      ) : section === "loyalty" ? <AdminLoyalty initialClientId={loyaltyClientId} bookings={financeBookings} today={today} /> : scheduleView === "week" ? (
         <AdminWeekSchedule
           date={date}
           bookings={bookings}

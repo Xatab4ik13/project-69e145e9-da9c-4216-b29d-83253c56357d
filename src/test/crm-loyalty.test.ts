@@ -49,3 +49,16 @@ describe("CRM loyalty rules", () => {
     expect(MOCK_LOYALTY_CLIENTS.every((client) => loyaltyBalance(client, "2026-11-11") >= 0)).toBe(true);
   });
 });
+
+import { loyaltyFromBookings as fromBookings } from "@/lib/crm/loyalty";
+describe("loyalty from real bookings (no app yet)", () => {
+  const b = (id: string, phone: string, payment: "paid" | "unpaid", wash = "done") =>
+    ({ id, date: "2026-11-10", phone, wash, payment, services: [{ price: 1500 }, { price: 500 }] });
+  it("accrues 5% only for paid washes, per phone, without welcome bonus", () => {
+    const list = fromBookings([b("1", "+7 921 345-67-89", "paid"), b("2", "9213456789", "unpaid"), b("3", "9213456789", "paid", "cancelled")]);
+    expect(list).toHaveLength(1);
+    expect(list[0]!.activated).toBe(false);
+    expect(list[0]!.transactions.map((t) => t.amount)).toEqual([100]);
+    expect(list[0]!.transactions[0]!.expiresAt).toBe("2027-11-10");
+  });
+});
