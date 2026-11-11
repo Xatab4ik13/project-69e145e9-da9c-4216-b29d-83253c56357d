@@ -21,7 +21,9 @@ describe("crm logic", () => {
   });
 });
 
-import { bookingDuration, customServiceDetails, freeSlots, isPastSlot, readyAndInvoice } from "@/lib/crm/logic";
+import { bookingDuration, customServiceDetails, freeSlots, isPastSlot, readyAndInvoice, smartSlots, OPEN_MIN as OPEN, CLOSE_MIN as CLOSE } from "@/lib/crm/logic";
+import { catalogDuration } from "@/lib/crm/booking-rules";
+import { DEFAULT_SERVICE_CATALOG } from "@/lib/crm/services";
 import { DEMO_NOW_MIN, DEMO_TODAY, SLOT_MIN } from "@/lib/crm/mock";
 
 describe("slots", () => {
@@ -122,5 +124,28 @@ describe("body care extras", () => {
   });
   it("silicone seal care costs from 300 ₽ and adds no time", () => {
     expect(EXTRAS.find((e) => e.name === "Силикон уплотнителей")).toMatchObject({ price: 300, minutes: 0 });
+  });
+});
+
+describe("умные слоты записи", () => {
+  const busy = (start: number, duration: number, box: 1 | 2 = 1) =>
+    ({ id: `b${start}${box}`, date: "2026-12-01", box, start, duration, wash: "scheduled" }) as unknown as Parameters<typeof smartSlots>[0][number];
+  it("после записи 12:15 на 40 минут бокс свободен с 12:55", () => {
+    const list = [busy(10 * 60, 12 * 60 - 10 * 60 + 15 - 0 + 120), busy(12 * 60 + 15, 40)].slice(1);
+    const both = [...list, busy(OPEN, 12 * 60 * 1 - OPEN + 15, 2)];
+    expect(smartSlots(both, "2026-12-01", 40).some((s) => s.start === 12 * 60 + 55 && s.box === 1)).toBe(true);
+  });
+  it("шаг начала — 15 минут", () => {
+    expect(smartSlots([], "2026-12-01", 40).slice(0, 3).map((s) => s.start)).toEqual([600, 615, 630]);
+  });
+  it("прячет время, после которого остаётся окно короче 40 минут", () => {
+    const list = [busy(12 * 60, 60), busy(OPEN, CLOSE - OPEN, 2)];
+    // 13:15 оставит дыру 15 минут после 13:00
+    expect(smartSlots(list, "2026-12-01", 40).some((s) => s.start === 13 * 60 + 15)).toBe(false);
+    expect(smartSlots(list, "2026-12-01", 40).some((s) => s.start === 13 * 60)).toBe(true);
+  });
+  it("резерв = время комплекса по классу + допуслуги", () => {
+    expect(catalogDuration(DEFAULT_SERVICE_CATALOG, "Стандарт", [], 1)).toBe(40);
+    expect(catalogDuration(DEFAULT_SERVICE_CATALOG, "Люкс", ["Антидождь"], 3)).toBe(100);
   });
 });

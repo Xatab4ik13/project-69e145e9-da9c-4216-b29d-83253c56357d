@@ -21,7 +21,7 @@ import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
 import { api, bookingPatch, type ApiError, type CarHit, type NewBooking } from "@/lib/crm/api";
-import { classPrice } from "@/lib/crm/booking-rules";
+import { MIN_WASH_MIN, catalogDuration, classPrice } from "@/lib/crm/booking-rules";
 import { CLASS_LABEL } from "@/lib/crm/car-class";
 import type { CatalogService } from "@/lib/crm/services";
 import { useWashClock } from "@/lib/crm/use-wash-clock";
