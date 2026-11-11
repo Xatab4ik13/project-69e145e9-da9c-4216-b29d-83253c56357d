@@ -41,7 +41,7 @@ describe("Удаление платежа", () => {
     const onRemoveOp = renderFinance();
 
     fireEvent.click(screen.getByRole("button", { name: "Удалить Коммуналка" }));
-    fireEvent.click(screen.getByRole("button", { name: "Удалить", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Удалить" }));
 
     expect(onRemoveOp).toHaveBeenCalledOnce();
     expect(onRemoveOp).toHaveBeenCalledWith("op-1");
