@@ -219,6 +219,29 @@ export function AdminFinance(props: Props) {
           onSave={(op) => { props.onAddOp(op); setDraft(null); }}
         />
       )}
+
+      <AlertDialog open={deleteOp !== null} onOpenChange={(open) => { if (!open) setDeleteOp(null); }}>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-xl p-5">
+          <AlertDialogHeader className="text-left">
+            <AlertDialogTitle className="text-xl">Удалить платёж?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              {deleteOp ? `${deleteOp.name} · ${money(deleteOp.amount)}` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="grid grid-cols-2 gap-2 space-x-0 sm:flex">
+            <AlertDialogCancel className="m-0 min-h-11">Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteOp) props.onRemoveOp(deleteOp.id);
+                setDeleteOp(null);
+              }}
+              className="min-h-11 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
