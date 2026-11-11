@@ -6,7 +6,7 @@ import { aquarius_logo as logo } from "@/assets/images";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { TONE } from "@/components/crm/booking-tone";
 import { bookingState, fmtDateShort, fmtTime, rub, total } from "@/lib/crm/logic";
-import { DEMO_NOW_MIN, DEMO_TODAY } from "@/lib/crm/mock";
+import { useWashClock } from "@/lib/crm/use-wash-clock";
 import { SOURCE_LABEL, type Booking, type CrmRole } from "@/lib/crm/types";
 import { STATE_LABEL } from "@/lib/crm/logic";
 
@@ -67,12 +67,12 @@ export function MobileAdminNavigation({
   section,
   onChange,
   role,
-  onRoleChange,
+  onLogout,
 }: {
   section: MobileAdminSection;
   onChange: (section: MobileAdminSection) => void;
   role: CrmRole;
-  onRoleChange: (role: CrmRole) => void;
+  onLogout: () => void;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -116,19 +116,14 @@ export function MobileAdminNavigation({
                 </button>
               ))}
             </div>
-            <p className="mt-4 text-sm font-semibold text-muted-foreground">Режим просмотра</p>
-            <div className="mt-1 space-y-1">
-              {ROLE_ITEMS.map(({ id, label, Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => { onRoleChange(id); setMoreOpen(false); }}
-                  aria-pressed={role === id}
-                  className={`flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium ${role === id ? "bg-crm-soft text-crm" : ""}`}
-                >
-                  <Icon className="h-5 w-5 shrink-0" /> {label}
-                </button>
-              ))}
+            <div className="mt-4 border-t border-border pt-3">
+              <button
+                type="button"
+                onClick={() => { setMoreOpen(false); onLogout(); }}
+                className="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium"
+              >
+                <LogOut className="h-5 w-5 shrink-0" /> Выйти · {role === "owner" ? "Владелец" : "Администратор"}
+              </button>
             </div>
           </div>
         </div>
@@ -243,7 +238,8 @@ export function MobileSchedule({
 }
 
 function MobileBookingCard({ booking, onClick }: { booking: Booking; onClick: () => void }) {
-  const state = bookingState(booking, DEMO_TODAY, DEMO_NOW_MIN);
+  const { today, nowMin } = useWashClock();
+  const state = bookingState(booking, today, nowMin);
   const tone = TONE[state];
   const { Icon } = tone;
   const extras = booking.services.length - 1;
