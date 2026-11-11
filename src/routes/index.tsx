@@ -208,7 +208,14 @@ function AppPromo() {
   );
 }
 
+type IndexSearch = { booking?: 1 };
+
+function validateIndexSearch(search: Record<string, unknown>): IndexSearch {
+  return search.booking === "1" || search.booking === 1 ? { booking: 1 } : {};
+}
+
 export const Route = createFileRoute("/")({
+  validateSearch: validateIndexSearch,
   loader: () => getAppHost(),
   head: ({ loaderData }) => loaderData === "crm" ? ({
     meta: [

@@ -14,4 +14,12 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it("opens the booking dialog from the shared ?booking=1 address", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    const matches = router.matchRoutes("/?booking=1");
+
+    expect(matches.at(-1)?.search).toMatchObject({ booking: 1 });
+  });
 });
