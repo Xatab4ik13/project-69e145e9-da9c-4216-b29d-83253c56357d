@@ -1,5 +1,6 @@
 import type { Booking, CrmRole } from "./types";
 import type { CatalogService } from "./services";
+import type { FinOp, PlanOverrides } from "./finance";
 
 /** Same-origin by default: Caddy forwards /api on every domain to the API service. */
 const BASE = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "/api/v1";
@@ -48,6 +49,10 @@ export const api = {
   createBooking: (b: NewBooking) => request<{ booking: Booking }>("/crm/bookings", json("POST", b)).then((r) => r.booking),
   updateBooking: (id: string, patch: BookingPatch) =>
     request<{ booking: Booking }>(`/crm/bookings/${id}`, json("PATCH", patch)).then((r) => r.booking),
+  finance: () => request<{ ops: FinOp[]; overrides: PlanOverrides }>("/crm/finance"),
+  addOp: ({ id: _id, ...op }: FinOp) => request<{ op: FinOp }>("/crm/finance/ops", json("POST", op)).then((r) => r.op),
+  removeOp: (id: string) => request<{ ok: true }>(`/crm/finance/ops/${id}`, { method: "DELETE" }),
+  setPlan: (month: string, article: string, amount: number) => request<{ ok: true }>("/crm/finance/plan", json("PUT", { month, article, amount })),
   prices: () => request<{ catalog: CatalogService[] }>("/prices").then((r) => r.catalog),
   savePrices: (catalog: CatalogService[]) => request<{ ok: true }>("/crm/prices", json("PUT", { catalog })),
   slots: (date: string, pkg: string, extras: string[], cls: 1 | 2 | 3 | 4) =>

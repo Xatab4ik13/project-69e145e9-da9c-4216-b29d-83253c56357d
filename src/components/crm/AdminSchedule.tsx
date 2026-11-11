@@ -19,14 +19,13 @@ import { TONE } from "@/components/crm/booking-tone";
 import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
-import { SLOT_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
+import { SLOT_MIN, DEMO_TODAY, EXTRAS, PACKAGES } from "@/lib/crm/mock";
 import { api, bookingPatch, type ApiError, type CarHit, type NewBooking } from "@/lib/crm/api";
 import { MIN_WASH_MIN, catalogDuration, classPrice } from "@/lib/crm/booking-rules";
 import { CLASS_LABEL } from "@/lib/crm/car-class";
 import type { CatalogService } from "@/lib/crm/services";
 import { useWashClock } from "@/lib/crm/use-wash-clock";
 import { WASHERS, type FinOp, type PlanOverrides } from "@/lib/crm/finance";
-import { DEMO_OPS } from "@/lib/crm/finance-mock";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
   fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, smartSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
@@ -51,26 +50,32 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
   const [section, setSection] = useState<AdminSection>(role === "owner" ? "dashboard" : "schedule");
   const [scheduleView, setScheduleView] = useState<"day" | "week">("day");
   const [loyaltyClientId, setLoyaltyClientId] = useState<string | null>(null);
-  /** Owner screens add up the demo month plus whatever happens in the live schedule. */
-  const financeBookings = useMemo(() => [...HISTORY_BOOKINGS, ...bookings], [bookings]);
-  /** Owner's payments and plan edits; demo months come from mock data, then live in this browser until a real backend exists. */
-  const [ops, setOps] = useState<FinOp[]>(DEMO_OPS);
+  /** Owner screens (dashboard, finance, washers) read the whole history from the server, plus the live schedule window. */
+  const [history, setHistory] = useState<Booking[]>([]);
+  const [ops, setOps] = useState<FinOp[]>([]);
   const [overrides, setOverrides] = useState<PlanOverrides>({});
-  const finLoaded = useRef(false);
+  const financeBookings = useMemo(() => {
+    const live = new Set(bookings.map((b) => b.id));
+    return [...history.filter((b) => !live.has(b.id)), ...bookings];
+  }, [history, bookings]);
+  const ownerScreen = section === "dashboard" || section === "finance" || section === "washers";
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(FIN_KEY);
-      if (saved) {
-        const data = JSON.parse(saved) as { ops: FinOp[]; overrides: PlanOverrides };
-        setOps(data.ops);
-        setOverrides(data.overrides);
-      }
-    } catch { /* keep demo data */ }
-    finLoaded.current = true;
-  }, []);
-  useEffect(() => {
-    if (finLoaded.current) window.localStorage.setItem(FIN_KEY, JSON.stringify({ ops, overrides }));
-  }, [ops, overrides]);
+    if (!ownerScreen) return;
+    let alive = true;
+    const pull = () => {
+      api.bookings("2020-01-01", addDays(today, 60)).then((l) => alive && setHistory(l), (e: ApiError) => alive && (e.status === 401 ? onLogout() : setLoadError(e.message)));
+      api.finance().then((f) => { if (alive) { setOps(f.ops); setOverrides(f.overrides); } }, (e: ApiError) => alive && setLoadError(e.message));
+    };
+    pull();
+    const id = window.setInterval(pull, 60_000);
+    return () => { alive = false; window.clearInterval(id); };
+  }, [ownerScreen, today, onLogout]);
+  const addOp = (op: FinOp) => api.addOp(op).then((saved) => setOps((l) => [...l, saved]), (e: Error) => setLoadError(`Не сохранилось: ${e.message}`));
+  const removeOp = (id: string) => api.removeOp(id).then(() => setOps((l) => l.filter((o) => o.id !== id)), (e: Error) => setLoadError(`Не удалилось: ${e.message}`));
+  const setPlan = (month: string, article: string, amount: number) => {
+    setOverrides((o) => ({ ...o, [month]: { ...o[month], [article]: amount } }));
+    api.setPlan(month, article, amount).catch((e: Error) => setLoadError(`Не сохранилось: ${e.message}`));
+  };
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -214,10 +219,9 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
           ops={ops}
           overrides={overrides}
           today={DEMO_TODAY}
-          onAddOp={(op) => setOps((l) => [...l, op])}
-          onRemoveOp={(id) => setOps((l) => l.filter((o) => o.id !== id))}
-          onPlanChange={(month, article, amount) =>
-            setOverrides((o) => ({ ...o, [month]: { ...o[month], [article]: amount } }))}
+          onAddOp={addOp}
+          onRemoveOp={removeOp}
+          onPlanChange={setPlan}
         />
       )}
 
@@ -261,8 +265,6 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
     </div>
   );
 }
-
-const FIN_KEY = "aquarius-crm-finance";
 
 type AdminSection = "schedule" | "clients" | "services" | "loyalty" | "washers" | "dashboard" | "finance" | "notifications";
 
