@@ -2,7 +2,7 @@ import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { z } from "zod";
 import type { SQL } from "bun";
-import { CLOSE_MIN, OPEN_MIN, addDays, isPastSlot, smartSlots, withinHours } from "../../src/lib/crm/logic";
+import { CLOSE_MIN, OPEN_MIN, addDays, findConflict, isPastSlot, smartSlots, withinHours } from "../../src/lib/crm/logic";
 import { MIN_WASH_MIN, catalogDuration } from "../../src/lib/crm/booking-rules";
 import { DEFAULT_SERVICE_CATALOG } from "../../src/lib/crm/services";
 import { washNow } from "../../src/lib/crm/clock";

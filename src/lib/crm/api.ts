@@ -31,7 +31,7 @@ const json = (method: string, body: unknown): RequestInit => ({ method, body: JS
 export type CrmUser = { login: string; role: CrmRole };
 export type NewBooking = Pick<Booking, "date" | "box" | "start" | "duration" | "car" | "carType" | "packageName" | "services"> & { phone: string };
 export type BookingPatch = Partial<Pick<Booking, "wash" | "confirmed" | "payment">> & { paymentMethod?: Booking["paymentMethod"] | null; washer?: string | null };
-export type SiteBooking = { date: string; start: number; car: string; carType: string; phone: string; packageName: string; services: Booking["services"]; extras: string[] };
+export type SiteBooking = { date: string; start: number; car: string; carType: string; phone: string; packageName: string; services: Booking["services"]; extras: string[]; cls: 1 | 2 | 3 | 4 };
 
 export type CarHit = { modelId: string; markId: string; name: string };
 export type CarInfo = { cls: 1 | 2 | 3 | 4; body: string };
@@ -50,8 +50,8 @@ export const api = {
     request<{ booking: Booking }>(`/crm/bookings/${id}`, json("PATCH", patch)).then((r) => r.booking),
   prices: () => request<{ catalog: CatalogService[] }>("/prices").then((r) => r.catalog),
   savePrices: (catalog: CatalogService[]) => request<{ ok: true }>("/crm/prices", json("PUT", { catalog })),
-  slots: (date: string, extras: string[]) =>
-    request<{ duration: number; slots: number[] }>(`/slots?date=${date}&extras=${encodeURIComponent(extras.join(","))}`),
+  slots: (date: string, pkg: string, extras: string[], cls: 1 | 2 | 3 | 4) =>
+    request<{ duration: number; slots: number[] }>(`/slots?date=${date}&cls=${cls}&pkg=${encodeURIComponent(pkg)}&extras=${encodeURIComponent(extras.join(","))}`),
   book: (b: SiteBooking) => request<{ id: string; start: number; duration: number }>("/bookings", json("POST", b)),
 };
 
