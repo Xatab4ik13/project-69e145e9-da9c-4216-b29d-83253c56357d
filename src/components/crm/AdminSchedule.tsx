@@ -130,7 +130,7 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
       <MobileAdminHeader role={role} />
       <Sidebar section={section} onChange={changeSection} role={role} onLogout={onLogout} />
-      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={DEMO_TODAY} /> : section === "finance" ? null : section === "notifications" ? <AdminNotifications today={DEMO_TODAY} /> : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={DEMO_TODAY} /> : section === "services" ? <AdminServices /> : section === "clients" ? (
+      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={today} /> : section === "finance" ? null : section === "notifications" ? <AdminNotifications today={DEMO_TODAY} /> : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={today} /> : section === "services" ? <AdminServices /> : section === "clients" ? (
         <AdminClients
           onOpenLoyalty={(clientId) => { setLoyaltyClientId(clientId); setSection("loyalty"); }}
           onNewBooking={(client) => {
@@ -212,13 +212,13 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
         />
       )}
 
-      {section === "dashboard" && <MobileDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={DEMO_TODAY} />}
+      {section === "dashboard" && <MobileDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={today} />}
       {section === "finance" && (
         <AdminFinance
           bookings={financeBookings}
           ops={ops}
           overrides={overrides}
-          today={DEMO_TODAY}
+          today={today}
           onAddOp={addOp}
           onRemoveOp={removeOp}
           onPlanChange={setPlan}
