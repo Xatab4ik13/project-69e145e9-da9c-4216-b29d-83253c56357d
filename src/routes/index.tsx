@@ -150,6 +150,26 @@ function SiteFooter() {
   );
 }
 
+import { care_foam_wash as imgFoam } from "@/assets/images";
+import { care_quartz_wax as imgWax } from "@/assets/images";
+import { care_antirain as imgRain } from "@/assets/images";
+import { care_tire_black as imgTire } from "@/assets/images";
+import { care_leather as imgLeather } from "@/assets/images";
+import { care_trunk_vacuum as imgTrunk } from "@/assets/images";
+import { care_body_degrease as imgDegrease } from "@/assets/images";
+import { care_silicone_seals as imgSilicone } from "@/assets/images";
+import { aquarius_logo as logo } from "@/assets/images";
+import { car_wash_hero as hero } from "@/assets/images";
+import { more_dry_clean as imgDry } from "@/assets/images";
+import { more_engine as imgEngine } from "@/assets/images";
+import { more_wheels as imgWheels } from "@/assets/images";
+
+const moreCare = [
+  { img: imgDry, alt: "Химчистка тканевого кресла", name: "Химчистка салона", info: "от 17 000 ₽ · 12 часов", note: "Запись до 13:00 предыдущего дня" },
+  { img: imgEngine, alt: "Мойка моторного отсека", name: "Мойка двигателя", info: "от 2 000 ₽ · 40 минут" },
+  { img: imgWheels, alt: "Чистка диска щёткой", name: "Чистка дисков", info: "от 500 ₽ за диск · 15 минут" },
+];
+
 function MoreCare() {
   return (
     <section className="mx-auto max-w-6xl border-t border-border px-4 pt-8 md:px-6">
