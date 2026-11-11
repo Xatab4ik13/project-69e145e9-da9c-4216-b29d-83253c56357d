@@ -28,7 +28,7 @@ import { useWashClock } from "@/lib/crm/use-wash-clock";
 import { WASHERS, type FinOp, type PlanOverrides } from "@/lib/crm/finance";
 import {
   CLOSE_MIN, OPEN_MIN, addDays, applyPayment, finishWash, fmtDateLong, fmtDateShort,
-  fmtTime, rub, autoStart, cancelBooking, confirmBooking, needsCall, total, bookingDuration, smartSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
+  fmtTime, rub, autoStart, cancelBooking, confirmBooking, startWash, needsCall, total, bookingDuration, smartSlots, readyAndInvoice, fmtPhone, phoneDigits, bookingMatches,
   bookingState, STATE_LABEL, STATE_ACTION, isPastSlot, CUSTOM_PACKAGE_NAME, customServiceDetails, receivePayment,
 } from "@/lib/crm/logic";
 
@@ -576,6 +576,9 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
           )}
           {b.wash === "scheduled" && b.confirmed && (
             <p className="rounded-lg bg-crm-soft p-3 text-center font-medium text-crm">Запись подтверждена. Мойка начнётся автоматически в {fmtTime(b.start)}.</p>
+          )}
+          {b.wash === "scheduled" && b.confirmed && (
+            <button type="button" onClick={() => onUpdate(startWash)} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground">Начать мойку</button>
           )}
           {b.wash === "scheduled" && (
             <button type="button" onClick={onCancel} className="mt-3 w-full rounded-lg border border-destructive py-2.5 font-semibold text-destructive">Отменить бронь</button>

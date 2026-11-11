@@ -42,6 +42,11 @@ export function autoStart(b: Booking, today: string, nowMin: number): Booking {
   return b.wash === "scheduled" && b.confirmed && b.date === today && nowMin >= b.start ? { ...b, wash: "in_progress" } : b;
 }
 
+/** Manual start for a confirmed booking on any day (testing / early start). */
+export function startWash(b: Booking): Booking {
+  return b.wash === "scheduled" && b.confirmed ? { ...b, wash: "in_progress" } : b;
+}
+
 export function confirmBooking(b: Booking, today: string, nowMin: number): Booking {
   return b.wash === "scheduled" ? autoStart({ ...b, confirmed: true }, today, nowMin) : b;
 }

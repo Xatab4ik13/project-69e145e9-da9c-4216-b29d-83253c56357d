@@ -148,3 +148,12 @@ describe("умные слоты записи", () => {
     expect(catalogDuration(DEFAULT_SERVICE_CATALOG, "Люкс", ["Антидождь"], 3)).toBe(100);
   });
 });
+
+import { startWash } from "@/lib/crm/logic";
+describe("manual start", () => {
+  it("starts a confirmed booking on any day, not an unconfirmed one", () => {
+    const b = { id: "x", date: "2099-01-01", box: 1, start: 600, duration: 60, car: "c", carType: "sedan", phone: "1", source: "site", packageName: "p", services: [], wash: "scheduled", confirmed: true, payment: "unpaid" } as never;
+    expect(startWash(b).wash).toBe("in_progress");
+    expect(startWash({ ...(b as object), confirmed: false } as never).wash).toBe("scheduled");
+  });
+});
