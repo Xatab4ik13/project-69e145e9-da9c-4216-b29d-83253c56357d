@@ -2,7 +2,7 @@ import type { Booking, CrmRole } from "./types";
 import type { CatalogService } from "./services";
 
 /** Same-origin by default: Caddy forwards /api on every domain to the API service. */
-const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "/api/v1";
+const BASE = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "/api/v1";
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {

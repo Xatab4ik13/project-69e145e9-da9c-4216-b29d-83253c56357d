@@ -19,7 +19,9 @@ import { TONE } from "@/components/crm/booking-tone";
 import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
-import { SLOT_MIN, nowMin, today, EXTRAS, HISTORY_BOOKINGS, MOCK_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
+import { SLOT_MIN, DEMO_TODAY, EXTRAS, HISTORY_BOOKINGS, PACKAGES } from "@/lib/crm/mock";
+import { api, bookingPatch, type ApiError, type NewBooking } from "@/lib/crm/api";
+import { useWashClock } from "@/lib/crm/use-wash-clock";
 import { WASHERS, type FinOp, type PlanOverrides } from "@/lib/crm/finance";
 import { DEMO_OPS } from "@/lib/crm/finance-mock";
 import {
