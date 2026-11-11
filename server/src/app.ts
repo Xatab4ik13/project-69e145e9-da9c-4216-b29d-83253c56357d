@@ -150,7 +150,7 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       const box = ([1, 2] as const).find((bx) => !findConflict(list, { date: data.date, box: bx, start: data.start, duration }));
       if (!box) return null;
       const [row] = await tx`insert into bookings (date, box, start_min, duration, car, car_type, phone, source, package_name, services)
-        values (${data.date}, ${box}, ${data.start}, ${duration}, ${data.car}, ${data.carType}, ${data.phone}, 'site', ${data.packageName}, ${JSON.stringify(data.services)}::jsonb)
+        values (${data.date}, ${box}, ${data.start}, ${duration}, ${data.car}, ${data.carType}, ${data.phone}, 'site', ${data.packageName}, ${JSON.stringify(data.services)}::text::jsonb)
         returning *`;
       return toBooking(row as Row);
     });
@@ -215,7 +215,7 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       await tx`select pg_advisory_xact_lock(hashtext(${data.date}))`;
       if (findConflict(await dayBookings(tx, data.date), { date: data.date, box: data.box, start: data.start, duration: data.duration })) return null;
       const [row] = await tx`insert into bookings (date, box, start_min, duration, car, car_type, phone, source, package_name, services)
-        values (${data.date}, ${data.box}, ${data.start}, ${data.duration}, ${data.car}, ${data.carType}, ${data.phone}, 'admin', ${data.packageName}, ${JSON.stringify(data.services)}::jsonb)
+        values (${data.date}, ${data.box}, ${data.start}, ${data.duration}, ${data.car}, ${data.carType}, ${data.phone}, 'admin', ${data.packageName}, ${JSON.stringify(data.services)}::text::jsonb)
         returning *`;
       return toBooking(row as Row);
     });
@@ -246,7 +246,7 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     if (c.get("user").role !== "owner") return c.json({ error: "Сохранять прайс может только владелец" }, 403);
     const data = await body(c, z.object({ catalog: catalogSchema }));
     if (!data) return c.json({ error: "Проверьте цены" }, 400);
-    await sql`insert into price_catalog (id, data) values (1, ${JSON.stringify(data.catalog)}::jsonb)
+    await sql`insert into price_catalog (id, data) values (1, ${JSON.stringify(data.catalog)}::text::jsonb)
       on conflict (id) do update set data = excluded.data, updated_at = now()`;
     return c.json({ ok: true });
   });
