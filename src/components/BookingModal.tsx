@@ -1,3 +1,4 @@
+import { catalogDuration } from "@/lib/crm/booking-rules";
 import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
 import { useEffect, useMemo, useState } from "react";
 import { aquarius_logo as logoAsset } from "@/assets/images";
@@ -150,7 +151,8 @@ export function BookingModal({
   const pkgPrice = classPriceOf(pkgId, basePrice - extraPrices.reduce((a, b) => a + b, 0));
   extraPrices = extraPrices.map((p, i) => classPriceOf(extraIds[i], p));
   const price = pkgPrice + extraPrices.reduce((a, b) => a + b, 0);
-  const minutes = car ? (car.cls === 1 ? time[0] : time[1]) : null;
+  // Длительность по классу машины из прайса — ровно столько времени и резервируется.
+  const minutes = car ? catalogDuration(catalog, pkgName, extras, car.cls) : null;
   const timeLabel = minutes ?? (time[0] === time[1] ? time[0] : `${time[0]}–${time[1]}`);
   const range = slot && minutes ? `${slot}–${addMin(slot, minutes)}` : "";
   const canContinue = !!car && !!slot;
@@ -170,13 +172,13 @@ export function BookingModal({
     let alive = true;
     setSlots(null);
     setSlotsError("");
-    api.slots(dayIso, extras).then(
+    api.slots(dayIso, pkgName, extras, car.cls).then(
       (r) => alive && setSlots(r.slots.map(hhmm)),
       (e: Error) => alive && setSlotsError(e.message),
     );
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, car, dayIso, extrasKey, done]);
+  }, [open, car, dayIso, extrasKey, done, pkgName]);
 
   const confirm = () => {
     if (!car || !slot || sending) return;
@@ -185,7 +187,7 @@ export function BookingModal({
     setSendError("");
     api.book({
       date: dayIso, start: h * 60 + m, car: car.name, carType: car.body, phone, packageName: pkgName,
-      services: washLines.map(([name, price]) => ({ name, price })), extras,
+      services: washLines.map(([name, price]) => ({ name, price })), extras, cls: car.cls,
     }).then(
       () => setDone(true),
       (e: Error) => setSendError(e.message),
