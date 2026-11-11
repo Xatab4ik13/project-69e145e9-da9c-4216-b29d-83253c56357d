@@ -32,3 +32,4 @@ use the editor.
 ## Project rules
 - CRM (/admin) keeps types, mock data and pure state logic in src/lib/crm/, separate from UI in src/components/crm/ — so a real API can replace mocks without rewriting the screen.
 - The owner demo month in src/lib/crm/mock.ts is generated from a fixed seed: keep it deterministic, because finance tests and the owner dashboard read its totals.
+- Production host routing serves the public site on aquariuswash.ru and the CRM at the root of crm.aquariuswash.ru; /admin remains the preview fallback so the future installed PWA opens only the CRM.

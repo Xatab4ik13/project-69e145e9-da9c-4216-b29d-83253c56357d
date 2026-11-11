@@ -1,4 +1,6 @@
 import { AppStoreButton, GooglePlayButton } from "@/components/StoreButtons";
+import { AdminEntry } from "@/components/crm/AdminEntry";
+import { getAppHost } from "@/lib/crm/host.functions";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { BookingModal, MobileBookingBar, MOBILE_SHEET } from "@/components/BookingModal";
@@ -207,7 +209,18 @@ function AppPromo() {
 }
 
 export const Route = createFileRoute("/")({
-  head: () => ({
+  loader: () => getAppHost(),
+  head: ({ loaderData }) => loaderData === "crm" ? ({
+    meta: [
+      { title: "CRM Aquarius" },
+      { name: "description", content: "Система управления автомойкой Aquarius." },
+      { property: "og:title", content: "CRM Aquarius" },
+      { property: "og:description", content: "Система управления автомойкой Aquarius." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }) : ({
     meta: [
       { title: "Автомойка Аквариус на Большевиков — запись онлайн" },
       {
@@ -225,8 +238,13 @@ export const Route = createFileRoute("/")({
     ],
     links: [{ rel: "preload", as: "image", href: hero.url, fetchpriority: "high" }],
   }),
-  component: Index,
+  component: RootPage,
 });
+
+function RootPage() {
+  const host = Route.useLoaderData();
+  return host === "crm" ? <AdminEntry /> : <Index />;
+}
 
 const nav = ["Услуги", "Приложение", "Как проехать"];
 const NAV_TARGET: Record<string, string> = { "Услуги": "services", "Приложение": "app", "Как проехать": "map" };
