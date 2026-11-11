@@ -1,14 +1,16 @@
-# Welcome to your Lovable project
+# Автомойка Аквариус
+
+Делаем сайт Аквариус начнем с первого блока скидываю макет, ассет, и логотип. Важно - заложи правило, что все картинки и файлы( ассеты) которые я тебе скидываю, тебе нужно их оптимизировать( уменьшить размер файла и может быть формат, так чтобы сайт в будущем не лагал. Так же скинул тебе маскот, его мы будем использовать как Favicoin. Проект назовем Автомойка Аквариус
 
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/69e145e9-da9c-4216-b29d-83253c56357d).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +22,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
