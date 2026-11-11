@@ -75,6 +75,14 @@ const fmtPhone = (digits: string) => {
   return `+7 (${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6, 8)}-${d.slice(8, 10)}`;
 };
 
+const fmtTyping = (d: string) => {
+  let r = "+7 (" + d.slice(0, 3);
+  if (d.length >= 3) r += ") " + d.slice(3, 6);
+  if (d.length >= 6) r += "-" + d.slice(6, 8);
+  if (d.length >= 8) r += "-" + d.slice(8, 10);
+  return r;
+};
+
 export function BookingModal({
   open,
   onOpenChange,
@@ -479,7 +487,7 @@ export function BookingModal({
               <input
                 type="tel"
                 inputMode="tel"
-                value={phone ? fmtPhone(phone) : ""}
+                value={phone ? fmtTyping(phone) : ""}
                 placeholder="+7 (___) ___-__-__"
                 onKeyDown={(e) => {
                   if (e.key === "Backspace") { e.preventDefault(); setPhone((p) => p.slice(0, -1)); }

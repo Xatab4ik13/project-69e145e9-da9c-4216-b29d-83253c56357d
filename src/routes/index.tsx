@@ -58,7 +58,7 @@ function Contacts() {
         <a href={PHONE_HREF} className="mt-2 flex items-center gap-3 font-display text-2xl"><Phone className="h-5 w-5" /> {PHONE}</a>
         <a href={PHONE_HREF} className="mt-3 flex items-center justify-center gap-2 rounded-lg border border-foreground py-2.5 font-semibold"><Phone className="h-4 w-4" /> Позвонить</a>
         <img data-nav="map" src={imgMap.url} alt="Схема заезда в паркинг Aquarius: от улицы Дыбенко к въезду, 4-й уровень" width={1280} height={735} loading="lazy" decoding="async" className="mt-5 w-full rounded-xl border border-border" />
-        <RouteButton className="btn-lime mt-3 flex items-center justify-center rounded-lg py-3 text-lg" />
+        <RouteButton className="btn-lime mt-3 flex w-full items-center justify-center rounded-lg px-4 py-3 text-center text-lg" />
         <h3 className="mt-6 border-t border-border pt-4 font-display text-3xl uppercase">Как нас найти</h3>
         <div className="mt-2 space-y-2">
           <p>Со стороны ул. Дыбенко поверните направо у «Вкусно — и точка».</p>
@@ -315,7 +315,7 @@ function Index() {
             <MapPin className="h-4 w-4" /> Большевиков, 18к2 · Ежедневно <b>10:00–22:00</b>
           </p>
           <div className="order-3 space-y-2 border-b border-border pb-2 text-base md:hidden">
-            <p className="flex items-center gap-3"><MapPin className="h-5 w-5" /> Большевиков, 18к2 · 4-й уровень</p>
+            <a href={YMAPS} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 leading-none"><MapPin className="h-5 w-5 shrink-0" /> <span>Большевиков, 18к2 · 4-й уровень</span></a>
             <p className="flex items-center gap-3"><Clock className="h-5 w-5" /> Ежедневно 10:00–22:00</p>
             <a href={PHONE_HREF} className="block pt-1 font-display text-3xl">{PHONE}</a>
           </div>
