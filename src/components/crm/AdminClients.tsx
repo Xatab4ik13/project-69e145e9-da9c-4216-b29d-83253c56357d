@@ -9,7 +9,7 @@ import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIn
 import { fmtDateShort, fmtPhone, rub } from "@/lib/crm/logic";
 import type { Booking } from "@/lib/crm/types";
 import {
-  buildClients, carClassRoman, clientMetrics, filterClients, paginateClients,
+  clientsFromBookings, carClassRoman, clientMetrics, filterClients, paginateClients,
   type ClientFilter, type ClientVisitStatus, type CrmClient,
 } from "@/lib/crm/clients";
 import { formatBonuses } from "@/lib/crm/loyalty";
@@ -30,9 +30,13 @@ const VISIT_LABELS: Record<ClientVisitStatus, string> = {
 };
 
 export function AdminClients({
+  bookings,
+  today,
   onNewBooking,
   onOpenLoyalty,
 }: {
+  bookings: Booking[];
+  today: string;
   onNewBooking: (client: CrmClient) => void;
   onOpenLoyalty: (clientId: string) => void;
 }) {
@@ -42,10 +46,10 @@ export function AdminClients({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const clients = useMemo(
     () => clientsFromBookings(bookings, today),
-    [],
+    [bookings, today],
   );
-  const metrics = useMemo(() => clientMetrics(clients, today), [clients]);
-  const visible = useMemo(() => filterClients(clients, query, filter, today), [clients, filter, query]);
+  const metrics = useMemo(() => clientMetrics(clients, today), [clients, today]);
+  const visible = useMemo(() => filterClients(clients, query, filter, today), [clients, filter, query, today]);
   const pagination = useMemo(() => paginateClients(visible, page), [page, visible]);
   const openClient = useCallback((id: string) => setSelectedId(id), []);
   const selected = clients.find((client) => client.id === selectedId) ?? null;

@@ -68,3 +68,21 @@ describe("CRM clients", () => {
     expect(result.items.every((client) => client.cars.some((car) => car.name === "Volkswagen Multivan"))).toBe(true);
   });
 });
+
+import { clientsFromBookings } from "@/lib/crm/clients";
+describe("clients from real bookings", () => {
+  it("groups by phone, keeps unpaid visitors and counts bonuses only from paid washes", () => {
+    const base = { box: 1 as const, start: 600, duration: 40, carType: "Седан", source: "site" as const, packageName: "Стандарт", services: [{ name: "Стандарт", price: 1000 }], confirmed: true };
+    const list = clientsFromBookings([
+      { ...base, id: "a", date: "2026-11-01", phone: "+7 921 000-00-01", car: "Kia Rio", wash: "done", payment: "paid", paymentMethod: "cash" },
+      { ...base, id: "b", date: "2026-11-05", phone: "9210000001", car: "Kia Sportage", carType: "Внедорожник", wash: "scheduled", payment: "unpaid" },
+      { ...base, id: "c", date: "2026-11-06", phone: "9210000002", car: "Lada Vesta", wash: "scheduled", payment: "unpaid" },
+    ] as never, "2026-11-11");
+    expect(list).toHaveLength(2);
+    const first = list.find((c) => c.phone === "9210000001")!;
+    expect(first.history).toHaveLength(2);
+    expect(first.bonusBalance).toBe(50);
+    expect(first.cars.map((c) => [c.name, c.carClass])).toEqual([["Kia Sportage", 3], ["Kia Rio", 1]]);
+    expect(list.find((c) => c.phone === "9210000002")!.bonusBalance).toBe(0);
+  });
+});
