@@ -1,4 +1,12 @@
 // Кнопки магазинов приложений с логотипами Apple и Google Play.
+import apkAsset from "@/assets/aquarius-apk.asset.json";
+
+// На боевом домене APK отдаёт сервер из /app/aquarius.apk,
+// в превью Lovable — файловое хранилище проекта.
+const APK_URL =
+  typeof window !== "undefined" && window.location.hostname.endsWith("aquariuswash.ru")
+    ? "/app/aquarius.apk"
+    : apkAsset.url;
 export function AppleLogo({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
@@ -32,9 +40,9 @@ export function AppStoreButton({ className = "" }: { className?: string }) {
 
 export function GooglePlayButton({ className = "" }: { className?: string }) {
   return (
-    <a href="#" className={`${BTN} ${className}`}>
+    <a href={APK_URL} download="aquarius.apk" className={`${BTN} ${className}`}>
       <GooglePlayLogo className="h-6 w-6 shrink-0" />
-      <span className="flex flex-col text-left"><span className="text-[10px] font-normal">Доступно в</span>Google Play</span>
+      <span className="flex flex-col text-left"><span className="text-[10px] font-normal">Скачать для</span>Android</span>
     </a>
   );
 }
