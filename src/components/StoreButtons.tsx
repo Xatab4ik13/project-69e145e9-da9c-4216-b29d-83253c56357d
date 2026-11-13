@@ -3,10 +3,11 @@ import apkAsset from "@/assets/aquarius-apk.asset.json";
 
 // На боевом домене APK отдаёт сервер из /app/aquarius.apk,
 // в превью Lovable — файловое хранилище проекта.
+// Сервер рендерит страницу без window, поэтому по умолчанию — боевой путь.
 const APK_URL =
-  typeof window !== "undefined" && window.location.hostname.endsWith("aquariuswash.ru")
-    ? "/app/aquarius.apk"
-    : apkAsset.url;
+  typeof window !== "undefined" && window.location.hostname.endsWith("lovable.app")
+    ? apkAsset.url
+    : "/app/aquarius.apk";
 export function AppleLogo({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
