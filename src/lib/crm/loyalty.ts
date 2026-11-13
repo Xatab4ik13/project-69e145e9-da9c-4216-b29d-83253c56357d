@@ -84,20 +84,39 @@ export function formatBonuses(value: number): string {
   return value.toLocaleString("ru-RU", { maximumFractionDigits: 2 }).replace(/\u00a0/g, " ");
 }
 
+/** A phone that signed in to the app (first login date). */
+export interface LoyaltyAccount { phone: string; activatedAt: string }
+
 /**
- * Loyalty accounts derived from real bookings while there is no app yet:
- * one account per phone, nobody is activated (no SMS login, no welcome bonus,
- * no redemptions), and each paid wash accrues 5% of its check for 12 months.
+ * Loyalty accounts derived from real bookings plus app sign-ins: one account per phone;
+ * a signed-in phone is activated with the welcome bonus; each paid wash accrues 5% of the
+ * money part for 12 months; bonuses used on a non-cancelled booking are redeemed.
  */
 export function loyaltyFromBookings(
-  bookings: { id: string; date: string; phone?: string; wash: string; payment: PaymentStatus; services: { price: number }[] }[],
+  bookings: { id: string; date: string; phone?: string; wash: string; payment: PaymentStatus; services: { price: number }[]; bonus?: number }[],
+  accounts: LoyaltyAccount[] = [],
 ): LoyaltyClient[] {
   const byPhone = new Map<string, LoyaltyClient>();
+  const get = (phone: string) => {
+    let client = byPhone.get(phone);
+    if (!client) byPhone.set(phone, client = { id: phone, phone, activated: false, visits: 0, totalSpent: 0, lastVisit: null, transactions: [] });
+    return client;
+  };
+  for (const a of accounts) {
+    const client = get(a.phone);
+    client.activated = true;
+    client.activatedAt = a.activatedAt;
+    client.transactions.push({ id: `welcome-${a.phone}`, type: "welcome", amount: LOYALTY.welcomeBonus, date: a.activatedAt,
+      description: "Приветственные бонусы", expiresAt: expiryAfterTwelveMonths(a.activatedAt) });
+  }
   for (const b of bookings) {
     const phone = (b.phone ?? "").replace(/\D/g, "").slice(-10);
-    if (phone.length !== 10 || b.wash === "cancelled" || b.payment !== "paid") continue;
-    const paid = b.services.reduce((s, l) => s + l.price, 0);
-    const client = byPhone.get(phone) ?? { id: phone, phone, activated: false, visits: 0, totalSpent: 0, lastVisit: null, transactions: [] };
+    if (phone.length !== 10 || b.wash === "cancelled") continue;
+    const bonus = b.bonus ?? 0;
+    if (bonus > 0) get(phone).transactions.push({ id: `redeem-${b.id}`, type: "redemption", amount: -bonus, date: b.date, description: "Оплата мойки бонусами" });
+    if (b.payment !== "paid") continue;
+    const client = get(phone);
+    const paid = b.services.reduce((s, l) => s + l.price, 0) - bonus;
     client.visits += 1;
     client.totalSpent += paid;
     if (!client.lastVisit || b.date > client.lastVisit) client.lastVisit = b.date;
@@ -107,7 +126,7 @@ export function loyaltyFromBookings(
       description: `5% с оплаты мойки · ${paid.toLocaleString("ru-RU").replace(/\u00a0/g, " ")} ₽`,
       expiresAt: expiryAfterTwelveMonths(b.date),
     });
-    byPhone.set(phone, client);
   }
-  return [...byPhone.values()].sort((a, b) => (b.lastVisit ?? "").localeCompare(a.lastVisit ?? ""));
+  for (const c of byPhone.values()) c.transactions.sort((a, b) => b.date.localeCompare(a.date));
+  return [...byPhone.values()].sort((a, b) => (b.lastVisit ?? b.activatedAt ?? "").localeCompare(a.lastVisit ?? a.activatedAt ?? ""));
 }

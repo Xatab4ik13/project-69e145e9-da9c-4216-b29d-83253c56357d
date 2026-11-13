@@ -62,3 +62,20 @@ describe("loyalty from real bookings (no app yet)", () => {
     expect(list[0]!.transactions[0]!.expiresAt).toBe("2027-11-10");
   });
 });
+
+describe("app sign-in and bonus redemption", () => {
+  const paid = { id: "b1", date: "2026-11-10", phone: "9001112233", wash: "done", payment: "paid" as const, services: [{ price: 2000 }], bonus: 400 };
+  it("signed-in phone gets 200 welcome bonuses", () => {
+    const [c] = fromBookings([], [{ phone: "9001112233", activatedAt: "2026-11-01" }]);
+    expect(c!.activated).toBe(true);
+    expect(c!.transactions.map((t) => t.amount)).toEqual([200]);
+  });
+  it("5% accrues only on the money part and used bonuses are deducted", () => {
+    const [c] = fromBookings([paid], [{ phone: "9001112233", activatedAt: "2026-11-01" }]);
+    expect(c!.transactions.map((t) => t.amount).sort((a, b) => a - b)).toEqual([-400, 80, 200]);
+  });
+  it("cancelled booking gives the bonuses back", () => {
+    const [c] = fromBookings([{ ...paid, wash: "cancelled" }], [{ phone: "9001112233", activatedAt: "2026-11-01" }]);
+    expect(c!.transactions.map((t) => t.amount)).toEqual([200]);
+  });
+});

@@ -30,6 +30,8 @@ export interface Booking {
   paymentMethod?: PaymentMethod;
   /** Washer who took the order — chosen when the money is accepted. */
   washer?: string;
+  /** Bonuses the app client chose to pay with (1 bonus = 1 ₽), already off the money total. */
+  bonus?: number;
 }
 
 export const SOURCE_LABEL: Record<BookingSource, string> = {

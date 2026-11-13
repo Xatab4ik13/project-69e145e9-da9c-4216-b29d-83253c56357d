@@ -3,7 +3,10 @@ import type { Booking, PaymentMethod } from "./types";
 export const OPEN_MIN = 10 * 60;
 export const CLOSE_MIN = 22 * 60;
 
-export const total = (b: Pick<Booking, "services">) => b.services.reduce((s, l) => s + l.price, 0);
+/** Full check price before bonuses. */
+export const checkTotal = (b: Pick<Booking, "services">) => b.services.reduce((s, l) => s + l.price, 0);
+/** Money the client actually pays: the check minus bonuses used. */
+export const total = (b: Pick<Booking, "services" | "bonus">) => checkTotal(b) - (b.bonus ?? 0);
 
 export const fmtTime = (m: number) =>
   `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;

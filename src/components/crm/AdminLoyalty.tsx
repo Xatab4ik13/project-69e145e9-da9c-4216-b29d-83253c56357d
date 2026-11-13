@@ -1,4 +1,5 @@
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { api } from "@/lib/crm/api";
 import { Check, ChevronLeft, ChevronRight, Clock3, Coins, Search, Smartphone, Star, Users, WalletCards } from "lucide-react";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CrmPagination } from "@/components/crm/CrmPagination";
@@ -7,7 +8,7 @@ import { paginateClients } from "@/lib/crm/clients";
 import { fmtPhone, fmtDateShort, phoneDigits, rub } from "@/lib/crm/logic";
 import { formatBonuses, loyaltyBalance, loyaltyFromBookings, loyaltyMetrics } from "@/lib/crm/loyalty";
 import type { Booking } from "@/lib/crm/types";
-import type { LoyaltyClient } from "@/lib/crm/loyalty";
+import type { LoyaltyAccount, LoyaltyClient } from "@/lib/crm/loyalty";
 
 const RULES = [
   { value: "5%", text: "с денежной части чека", note: "Начисление после оплаты" },
@@ -17,7 +18,9 @@ const RULES = [
 ];
 
 export function AdminLoyalty({ initialClientId, bookings, today }: { initialClientId?: string | null; bookings: Booking[]; today: string }) {
-  const allClients = useMemo(() => loyaltyFromBookings(bookings), [bookings]);
+  const [accounts, setAccounts] = useState<LoyaltyAccount[]>([]);
+  useEffect(() => { api.loyaltyAccounts().then(setAccounts).catch(() => setAccounts([])); }, []);
+  const allClients = useMemo(() => loyaltyFromBookings(bookings, accounts), [bookings, accounts]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [page, setPage] = useState(1);

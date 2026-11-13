@@ -2,14 +2,14 @@ import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { z } from "zod";
 import type { SQL } from "bun";
-import { CLOSE_MIN, OPEN_MIN, addDays, findConflict, isPastSlot, smartSlots, withinHours } from "../../src/lib/crm/logic";
+import { checkTotal, CLOSE_MIN, OPEN_MIN, addDays, findConflict, isPastSlot, smartSlots, withinHours } from "../../src/lib/crm/logic";
 import { MIN_WASH_MIN, catalogDuration } from "../../src/lib/crm/booking-rules";
 import { DEFAULT_SERVICE_CATALOG } from "../../src/lib/crm/services";
 import { washNow } from "../../src/lib/crm/clock";
 import { carInfo, logoFile, searchCars } from "./carsbase";
 import { notifyAll, vapidPublicKey } from "./push";
 import { sendTelegramCode } from "./telegram";
-import { LOYALTY, expiryAfterTwelveMonths, loyaltyFromBookings } from "../../src/lib/crm/loyalty";
+import { LOYALTY, loyaltyBalance, loyaltyFromBookings, maxRedemption, type LoyaltyAccount } from "../../src/lib/crm/loyalty";
 import { newBookingPush } from "../../src/lib/crm/crm-push";
 import type { Booking } from "../../src/lib/crm/types";
 
@@ -89,7 +89,7 @@ const catalogSchema = z.array(z.object({
 type Row = {
   id: string; date: string; box: number; start_min: number; duration: number; car: string; car_type: string; phone: string;
   source: Booking["source"]; package_name: string; services: Booking["services"] | string; wash: Booking["wash"]; confirmed: boolean;
-  payment: Booking["payment"]; payment_method: Booking["paymentMethod"] | null; washer: string | null;
+  payment: Booking["payment"]; payment_method: Booking["paymentMethod"] | null; washer: string | null; bonus?: number | null;
 };
 
 export const toBooking = (r: Row): Booking => ({
@@ -97,7 +97,7 @@ export const toBooking = (r: Row): Booking => ({
   phone: r.phone || undefined, source: r.source, packageName: r.package_name,
   services: typeof r.services === "string" ? JSON.parse(r.services) : r.services,
   wash: r.wash, confirmed: r.confirmed, payment: r.payment,
-  ...(r.payment_method ? { paymentMethod: r.payment_method } : {}), ...(r.washer ? { washer: r.washer } : {}),
+  ...(r.payment_method ? { paymentMethod: r.payment_method } : {}), ...(r.washer ? { washer: r.washer } : {}), ...(r.bonus ? { bonus: r.bonus } : {}),
 });
 
 export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => Date }) {
@@ -175,27 +175,55 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     throw e;
   };
 
-  app.post("/bookings", async (c) => {
-    if (!bookingLimit(ip(c))) return c.json({ error: "Слишком много записей. Позвоните нам." }, 429);
-    const data = await body(c, siteBookingSchema);
-    if (!data) return c.json({ error: "Проверьте данные записи" }, 400);
+  type SiteData = z.infer<typeof siteBookingSchema>;
+  /** Creates a site/app booking in a free slot; null when the slot is gone, "bonus" when bonuses are not allowed. */
+  const createPublicBooking = async (data: SiteData, source: "site" | "app", bonus = 0) => {
     const duration = catalogDuration(await loadCatalog(), data.packageName, data.extras, data.cls);
     const { today, nowMin } = now();
     if (data.date > addDays(today, BOOK_AHEAD_DAYS) || isPastSlot(data.date, data.start, today, nowMin) || !withinHours(data.start, duration))
-      return c.json({ error: "Это время недоступно" }, 409);
+      return "time" as const;
     const created = await sql.begin(async (tx) => {
+      if (bonus > 0) {
+        await tx`select pg_advisory_xact_lock(hashtext(${"bonus:" + data.phone}))`;
+        const balance = await bonusBalance(tx, data.phone);
+        if (bonus > maxRedemption(checkTotal(data), balance)) return "bonus" as const;
+      }
       await tx`select pg_advisory_xact_lock(hashtext(${data.date}))`;
       const list = await dayBookings(tx, data.date);
       const box = smartSlots(list, data.date, duration, today, nowMin, MIN_WASH_MIN).find((sl) => sl.start === data.start)?.box;
       if (!box) return null;
-      const [row] = await tx`insert into bookings (date, box, start_min, duration, car, car_type, phone, source, package_name, services)
-        values (${data.date}, ${box}, ${data.start}, ${duration}, ${data.car}, ${data.carType}, ${data.phone}, 'site', ${data.packageName}, ${JSON.stringify(data.services)}::text::jsonb)
+      const [row] = await tx`insert into bookings (date, box, start_min, duration, car, car_type, phone, source, package_name, services, confirmed, bonus)
+        values (${data.date}, ${box}, ${data.start}, ${duration}, ${data.car}, ${data.carType}, ${data.phone}, ${source}, ${data.packageName}, ${JSON.stringify(data.services)}::text::jsonb, ${source === "app"}, ${bonus})
         returning *`;
       return toBooking(row as Row);
     }).catch(overlapAsNull);
+    if (created && typeof created === "object") void notifyAll(sql, newBookingPush(created)).catch((e) => console.error("push", e));
+    return created;
+  };
+  const bookingReply = (c: Context, created: Awaited<ReturnType<typeof createPublicBooking>>) => {
+    if (created === "time") return c.json({ error: "Это время недоступно" }, 409);
+    if (created === "bonus") return c.json({ error: "Столько бонусов списать нельзя" }, 409);
     if (!created) return c.json({ error: "Это время только что заняли. Выберите другое." }, 409);
-    void notifyAll(sql, newBookingPush(created)).catch((e) => console.error("push", e));
-    return c.json({ id: created.id, date: created.date, start: created.start, duration: created.duration }, 201);
+    return c.json({ id: created.id, date: created.date, start: created.start, duration: created.duration, bonus: created.bonus ?? 0 }, 201);
+  };
+
+  /** Loyalty account of one phone from its bookings and first app sign-in. */
+  const phoneLoyalty = async (tx: SQL, phone: string) => {
+    const rows = ((await tx`select * from bookings where right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone}`) as Row[]).map(toBooking);
+    const [first] = await tx`select min(created_at)::date::text as d from client_sessions where phone = ${phone}`;
+    const accounts: LoyaltyAccount[] = first?.d ? [{ phone, activatedAt: first.d as string }] : [];
+    return loyaltyFromBookings(rows, accounts).find((a) => a.phone === phone) ?? null;
+  };
+  const bonusBalance = async (tx: SQL, phone: string) => {
+    const acc = await phoneLoyalty(tx, phone);
+    return acc ? Math.floor(loyaltyBalance(acc, now().today)) : 0;
+  };
+
+  app.post("/bookings", async (c) => {
+    if (!bookingLimit(ip(c))) return c.json({ error: "Слишком много записей. Позвоните нам." }, 429);
+    const data = await body(c, siteBookingSchema);
+    if (!data) return c.json({ error: "Проверьте данные записи" }, 400);
+    return bookingReply(c, await createPublicBooking(data, "site"));
   });
 
   // ---------- auth ----------
@@ -307,17 +335,47 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
   app.get("/client/loyalty", async (c) => {
     const phone = await clientPhone(c);
     if (!phone) return noClient(c);
-    const { today } = now();
-    const rows = ((await sql`select * from bookings where right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone} and payment = 'paid'`) as Row[]).map(toBooking);
-    const acc = loyaltyFromBookings(rows)[0];
-    const [first] = await sql`select min(created_at)::date::text as d from client_sessions where phone = ${phone}`;
-    const welcomeDate = (first?.d as string | null) ?? today;
-    const transactions = [
-      { id: "welcome", type: "welcome", amount: LOYALTY.welcomeBonus, date: welcomeDate, description: "Приветственные бонусы", expiresAt: expiryAfterTwelveMonths(welcomeDate) },
-      ...(acc?.transactions ?? []),
-    ].sort((a, b) => b.date.localeCompare(a.date));
-    const balance = Math.floor(transactions.filter((t) => !t.expiresAt || t.expiresAt > today).reduce((s, t) => s + t.amount, 0));
-    return c.json({ balance, rules: LOYALTY, visits: acc?.visits ?? 0, totalSpent: acc?.totalSpent ?? 0, transactions });
+    const acc = await phoneLoyalty(sql, phone);
+    return c.json({ balance: acc ? Math.floor(loyaltyBalance(acc, now().today)) : 0, rules: LOYALTY,
+      visits: acc?.visits ?? 0, totalSpent: acc?.totalSpent ?? 0, transactions: acc?.transactions ?? [] });
+  });
+
+  /** App booking: phone comes from the login, booking is confirmed, client may pay part with bonuses. */
+  app.post("/client/bookings", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    if (!bookingLimit(`client:${phone}`)) return c.json({ error: "Слишком много записей. Позвоните нам." }, 429);
+    const raw = await c.req.json().catch(() => null);
+    const parsed = siteBookingSchema.extend({ bonus: z.number().int().min(0).max(1_000_000).default(0) })
+      .safeParse(raw && typeof raw === "object" ? { ...raw, phone } : null);
+    if (!parsed.success) return c.json({ error: "Проверьте данные записи" }, 400);
+    const { bonus, ...data } = parsed.data;
+    return bookingReply(c, await createPublicBooking(data, "app", bonus));
+  });
+
+  app.post("/client/bookings/:id/cancel", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    if (!z.string().uuid().safeParse(c.req.param("id")).success) return c.json({ error: "Запись не найдена" }, 404);
+    const rows = await sql`update bookings set wash = 'cancelled', updated_at = now()
+      where id = ${c.req.param("id")} and right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone} and wash = 'scheduled' returning id`;
+    if (rows.length) return c.json({ ok: true });
+    const [exists] = await sql`select wash from bookings where id = ${c.req.param("id")} and right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone}`;
+    return exists ? c.json({ error: "Мойка уже началась — отменить нельзя" }, 409) : c.json({ error: "Запись не найдена" }, 404);
+  });
+
+  /** Deletes the account: sign-ins, cars and the phone in past bookings (money records stay for accounting). */
+  app.delete("/client/account", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    await sql.begin(async (tx) => {
+      await tx`update bookings set wash = 'cancelled', updated_at = now() where right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone} and wash = 'scheduled'`;
+      await tx`update bookings set phone = '', updated_at = now() where right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone}`;
+      await tx`delete from client_cars where phone = ${phone}`;
+      await tx`delete from client_auth_codes where phone = ${phone}`;
+      await tx`delete from client_sessions where phone = ${phone}`;
+    });
+    return c.json({ ok: true });
   });
 
   app.get("/client/cars", async (c) => {
@@ -368,6 +426,11 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     if (!data) return c.json({ error: "Неверная подписка" }, 400);
     await sql`delete from push_subscriptions where endpoint = ${data.endpoint}`;
     return c.json({ ok: true });
+  });
+
+  app.get("/crm/loyalty/accounts", async (c) => {
+    const rows = await sql`select phone, min(created_at)::date::text as "activatedAt" from client_sessions group by phone`;
+    return c.json({ accounts: rows });
   });
 
   app.get("/crm/bookings", async (c) => {
