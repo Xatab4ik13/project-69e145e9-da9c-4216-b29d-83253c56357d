@@ -358,6 +358,32 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     return bookingReply(c, await createPublicBooking(data, "app", bonus));
   });
 
+  /** Bonuses are spent only from the app, on any own unpaid booking (site, CRM or app), the first wash included. */
+  app.post("/client/bookings/:id/bonus", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    const id = c.req.param("id");
+    if (!z.string().uuid().safeParse(id).success) return c.json({ error: "Запись не найдена" }, 404);
+    const data = await body(c, z.object({ bonus: z.number().int().min(0).max(1_000_000) }));
+    if (!data) return c.json({ error: "Укажите количество бонусов" }, 400);
+    const result = await sql.begin(async (tx) => {
+      await tx`select pg_advisory_xact_lock(hashtext(${"bonus:" + phone}))`;
+      const [row] = (await tx`select * from bookings where id = ${id} and right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone} for update`) as Row[];
+      if (!row) return "missing" as const;
+      const b = toBooking(row);
+      if (b.wash === "cancelled" || b.payment === "paid") return "closed" as const;
+      const total = b.services.reduce((s, l) => s + l.price, 0);
+      const available = (await bonusBalance(tx, phone)) + (b.bonus ?? 0);
+      if (data.bonus > maxRedemption(total, available)) return "bonus" as const;
+      await tx`update bookings set bonus = ${data.bonus}, updated_at = now() where id = ${id}`;
+      return { bonus: data.bonus, toPay: total - data.bonus };
+    });
+    if (result === "missing") return c.json({ error: "Запись не найдена" }, 404);
+    if (result === "closed") return c.json({ error: "Запись уже оплачена или отменена" }, 409);
+    if (result === "bonus") return c.json({ error: "Столько бонусов списать нельзя" }, 409);
+    return c.json({ ok: true, ...result });
+  });
+
   app.post("/client/bookings/:id/cancel", async (c) => {
     const phone = await clientPhone(c);
     if (!phone) return noClient(c);
