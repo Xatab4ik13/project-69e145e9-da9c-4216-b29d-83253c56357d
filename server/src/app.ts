@@ -8,6 +8,7 @@ import { DEFAULT_SERVICE_CATALOG } from "../../src/lib/crm/services";
 import { washNow } from "../../src/lib/crm/clock";
 import { carInfo, logoFile, searchCars } from "./carsbase";
 import { notifyAll, vapidPublicKey } from "./push";
+import { sendTelegramCode } from "./telegram";
 import { newBookingPush } from "../../src/lib/crm/crm-push";
 import type { Booking } from "../../src/lib/crm/types";
 
@@ -228,6 +229,57 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
   app.get("/auth/me", requireUser, (c) => {
     const { login, role } = c.get("user");
     return c.json({ login, role });
+  });
+
+  // ---------- client auth (приложение, код из Telegram) ----------
+  const codeRequestLimit = limiter(1, 60_000); // 1 код в минуту на номер
+  const codeDayLimit = limiter(5, 24 * 60 * 60_000); // не больше 5 кодов в сутки
+  const CODE_TTL_MIN = 5;
+  const CODE_MAX_ATTEMPTS = 5;
+
+  app.post("/auth/client/code", async (c) => {
+    const data = await body(c, z.object({ phone: phoneSchema }));
+    if (!data) return c.json({ error: "Введите номер телефона" }, 400);
+    if (!codeRequestLimit(data.phone)) return c.json({ error: "Код уже отправлен. Подождите минуту." }, 429);
+    if (!codeDayLimit(data.phone)) return c.json({ error: "Слишком много кодов за сутки. Попробуйте завтра." }, 429);
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const sent = await sendTelegramCode(`+7${data.phone}`, code);
+    if (!sent.ok) {
+      console.error("telegram gateway:", sent.error);
+      return c.json({ error: "Не удалось отправить код. Попробуйте позже." }, 502);
+    }
+
+    await sql`insert into client_auth_codes (phone, code_hash, attempts, expires_at)
+      values (${data.phone}, ${sha256(code)}, 0, now() + ${`${CODE_TTL_MIN} minutes`}::interval)
+      on conflict (phone) do update set code_hash = excluded.code_hash, attempts = 0, expires_at = excluded.expires_at, created_at = now()`;
+    return c.json({ ok: true, ttl: CODE_TTL_MIN * 60 });
+  });
+
+  app.post("/auth/client/verify", async (c) => {
+    const data = await body(c, z.object({ phone: phoneSchema, code: z.string().regex(/^\d{6}$/) }));
+    if (!data) return c.json({ error: "Введите телефон и код" }, 400);
+    const [row] = await sql`select code_hash, attempts, expires_at from client_auth_codes where phone = ${data.phone}`;
+    if (!row || new Date(row.expires_at) < new Date()) return c.json({ error: "Код истёк. Запросите новый." }, 401);
+    if (row.attempts >= CODE_MAX_ATTEMPTS) return c.json({ error: "Слишком много попыток. Запросите новый код." }, 429);
+    if (row.code_hash !== sha256(data.code)) {
+      await sql`update client_auth_codes set attempts = attempts + 1 where phone = ${data.phone}`;
+      return c.json({ error: "Неверный код" }, 401);
+    }
+
+    await sql`delete from client_auth_codes where phone = ${data.phone}`;
+    const token = crypto.randomUUID() + crypto.randomUUID();
+    await sql`insert into client_sessions (token_hash, phone, expires_at) values (${sha256(token)}, ${data.phone}, now() + ${`${SESSION_DAYS} days`}::interval)`;
+    await sql`delete from client_sessions where expires_at < now()`;
+    return c.json({ token, phone: data.phone });
+  });
+
+  app.get("/auth/client/me", async (c) => {
+    const token = c.req.header("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+    if (!token) return c.json({ error: "Войдите в приложение" }, 401);
+    const [row] = await sql`select phone from client_sessions where token_hash = ${sha256(token)} and expires_at > now()`;
+    if (!row) return c.json({ error: "Войдите в приложение" }, 401);
+    return c.json({ phone: row.phone });
   });
 
   // ---------- CRM ----------
