@@ -9,12 +9,15 @@ import { washNow } from "../../src/lib/crm/clock";
 import { carInfo, logoFile, searchCars } from "./carsbase";
 import { notifyAll, vapidPublicKey } from "./push";
 import { sendTelegramCode } from "./telegram";
+import { LOYALTY, expiryAfterTwelveMonths, loyaltyFromBookings } from "../../src/lib/crm/loyalty";
 import { newBookingPush } from "../../src/lib/crm/crm-push";
 import type { Booking } from "../../src/lib/crm/types";
 
 const COOKIE = "aq_session";
 /** Login stays valid for a year on each device. */
 export const SESSION_DAYS = 365;
+/** A client account keeps at most this many cars. */
+export const MAX_CLIENT_CARS = 5;
 /** Site visitors may book up to this many days ahead. */
 const BOOK_AHEAD_DAYS = 30;
 
@@ -280,6 +283,71 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     const [row] = await sql`select phone from client_sessions where token_hash = ${sha256(token)} and expires_at > now()`;
     if (!row) return c.json({ error: "Войдите в приложение" }, 401);
     return c.json({ phone: row.phone });
+  });
+
+  /** Phone of the signed-in app client, or null. */
+  const clientPhone = async (c: Context): Promise<string | null> => {
+    const token = c.req.header("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+    if (!token) return null;
+    const [row] = await sql`select phone from client_sessions where token_hash = ${sha256(token)} and expires_at > now()`;
+    return row ? (row.phone as string) : null;
+  };
+  const noClient = (c: Context) => c.json({ error: "Войдите в приложение" }, 401);
+
+  app.get("/client/bookings", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    await autoStart();
+    const { today, nowMin } = now();
+    const rows = ((await sql`select * from bookings where right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone} order by date desc, start_min desc limit 200`) as Row[]).map(toBooking);
+    const isUpcoming = (b: Booking) => (b.wash === "scheduled" || b.wash === "in_progress") && (b.date > today || (b.date === today && b.start + b.duration > nowMin));
+    return c.json({ upcoming: rows.filter(isUpcoming).reverse(), history: rows.filter((b) => !isUpcoming(b)) });
+  });
+
+  app.get("/client/loyalty", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    const { today } = now();
+    const rows = ((await sql`select * from bookings where right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone} and payment = 'paid'`) as Row[]).map(toBooking);
+    const acc = loyaltyFromBookings(rows)[0];
+    const [first] = await sql`select min(created_at)::date::text as d from client_sessions where phone = ${phone}`;
+    const welcomeDate = (first?.d as string | null) ?? today;
+    const transactions = [
+      { id: "welcome", type: "welcome", amount: LOYALTY.welcomeBonus, date: welcomeDate, description: "Приветственные бонусы", expiresAt: expiryAfterTwelveMonths(welcomeDate) },
+      ...(acc?.transactions ?? []),
+    ].sort((a, b) => b.date.localeCompare(a.date));
+    const balance = Math.floor(transactions.filter((t) => !t.expiresAt || t.expiresAt > today).reduce((s, t) => s + t.amount, 0));
+    return c.json({ balance, rules: LOYALTY, visits: acc?.visits ?? 0, totalSpent: acc?.totalSpent ?? 0, transactions });
+  });
+
+  app.get("/client/cars", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    const cars = await sql`select id, car, car_type as "carType" from client_cars where phone = ${phone} order by created_at`;
+    return c.json({ cars, max: MAX_CLIENT_CARS });
+  });
+  app.post("/client/cars", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    const data = await body(c, z.object({ car: z.string().trim().min(2).max(100), carType: z.string().max(40).default("") }));
+    if (!data) return c.json({ error: "Укажите автомобиль" }, 400);
+    const result = await sql.begin(async (tx) => {
+      await tx`select pg_advisory_xact_lock(hashtext(${phone}))`;
+      const [{ n }] = await tx`select count(*)::int as n from client_cars where phone = ${phone}`;
+      if (n >= MAX_CLIENT_CARS) return null;
+      const [row] = await tx`insert into client_cars (phone, car, car_type) values (${phone}, ${data.car}, ${data.carType})
+        on conflict (phone, car) do update set car_type = excluded.car_type returning id, car, car_type as "carType"`;
+      return row;
+    });
+    if (!result) return c.json({ error: `Можно сохранить не больше ${MAX_CLIENT_CARS} машин` }, 409);
+    return c.json(result, 201);
+  });
+  app.delete("/client/cars/:id", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    if (!z.string().uuid().safeParse(c.req.param("id")).success) return c.json({ error: "Машина не найдена" }, 404);
+    const rows = await sql`delete from client_cars where id = ${c.req.param("id")} and phone = ${phone} returning id`;
+    return rows.length ? c.json({ ok: true }) : c.json({ error: "Машина не найдена" }, 404);
   });
 
   // ---------- CRM ----------
