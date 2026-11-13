@@ -91,6 +91,6 @@ describe("client app notifications", () => {
     expect(eventForChange("in_progress", "done")).toBe("ready");
     expect(eventForChange("scheduled", "cancelled")).toBe("cancelled");
     expect(eventForChange("scheduled", "in_progress")).toBeNull();
-    expect(clientPush("ready", { id: "1", date: "2026-11-13", start: 720, car: "Kia Rio", services: [{ name: "x", price: 2000 }], bonus: 400 }).data.amount).toBe("1600");
+    expect(clientPush("ready", { id: "1", date: "2026-11-13", start: 720, car: "Kia Rio", services: [{ name: "x", price: 2000 }], bonus: 400 }).data["amount"]).toBe("1600");
   });
 });
