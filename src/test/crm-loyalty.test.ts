@@ -79,3 +79,18 @@ describe("app sign-in and bonus redemption", () => {
     expect(c!.transactions.map((t) => t.amount)).toEqual([200]);
   });
 });
+
+import { clientPush, eventForChange, isClientReminderDue } from "@/lib/crm/client-push";
+describe("client app notifications", () => {
+  it("reminder comes 60 minutes before, once", () => {
+    expect(isClientReminderDue({ date: "2026-11-13", start: 720, wash: "scheduled", reminded: false }, "2026-11-13", 660)).toBe(true);
+    expect(isClientReminderDue({ date: "2026-11-13", start: 720, wash: "scheduled", reminded: false }, "2026-11-13", 659)).toBe(false);
+    expect(isClientReminderDue({ date: "2026-11-13", start: 720, wash: "scheduled", reminded: true }, "2026-11-13", 700)).toBe(false);
+  });
+  it("finished wash sends «Машина готова» with the amount after bonuses", () => {
+    expect(eventForChange("in_progress", "done")).toBe("ready");
+    expect(eventForChange("scheduled", "cancelled")).toBe("cancelled");
+    expect(eventForChange("scheduled", "in_progress")).toBeNull();
+    expect(clientPush("ready", { id: "1", date: "2026-11-13", start: 720, car: "Kia Rio", services: [{ name: "x", price: 2000 }], bonus: 400 }).data.amount).toBe("1600");
+  });
+});

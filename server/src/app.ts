@@ -9,6 +9,8 @@ import { washNow } from "../../src/lib/crm/clock";
 import { carInfo, logoFile, searchCars } from "./carsbase";
 import { notifyAll, vapidPublicKey } from "./push";
 import { sendTelegramCode } from "./telegram";
+import { notifyClient } from "./rustore";
+import { eventForChange } from "../../src/lib/crm/client-push";
 import { LOYALTY, loyaltyBalance, loyaltyFromBookings, maxRedemption, type LoyaltyAccount } from "../../src/lib/crm/loyalty";
 import { newBookingPush } from "../../src/lib/crm/crm-push";
 import type { Booking } from "../../src/lib/crm/types";
@@ -197,7 +199,10 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
         returning *`;
       return toBooking(row as Row);
     }).catch(overlapAsNull);
-    if (created && typeof created === "object") void notifyAll(sql, newBookingPush(created)).catch((e) => console.error("push", e));
+    if (created && typeof created === "object") {
+      void notifyAll(sql, newBookingPush(created)).catch((e) => console.error("push", e));
+      void notifyClient(sql, "created", created).catch((e) => console.error("rustore", e));
+    }
     return created;
   };
   const bookingReply = (c: Context, created: Awaited<ReturnType<typeof createPublicBooking>>) => {
@@ -372,9 +377,26 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       await tx`update bookings set wash = 'cancelled', updated_at = now() where right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone} and wash = 'scheduled'`;
       await tx`update bookings set phone = '', updated_at = now() where right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone}`;
       await tx`delete from client_cars where phone = ${phone}`;
+      await tx`delete from client_push_tokens where phone = ${phone}`;
       await tx`delete from client_auth_codes where phone = ${phone}`;
       await tx`delete from client_sessions where phone = ${phone}`;
     });
+    return c.json({ ok: true });
+  });
+
+  /** The app registers its RuStore Push token after login. */
+  app.post("/client/push/token", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    const data = await body(c, z.object({ token: z.string().min(10).max(500) }));
+    if (!data) return c.json({ error: "Неверный токен" }, 400);
+    await sql`insert into client_push_tokens (token, phone) values (${data.token}, ${phone}) on conflict (token) do update set phone = excluded.phone`;
+    return c.json({ ok: true });
+  });
+  app.delete("/client/push/token", async (c) => {
+    const data = await body(c, z.object({ token: z.string().max(500) }));
+    if (!data) return c.json({ error: "Неверный токен" }, 400);
+    await sql`delete from client_push_tokens where token = ${data.token}`;
     return c.json({ ok: true });
   });
 
@@ -457,6 +479,7 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     }).catch(overlapAsNull);
     if (!created) return c.json({ error: "Это время только что заняли. Выберите другое." }, 409);
     void notifyAll(sql, newBookingPush(created)).catch((e) => console.error("push", e));
+    void notifyClient(sql, "created", created).catch((e) => console.error("rustore", e));
     return c.json({ booking: created }, 201);
   });
 
@@ -477,7 +500,10 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     const row = (await sql`update bookings set wash = ${next.wash}, confirmed = ${next.confirmed}, payment = ${next.payment},
       payment_method = ${next.payment_method}, washer = ${next.washer}, updated_at = now() where id = ${id.data} returning *`.catch(overlapAsNull))?.[0];
     if (!row) return c.json({ error: "Это время уже занято другой записью" }, 409);
-    return c.json({ booking: toBooking(row as Row) });
+    const updated = toBooking(row as Row);
+    const event = eventForChange(b.wash, updated.wash);
+    if (event) void notifyClient(sql, event, updated).catch((e) => console.error("rustore", e));
+    return c.json({ booking: updated });
   });
 
   // ---------- finance (dashboard, finance, washers) ----------
