@@ -33,7 +33,7 @@ const json = (method: string, body: unknown): RequestInit => ({ method, body: JS
 export type CrmUser = { login: string; role: CrmRole };
 export type NewBooking = Pick<Booking, "date" | "box" | "start" | "duration" | "car" | "carType" | "packageName" | "services"> & { phone: string; cls?: 1 | 2 | 3 | 4 };
 export type ClientCar = { car: string; carType: string; cls: 1 | 2 | 3 | 4 | null };
-export type ClientHint = { phone: string; name: string; cars: ClientCar[] };
+export type ClientHint = { phone: string; cars: ClientCar[] };
 export type BookingPatch = Partial<Pick<Booking, "wash" | "confirmed" | "payment">> & { paymentMethod?: Booking["paymentMethod"] | null; washer?: string | null };
 export type SiteBooking = { date: string; start: number; car: string; carType: string; phone: string; packageName: string; services: Booking["services"]; extras: string[]; cls: 1 | 2 | 3 | 4 };
 

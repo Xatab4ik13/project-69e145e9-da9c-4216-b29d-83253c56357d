@@ -1,7 +1,6 @@
 -- Общая база клиентов и их машин (сайт, приложение, CRM).
 create table if not exists clients (
   phone text primary key,
-  name text not null default '',
   note text not null default '',
   created_at timestamptz not null default now(),
   last_seen_at timestamptz not null default now()

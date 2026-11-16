@@ -764,7 +764,7 @@ function NewBookingDialog({
               {phoneHints.map((h) => (
                 <li key={h.phone}><button type="button" onClick={() => { setPhone(h.phone); setPhoneFocus(false); if (h.cars.length === 1) pickClientCar(h.cars[0]!); }}
                   className="min-h-12 w-full px-4 py-3 text-left hover:bg-muted sm:min-h-0 sm:px-3 sm:py-2">
-                  {fmtPhone(h.phone)}{h.name && ` · ${h.name}`}
+                  {fmtPhone(h.phone)}
                   {h.cars.length > 0 && <span className="block text-muted-foreground">{h.cars.map((c) => c.car).join(", ")}</span>}
                 </button></li>
               ))}

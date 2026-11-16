@@ -548,10 +548,10 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
   app.get("/crm/clients/search", async (c) => {
     const q = (c.req.query("q") ?? "").replace(/\D/g, "").slice(-10);
     if (q.length < 3) return c.json({ clients: [] });
-    const clients = await sql`select phone, name from clients where phone like ${"%" + q + "%"} order by last_seen_at desc limit 6`;
+    const clients = await sql`select phone from clients where phone like ${"%" + q + "%"} order by last_seen_at desc limit 6`;
     const phones = clients.map((r: { phone: string }) => r.phone);
     const cars = phones.length ? await sql`select phone, car, car_type as "carType", cls from client_cars where phone in ${sql(phones)} order by last_used_at desc` : [];
-    return c.json({ clients: clients.map((r: { phone: string; name: string }) => ({ ...r,
+    return c.json({ clients: clients.map((r: { phone: string }) => ({ phone: r.phone,
       cars: cars.filter((x: { phone: string }) => x.phone === r.phone).map(({ phone: _p, ...car }: { phone: string }) => car) })) });
   });
 
