@@ -432,7 +432,7 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       where booking_id = ${id} and status in ('NEW', 'FORM_SHOWED') and amount = ${amount} and created_at > now() - interval '20 hours' order by created_at desc limit 1`;
     if (open?.payment_url) return c.json({ paymentUrl: open.payment_url, paymentId: open.payment_id, amount: amount / 100 });
     const orderId = `${id.slice(0, 8)}-${Date.now()}`;
-    const init = await tbankInit(orderId, amount, `Автомойка Аквариус: ${b.packageName}, ${b.car}`);
+    const init = await tbankInit(orderId, amount, `Автомойка Аквариус: ${b.packageName}, ${b.car}`, phone);
     if (!init.ok) {
       console.error("tbank init", init.error);
       return c.json({ error: "Банк не ответил. Попробуйте ещё раз." }, 502);

@@ -26,10 +26,20 @@ export function verifyNotification(body: Record<string, unknown>): boolean {
 
 type InitResult = { ok: true; paymentId: string; paymentUrl: string } | { ok: false; error: string };
 
-export async function tbankInit(orderId: string, amountKop: number, description: string): Promise<InitResult> {
+/** Чек 54-ФЗ (чеки Т-Банка без своей кассы): одна позиция на сумму к оплате, УСН доходы, без НДС. */
+export function tbankReceipt(phone10: string, amountKop: number, name: string) {
+  return {
+    Phone: `+7${phone10}`,
+    Taxation: process.env.TBANK_TAXATION ?? "usn_income",
+    Items: [{ Name: name.slice(0, 128), Price: amountKop, Quantity: 1, Amount: amountKop, Tax: "none", PaymentMethod: "full_payment", PaymentObject: "service" }],
+  };
+}
+
+export async function tbankInit(orderId: string, amountKop: number, description: string, phone10: string): Promise<InitResult> {
   const TerminalKey = process.env.TBANK_TERMINAL_KEY!;
   const params: Record<string, unknown> = {
     TerminalKey, Amount: amountKop, OrderId: orderId, Description: description.slice(0, 140),
+    Receipt: tbankReceipt(phone10, amountKop, description),
     NotificationURL: process.env.TBANK_NOTIFY_URL ?? "https://crm.aquariuswash.ru/api/v1/payments/tbank/notify",
     ...(process.env.TBANK_SUCCESS_URL ? { SuccessURL: process.env.TBANK_SUCCESS_URL } : {}),
     ...(process.env.TBANK_FAIL_URL ? { FailURL: process.env.TBANK_FAIL_URL } : {}),
