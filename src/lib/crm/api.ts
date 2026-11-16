@@ -71,3 +71,19 @@ export const api = {
 export const bookingPatch = (b: Booking): BookingPatch => ({
   wash: b.wash, confirmed: b.confirmed, payment: b.payment, paymentMethod: b.paymentMethod ?? null, washer: b.washer ?? null,
 });
+
+export type ApkInfo = { size: number; updatedAt: string } | null;
+export const getApk = () => request<{ apk: ApkInfo }>("/crm/app/apk");
+export async function uploadApk(file: File): Promise<{ apk: ApkInfo }> {
+  const fd = new FormData();
+  fd.append("file", file);
+  let res: Response;
+  try {
+    res = await fetch(BASE + "/crm/app/apk", { method: "POST", body: fd, credentials: "include" });
+  } catch {
+    throw new ApiError("Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.", 0);
+  }
+  const data = (await res.json().catch(() => null)) as ({ apk: ApkInfo } & { error?: string }) | null;
+  if (!res.ok || !data) throw new ApiError(data?.error ?? "Сервер недоступен. Попробуйте позже.", res.status);
+  return data;
+}

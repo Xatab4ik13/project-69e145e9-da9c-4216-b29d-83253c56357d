@@ -659,6 +659,36 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     return c.json({ ok: true });
   });
 
+  /** Temporary owner page: replace the Android test APK served at /app/aquarius.apk. */
+  const apkPath = () => process.env.APK_PATH ?? "/var/www/aquarius/app/aquarius.apk";
+  app.get("/crm/app/apk", async (c) => {
+    const denied = ownerOnly(c);
+    if (denied) return denied;
+    const { stat } = await import("node:fs/promises");
+    const st = await stat(apkPath()).catch(() => null);
+    return c.json({ apk: st ? { size: st.size, updatedAt: st.mtime.toISOString() } : null });
+  });
+
+  app.post("/crm/app/apk", async (c) => {
+    const denied = ownerOnly(c);
+    if (denied) return denied;
+    const form = await c.req.parseBody().catch(() => null);
+    const file = form?.["file"];
+    if (!(file instanceof File) || !file.name.toLowerCase().endsWith(".apk")) return c.json({ error: "Выберите файл .apk" }, 400);
+    if (file.size > 200 * 1024 * 1024) return c.json({ error: "Файл больше 200 МБ" }, 400);
+    const { rename, stat } = await import("node:fs/promises");
+    const tmp = apkPath() + ".uploading";
+    try {
+      await Bun.write(tmp, file);
+      await rename(tmp, apkPath());
+    } catch (e) {
+      console.error("apk upload", e);
+      return c.json({ error: "Сервер не смог сохранить файл: нет доступа к папке app" }, 500);
+    }
+    const st = await stat(apkPath());
+    return c.json({ apk: { size: st.size, updatedAt: st.mtime.toISOString() } });
+  });
+
   app.put("/crm/prices", async (c) => {
     if (c.get("user").role !== "owner") return c.json({ error: "Сохранять прайс может только владелец" }, 403);
     const data = await body(c, z.object({ catalog: catalogSchema }));

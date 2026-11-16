@@ -12,6 +12,7 @@ import { AdminDashboard, MobileDashboard } from "@/components/crm/AdminDashboard
 import { AdminFinance } from "@/components/crm/AdminFinance";
 import { AdminWashers } from "@/components/crm/AdminWashers";
 import { AdminNotifications } from "@/components/crm/AdminNotifications";
+import { AdminApp } from "@/components/crm/AdminApp";
 import { AdminWeekSchedule } from "@/components/crm/AdminWeekSchedule";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
 import { MobileAdminHeader, MobileAdminNavigation, MobileSchedule } from "@/components/crm/MobileSchedule";
@@ -130,7 +131,7 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-sm text-foreground md:flex-row">
       <MobileAdminHeader role={role} />
       <Sidebar section={section} onChange={changeSection} role={role} onLogout={onLogout} />
-      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={today} /> : section === "finance" ? null : section === "notifications" ? <AdminNotifications today={DEMO_TODAY} /> : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={today} /> : section === "services" ? <AdminServices role={role} /> : section === "clients" ? (
+      {section === "dashboard" ? <AdminDashboard bookings={financeBookings} ops={ops} overrides={overrides} today={today} /> : section === "finance" ? null : section === "notifications" ? <AdminNotifications today={DEMO_TODAY} /> : section === "app" ? <AdminApp /> : section === "washers" ? <AdminWashers bookings={financeBookings} ops={ops} today={today} /> : section === "services" ? <AdminServices role={role} /> : section === "clients" ? (
         <AdminClients
           bookings={financeBookings}
           today={today}
@@ -268,7 +269,7 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
   );
 }
 
-type AdminSection = "schedule" | "clients" | "services" | "loyalty" | "washers" | "dashboard" | "finance" | "notifications";
+type AdminSection = "schedule" | "clients" | "services" | "loyalty" | "washers" | "dashboard" | "finance" | "notifications" | "app";
 
 /** Owner sees everything the manager sees, plus his own screens (Уведомления — soon). */
 const SECTION_ITEMS: Record<CrmRole, { label: string; icon: typeof CalendarDays; target?: AdminSection }[]> = {
@@ -288,6 +289,7 @@ const SECTION_ITEMS: Record<CrmRole, { label: string; icon: typeof CalendarDays;
     { label: "Услуги", icon: Wrench, target: "services" },
     { label: "Финансы", icon: Wallet, target: "finance" },
     { label: "Уведомления", icon: Bell, target: "notifications" },
+    { label: "Приложение", icon: Smartphone, target: "app" },
   ],
 };
 
