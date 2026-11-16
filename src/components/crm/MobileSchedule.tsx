@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   Bell, Building2, CalendarDays, ChevronLeft, ChevronRight, HandCoins, LayoutDashboard, Menu, Plus, Search, Star, User, Wallet, Wrench,
   LogOut,
+  Smartphone,
 } from "lucide-react";
 import { aquarius_logo as logo } from "@/assets/images";
 import { AdminNotificationIndicator } from "@/components/crm/AdminNotificationIndicator";
@@ -12,7 +13,7 @@ import { SOURCE_LABEL, type Booking, type CrmRole } from "@/lib/crm/types";
 import { STATE_LABEL } from "@/lib/crm/logic";
 
 export type MobileAdminSection =
-  | "schedule" | "clients" | "services" | "loyalty" | "washers" | "dashboard" | "finance" | "notifications";
+  | "schedule" | "clients" | "services" | "loyalty" | "washers" | "dashboard" | "finance" | "notifications" | "app";
 
 type NavItem = { id: MobileAdminSection | "more"; label: string; Icon: typeof CalendarDays };
 type SheetItem = { id: MobileAdminSection; label: string; Icon: typeof CalendarDays; soon?: boolean };
@@ -44,6 +45,7 @@ const MORE: Record<CrmRole, SheetItem[]> = {
     { id: "services", label: "Услуги", Icon: Wrench },
     { id: "finance", label: "Финансы", Icon: Wallet },
     { id: "notifications", label: "Уведомления", Icon: Bell },
+    { id: "app", label: "Приложение", Icon: Smartphone },
   ],
 };
 
