@@ -39,8 +39,24 @@ export async function tbankInit(orderId: string, amountKop: number, description:
     const res = await fetch(`${API}/Init`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(params) });
     const data = (await res.json()) as { Success?: boolean; PaymentId?: string | number; PaymentURL?: string; Message?: string; Details?: string };
     if (!data.Success || !data.PaymentURL) return { ok: false, error: [data.Message, data.Details].filter(Boolean).join(": ") || "Банк отклонил платёж" };
-    return { ok: true, paymentId: String(data.PaymentId), paymentUrl: data.PaymentURL };
+    const paymentId = String(data.PaymentId);
+    // Только СБП: берём ссылку СБП (qr.nspk.ru) — на телефоне она сразу открывает выбор банка, без ввода карты.
+    const sbp = await tbankSbpLink(paymentId);
+    if (!sbp) console.error("tbank getqr failed, fallback to payment page");
+    return { ok: true, paymentId, paymentUrl: sbp ?? data.PaymentURL };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+/** GetQr с DataType=PAYLOAD возвращает ссылку СБП для оплаты с мобильного. */
+export async function tbankSbpLink(paymentId: string): Promise<string | null> {
+  const params: Record<string, unknown> = { TerminalKey: process.env.TBANK_TERMINAL_KEY!, PaymentId: paymentId, DataType: "PAYLOAD" };
+  params.Token = tbankToken(params, process.env.TBANK_PASSWORD!);
+  try {
+    const res = await fetch(`${API}/GetQr`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(params) });
+    const data = (await res.json()) as { Success?: boolean; Data?: string; Message?: string; Details?: string };
+    if (!data.Success || !data.Data) { console.error("tbank getqr", data.Message, data.Details); return null; }
+    return data.Data;
+  } catch (e) { console.error("tbank getqr", e); return null; }
 }
