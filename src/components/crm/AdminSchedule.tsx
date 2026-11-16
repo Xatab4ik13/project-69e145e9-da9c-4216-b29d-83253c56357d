@@ -20,7 +20,7 @@ import { carTypeForClass } from "@/lib/crm/clients";
 import type { Booking, BookingSource, PaymentMethod } from "@/lib/crm/types";
 import { METHOD_LABEL, SOURCE_LABEL, type CrmRole } from "@/lib/crm/types";
 import { SLOT_MIN, DEMO_TODAY, EXTRAS, PACKAGES } from "@/lib/crm/mock";
-import { api, bookingPatch, type ApiError, type CarHit, type NewBooking } from "@/lib/crm/api";
+import { api, bookingPatch, type ApiError, type CarHit, type ClientCar, type ClientHint, type NewBooking } from "@/lib/crm/api";
 import { MIN_WASH_MIN, catalogDuration, classPrice } from "@/lib/crm/booking-rules";
 import { CLASS_LABEL } from "@/lib/crm/car-class";
 import type { CatalogService } from "@/lib/crm/services";
@@ -671,6 +671,8 @@ function NewBookingDialog({
   const [car, setCar] = useState("");
   const [carPick, setCarPick] = useState<{ cls: 1 | 2 | 3 | 4; body: string } | null>(null);
   const [hits, setHits] = useState<CarHit[] | null>(null);
+  const [clientHints, setClientHints] = useState<ClientHint[]>([]);
+  const [phoneFocus, setPhoneFocus] = useState(false);
   const [catalog, setCatalog] = useState<CatalogService[] | null>(null);
   const [pkgName, setPkgName] = useState("Комфорт");
   const [extras, setExtras] = useState<string[]>([]);
@@ -695,6 +697,18 @@ function NewBookingDialog({
     const t = setTimeout(() => api.searchCars(q).then((r) => alive && setHits(r), () => alive && setHits([])), 250);
     return () => { alive = false; clearTimeout(t); };
   }, [car, carPick, open]);
+  useEffect(() => {
+    if (!open || phone.length < 3) { setClientHints([]); return; }
+    let alive = true;
+    const t = setTimeout(() => api.searchClients(phone).then((r) => alive && setClientHints(r), () => alive && setClientHints([])), 250);
+    return () => { alive = false; clearTimeout(t); };
+  }, [phone, open]);
+  const clientCars = clientHints.find((h) => h.phone === phone)?.cars ?? [];
+  const phoneHints = phoneFocus && phone.length < 10 ? clientHints : [];
+  const pickClientCar = (c: ClientCar) => {
+    setHits(null); setError(""); setCar(c.car);
+    setCarPick(c.cls ? { cls: c.cls, body: c.carType } : null);
+  };
   const pickCar = (h: CarHit) => {
     setHits(null); setCar(h.name);
     api.carInfo(h.modelId).then((i) => setCarPick(i), () => setError("Не удалось определить класс машины."));
@@ -724,7 +738,7 @@ function NewBookingDialog({
     setBusy(true);
     setError("");
     onCreate({
-      date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: carPick.body,
+      date, box: picked.box, start: picked.start, duration, car: car.trim(), carType: carPick.body, cls: carPick.cls,
       phone, packageName: isCustom ? custom.packageName : pkg?.name ?? "", services,
     }).catch((e: Error) => setError(e.message)).finally(() => setBusy(false));
   };
@@ -744,7 +758,26 @@ function NewBookingDialog({
               // deleting a formatting char (")", " ", "-") should remove the previous digit
               const d = raw.length < fmtPhone(phone).length && phoneDigits(raw) === phone ? phone.slice(0, -1) : phoneDigits(raw);
               setPhone(d);
-            }} />
+            }} onFocus={() => setPhoneFocus(true)} onBlur={() => setTimeout(() => setPhoneFocus(false), 150)} />
+          {phoneHints.length > 0 && (
+            <ul className="-mt-2 max-h-64 overflow-y-auto rounded-xl border border-border bg-background shadow-lg sm:-mt-1 sm:rounded-lg">
+              {phoneHints.map((h) => (
+                <li key={h.phone}><button type="button" onClick={() => { setPhone(h.phone); setPhoneFocus(false); if (h.cars.length === 1) pickClientCar(h.cars[0]!); }}
+                  className="min-h-12 w-full px-4 py-3 text-left hover:bg-muted sm:min-h-0 sm:px-3 sm:py-2">
+                  {fmtPhone(h.phone)}{h.name && ` · ${h.name}`}
+                  {h.cars.length > 0 && <span className="block text-muted-foreground">{h.cars.map((c) => c.car).join(", ")}</span>}
+                </button></li>
+              ))}
+            </ul>
+          )}
+          {clientCars.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {clientCars.map((c) => (
+                <button key={c.car} type="button" onClick={() => pickClientCar(c)}
+                  className={`min-h-11 rounded-xl border px-3 py-2 sm:min-h-0 sm:rounded-lg sm:py-1 ${car === c.car ? "border-crm bg-crm-soft" : "border-border hover:bg-muted"}`}>{c.car}</button>
+              ))}
+            </div>
+          )}
           <div className="relative">
             <input aria-label="Автомобиль" className={field} placeholder="Марка или модель" value={car}
               onChange={(e) => { setCar(e.target.value); setCarPick(null); }} />

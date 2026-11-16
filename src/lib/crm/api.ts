@@ -31,7 +31,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) });
 
 export type CrmUser = { login: string; role: CrmRole };
-export type NewBooking = Pick<Booking, "date" | "box" | "start" | "duration" | "car" | "carType" | "packageName" | "services"> & { phone: string };
+export type NewBooking = Pick<Booking, "date" | "box" | "start" | "duration" | "car" | "carType" | "packageName" | "services"> & { phone: string; cls?: 1 | 2 | 3 | 4 };
+export type ClientCar = { car: string; carType: string; cls: 1 | 2 | 3 | 4 | null };
+export type ClientHint = { phone: string; name: string; cars: ClientCar[] };
 export type BookingPatch = Partial<Pick<Booking, "wash" | "confirmed" | "payment">> & { paymentMethod?: Booking["paymentMethod"] | null; washer?: string | null };
 export type SiteBooking = { date: string; start: number; car: string; carType: string; phone: string; packageName: string; services: Booking["services"]; extras: string[]; cls: 1 | 2 | 3 | 4 };
 
@@ -58,6 +60,7 @@ export const api = {
   savePrices: (catalog: CatalogService[]) => request<{ ok: true }>("/crm/prices", json("PUT", { catalog })),
   slots: (date: string, pkg: string, extras: string[], cls: 1 | 2 | 3 | 4) =>
     request<{ duration: number; slots: number[] }>(`/slots?date=${date}&cls=${cls}&pkg=${encodeURIComponent(pkg)}&extras=${encodeURIComponent(extras.join(","))}`),
+  searchClients: (q: string) => request<{ clients: ClientHint[] }>(`/crm/clients/search?q=${encodeURIComponent(q)}`).then((r) => r.clients),
   loyaltyAccounts: () => request<{ accounts: LoyaltyAccount[] }>("/crm/loyalty/accounts").then((r) => r.accounts),
   pushKey: () => request<{ key: string }>("/crm/push/key"),
   pushSubscribe: (sub: PushSubscriptionJSON) => request<{ ok: true }>("/crm/push/subscribe", json("POST", sub)),

@@ -20,7 +20,8 @@ const COOKIE = "aq_session";
 /** Login stays valid for a year on each device. */
 export const SESSION_DAYS = 365;
 /** A client account keeps at most this many cars. */
-export const MAX_CLIENT_CARS = 5;
+export { MAX_CLIENT_CARS } from "../../src/lib/crm/client-cars";
+import { MAX_CLIENT_CARS, carToEvict } from "../../src/lib/crm/client-cars";
 /** Site visitors may book up to this many days ahead. */
 const BOOK_AHEAD_DAYS = 30;
 
@@ -67,6 +68,7 @@ const crmBookingSchema = z.object({
   duration: z.number().int().min(1).max(CLOSE_MIN - OPEN_MIN),
   car: z.string().trim().min(1).max(120),
   carType: z.string().trim().max(60).default(""),
+  cls: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
   phone: phoneSchema,
   packageName: z.string().trim().min(1).max(120),
   services: z.array(serviceLine).min(1).max(20),
@@ -179,6 +181,21 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
   };
 
   type SiteData = z.infer<typeof siteBookingSchema>;
+  /** Remembers the client and the car in the shared base; the 6th car replaces the one used longest ago. */
+  const rememberClient = async (tx: SQL, rawPhone: string, rawCar: string, carType: string, cls: number | null) => {
+    const phone = rawPhone.replace(/\D/g, "").slice(-10), car = rawCar.trim();
+    if (phone.length !== 10) return;
+    await tx`select pg_advisory_xact_lock(hashtext(${"client:" + phone}))`;
+    await tx`insert into clients (phone) values (${phone}) on conflict (phone) do update set last_seen_at = now()`;
+    if (!car) return null;
+    const cars = await tx`select car, last_used_at::text as "lastUsed" from client_cars where phone = ${phone}`;
+    const evict = carToEvict(cars as { car: string; lastUsed: string }[], car);
+    if (evict) await tx`delete from client_cars where phone = ${phone} and car = ${evict}`;
+    const [row] = await tx`insert into client_cars (phone, car, car_type, cls) values (${phone}, ${car}, ${carType}, ${cls})
+      on conflict (phone, car) do update set car_type = excluded.car_type, cls = coalesce(excluded.cls, client_cars.cls), last_used_at = now()
+      returning id, car, car_type as "carType"`;
+    return row;
+  };
   /** Creates a site/app booking in a free slot; null when the slot is gone, "bonus" when bonuses are not allowed. */
   const createPublicBooking = async (data: SiteData, source: "site" | "app", bonus = 0) => {
     const duration = catalogDuration(await loadCatalog(), data.packageName, data.extras, data.cls);
@@ -198,6 +215,7 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       const [row] = await tx`insert into bookings (date, box, start_min, duration, car, car_type, phone, source, package_name, services, confirmed, bonus)
         values (${data.date}, ${box}, ${data.start}, ${duration}, ${data.car}, ${data.carType}, ${data.phone}, ${source}, ${data.packageName}, ${JSON.stringify(data.services)}::text::jsonb, ${source === "app"}, ${bonus})
         returning *`;
+      await rememberClient(tx, data.phone, data.car, data.carType, data.cls);
       return toBooking(row as Row);
     }).catch(overlapAsNull);
     if (created && typeof created === "object") {
@@ -454,6 +472,7 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       await tx`update bookings set wash = 'cancelled', updated_at = now() where right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone} and wash = 'scheduled'`;
       await tx`update bookings set phone = '', updated_at = now() where right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone}`;
       await tx`delete from client_cars where phone = ${phone}`;
+      await tx`delete from clients where phone = ${phone}`;
       await tx`delete from client_push_tokens where phone = ${phone}`;
       await tx`delete from client_auth_codes where phone = ${phone}`;
       await tx`delete from client_sessions where phone = ${phone}`;
@@ -488,15 +507,8 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     if (!phone) return noClient(c);
     const data = await body(c, z.object({ car: z.string().trim().min(2).max(100), carType: z.string().max(40).default("") }));
     if (!data) return c.json({ error: "Укажите автомобиль" }, 400);
-    const result = await sql.begin(async (tx) => {
-      await tx`select pg_advisory_xact_lock(hashtext(${phone}))`;
-      const [{ n }] = await tx`select count(*)::int as n from client_cars where phone = ${phone}`;
-      if (n >= MAX_CLIENT_CARS) return null;
-      const [row] = await tx`insert into client_cars (phone, car, car_type) values (${phone}, ${data.car}, ${data.carType})
-        on conflict (phone, car) do update set car_type = excluded.car_type returning id, car, car_type as "carType"`;
-      return row;
-    });
-    if (!result) return c.json({ error: `Можно сохранить не больше ${MAX_CLIENT_CARS} машин` }, 409);
+    const result = await sql.begin((tx) => rememberClient(tx, phone, data.car, data.carType, null));
+    if (!result) return c.json({ error: "Укажите автомобиль" }, 400);
     return c.json(result, 201);
   });
   app.delete("/client/cars/:id", async (c) => {
@@ -532,6 +544,17 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     return c.json({ accounts: rows });
   });
 
+  /** Phone hints for manual booking: clients whose number contains the typed digits, with their cars. */
+  app.get("/crm/clients/search", async (c) => {
+    const q = (c.req.query("q") ?? "").replace(/\D/g, "").slice(-10);
+    if (q.length < 3) return c.json({ clients: [] });
+    const clients = await sql`select phone, name from clients where phone like ${"%" + q + "%"} order by last_seen_at desc limit 6`;
+    const phones = clients.map((r: { phone: string }) => r.phone);
+    const cars = phones.length ? await sql`select phone, car, car_type as "carType", cls from client_cars where phone in ${sql(phones)} order by last_used_at desc` : [];
+    return c.json({ clients: clients.map((r: { phone: string; name: string }) => ({ ...r,
+      cars: cars.filter((x: { phone: string }) => x.phone === r.phone).map(({ phone: _p, ...car }: { phone: string }) => car) })) });
+  });
+
   app.get("/crm/bookings", async (c) => {
     const from = dateSchema.safeParse(c.req.query("from"));
     const to = dateSchema.safeParse(c.req.query("to"));
@@ -552,6 +575,7 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       const [row] = await tx`insert into bookings (date, box, start_min, duration, car, car_type, phone, source, package_name, services)
         values (${data.date}, ${data.box}, ${data.start}, ${data.duration}, ${data.car}, ${data.carType}, ${data.phone}, 'admin', ${data.packageName}, ${JSON.stringify(data.services)}::text::jsonb)
         returning *`;
+      await rememberClient(tx, data.phone, data.car, data.carType, data.cls ?? null);
       return toBooking(row as Row);
     }).catch(overlapAsNull);
     if (!created) return c.json({ error: "Это время только что заняли. Выберите другое." }, 409);
