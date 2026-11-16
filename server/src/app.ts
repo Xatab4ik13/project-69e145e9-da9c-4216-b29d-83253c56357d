@@ -10,6 +10,7 @@ import { carInfo, logoFile, searchCars } from "./carsbase";
 import { notifyAll, vapidPublicKey } from "./push";
 import { sendTelegramCode } from "./telegram";
 import { notifyClient } from "./rustore";
+import { tbankConfigured, tbankInit, verifyNotification } from "./tbank";
 import { eventForChange } from "../../src/lib/crm/client-push";
 import { LOYALTY, loyaltyBalance, loyaltyFromBookings, maxRedemption, type LoyaltyAccount } from "../../src/lib/crm/loyalty";
 import { newBookingPush } from "../../src/lib/crm/crm-push";
@@ -393,6 +394,56 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     if (rows.length) return c.json({ ok: true });
     const [exists] = await sql`select wash from bookings where id = ${c.req.param("id")} and right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone}`;
     return exists ? c.json({ error: "Мойка уже началась — отменить нельзя" }, 409) : c.json({ error: "Запись не найдена" }, 404);
+  });
+
+  /** Online payment of the CRM invoice («Машина готова» → awaiting): card now, SBP later. Pays the rest after bonuses. */
+  app.post("/client/bookings/:id/pay", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    const id = c.req.param("id");
+    if (!z.string().uuid().safeParse(id).success) return c.json({ error: "Запись не найдена" }, 404);
+    if (!tbankConfigured()) return c.json({ error: "Онлайн-оплата пока недоступна" }, 503);
+    const [row] = (await sql`select * from bookings where id = ${id} and right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone}`) as Row[];
+    if (!row) return c.json({ error: "Запись не найдена" }, 404);
+    const b = toBooking(row);
+    if (b.payment === "paid") return c.json({ error: "Запись уже оплачена" }, 409);
+    if (b.payment !== "awaiting" || b.wash === "cancelled") return c.json({ error: "Счёт ещё не выставлен" }, 409);
+    const amount = (b.services.reduce((s, l) => s + l.price, 0) - (b.bonus ?? 0)) * 100;
+    if (amount <= 0) return c.json({ error: "Нечего оплачивать" }, 409);
+    const [open] = await sql`select payment_url, payment_id, amount from payments
+      where booking_id = ${id} and status in ('NEW', 'FORM_SHOWED') and amount = ${amount} and created_at > now() - interval '20 hours' order by created_at desc limit 1`;
+    if (open?.payment_url) return c.json({ paymentUrl: open.payment_url, paymentId: open.payment_id, amount: amount / 100 });
+    const orderId = `${id.slice(0, 8)}-${Date.now()}`;
+    const init = await tbankInit(orderId, amount, `Автомойка Аквариус: ${b.packageName}, ${b.car}`);
+    if (!init.ok) {
+      console.error("tbank init", init.error);
+      return c.json({ error: "Банк не ответил. Попробуйте ещё раз." }, 502);
+    }
+    await sql`insert into payments (order_id, booking_id, payment_id, amount, payment_url) values (${orderId}, ${id}, ${init.paymentId}, ${amount}, ${init.paymentUrl})`;
+    return c.json({ paymentUrl: init.paymentUrl, paymentId: init.paymentId, amount: amount / 100 });
+  });
+
+  app.get("/client/bookings/:id/payment", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    const id = c.req.param("id");
+    if (!z.string().uuid().safeParse(id).success) return c.json({ error: "Запись не найдена" }, 404);
+    const [row] = await sql`select payment from bookings where id = ${id} and right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone}`;
+    if (!row) return c.json({ error: "Запись не найдена" }, 404);
+    const [last] = await sql`select status from payments where booking_id = ${id} order by created_at desc limit 1`;
+    return c.json({ payment: row.payment, bankStatus: last?.status ?? null });
+  });
+
+  /** T-Bank calls this after every status change; the signature is checked, the answer must be plain OK. */
+  app.post("/payments/tbank/notify", async (c) => {
+    const n = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
+    if (!n || !verifyNotification(n)) return c.text("bad token", 403);
+    const orderId = String(n.OrderId ?? ""), status = String(n.Status ?? "");
+    const [p] = await sql`update payments set status = ${status}, updated_at = now() where order_id = ${orderId} returning booking_id, amount`;
+    if (p && status === "CONFIRMED" && n.Success !== false && Number(n.Amount) === Number(p.amount)) {
+      await sql`update bookings set payment = 'paid', payment_method = 'app', updated_at = now() where id = ${p.booking_id} and payment <> 'paid'`;
+    }
+    return c.text("OK");
   });
 
   /** Deletes the account: sign-ins, cars and the phone in past bookings (money records stay for accounting). */
