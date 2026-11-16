@@ -30,8 +30,6 @@ export async function tbankInit(orderId: string, amountKop: number, description:
   const TerminalKey = process.env.TBANK_TERMINAL_KEY!;
   const params: Record<string, unknown> = {
     TerminalKey, Amount: amountKop, OrderId: orderId, Description: description.slice(0, 140),
-    // Только СБП: платёжная страница банка показывает QR-код, оплата картой скрыта.
-    PaymentMethod: "sbp",
     NotificationURL: process.env.TBANK_NOTIFY_URL ?? "https://crm.aquariuswash.ru/api/v1/payments/tbank/notify",
     ...(process.env.TBANK_SUCCESS_URL ? { SuccessURL: process.env.TBANK_SUCCESS_URL } : {}),
     ...(process.env.TBANK_FAIL_URL ? { FailURL: process.env.TBANK_FAIL_URL } : {}),
