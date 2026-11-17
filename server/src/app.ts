@@ -403,6 +403,18 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
     return c.json({ ok: true, ...result });
   });
 
+  /** Client confirms a CRM/site booking from the app; the CRM then shows it as confirmed. */
+  app.post("/client/bookings/:id/confirm", async (c) => {
+    const phone = await clientPhone(c);
+    if (!phone) return noClient(c);
+    if (!z.string().uuid().safeParse(c.req.param("id")).success) return c.json({ error: "Запись не найдена" }, 404);
+    const [row] = (await sql`update bookings set confirmed = true, updated_at = now()
+      where id = ${c.req.param("id")} and right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone} and wash = 'scheduled' returning *`) as Row[];
+    if (row) return c.json({ ok: true, booking: toBooking(row) });
+    const [exists] = await sql`select wash from bookings where id = ${c.req.param("id")} and right(regexp_replace(phone, '\D', '', 'g'), 10) = ${phone}`;
+    return exists ? c.json({ error: "Запись уже нельзя подтвердить" }, 409) : c.json({ error: "Запись не найдена" }, 404);
+  });
+
   app.post("/client/bookings/:id/cancel", async (c) => {
     const phone = await clientPhone(c);
     if (!phone) return noClient(c);
@@ -598,6 +610,8 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       payment_method: data.paymentMethod === undefined ? b.paymentMethod ?? null : data.paymentMethod,
       washer: data.washer === undefined ? b.washer ?? null : data.washer,
     };
+    if (next.payment === "paid" && b.payment !== "paid" && (next.payment_method === "terminal" || next.payment_method === "cash") && !next.washer)
+      return c.json({ error: "Укажите мойщика" }, 400);
     const row = (await sql`update bookings set wash = ${next.wash}, confirmed = ${next.confirmed}, payment = ${next.payment},
       payment_method = ${next.payment_method}, washer = ${next.washer}, updated_at = now() where id = ${id.data} returning *`.catch(overlapAsNull))?.[0];
     if (!row) return c.json({ error: "Это время уже занято другой записью" }, 409);

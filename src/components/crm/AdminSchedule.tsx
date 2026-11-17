@@ -600,6 +600,21 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
               <p className="mt-1">{METHOD_LABEL[b.paymentMethod!]} · {rub(sum)}{b.washer ? ` · ${b.washer}` : ""}</p>
             </div>
           )}
+          {b.wash === "done" && b.payment === "paid" && !b.washer && (
+            <div className="mt-3 rounded-lg bg-crm-warn p-3 text-crm-warn-foreground">
+              <p className="font-semibold">Укажите мойщика</p>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {WASHERS.map((w) => (
+                  <button key={w} type="button" onClick={() => setWasher(w)} aria-pressed={washer === w}
+                    className={`relative rounded-lg border bg-background px-1 py-2.5 text-sm font-medium text-foreground ${washer === w ? "border-2 border-crm text-crm" : "border-border"}`}>
+                    {washer === w && <Check className="absolute right-1 top-1 h-4 w-4 rounded-full bg-crm p-0.5 text-crm-foreground" />}
+                    {w}
+                  </button>
+                ))}
+              </div>
+              <button type="button" disabled={!washer} onClick={() => onUpdate((x) => ({ ...x, washer: washer ?? undefined }))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Сохранить мойщика</button>
+            </div>
+          )}
           {b.wash === "done" && b.payment !== "paid" && (
             <>
               <p className="text-base font-semibold">Способ оплаты</p>

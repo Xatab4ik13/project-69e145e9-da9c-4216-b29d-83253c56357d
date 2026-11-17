@@ -10,7 +10,7 @@ export const rustoreEnabled = Boolean(PROJECT && TOKEN);
 export const clientPushEnabled = rustoreEnabled || apnsEnabled;
 
 /** Sends one push to every device of the phone: iOS via APNs, Android via RuStore; dead tokens are dropped. */
-export async function notifyClient(sql: SQL, event: ClientEvent, b: Pick<Booking, "id" | "date" | "start" | "car" | "services" | "bonus" | "phone">) {
+export async function notifyClient(sql: SQL, event: ClientEvent, b: Pick<Booking, "id" | "date" | "start" | "car" | "services" | "bonus" | "phone"> & { confirmed?: boolean }) {
   const phone = (b.phone ?? "").replace(/\D/g, "").slice(-10);
   if (!clientPushEnabled || phone.length !== 10) return;
   const tokens = (await sql`select token, platform from client_push_tokens where phone = ${phone}`) as { token: string; platform: string }[];

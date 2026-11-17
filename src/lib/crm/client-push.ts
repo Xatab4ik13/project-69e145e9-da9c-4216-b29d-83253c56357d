@@ -10,11 +10,12 @@ export type ClientPush = { title: string; body: string; data: Record<string, str
 const day = (date: string) => date.split("-").reverse().slice(0, 2).join(".");
 const rub = (n: number) => `${n.toLocaleString("ru-RU").replace(/\u00a0/g, " ")} ₽`;
 
-export function clientPush(event: ClientEvent, b: Pick<Booking, "id" | "date" | "start" | "car" | "services" | "bonus">): ClientPush {
+export function clientPush(event: ClientEvent, b: Pick<Booking, "id" | "date" | "start" | "car" | "services" | "bonus"> & { confirmed?: boolean }): ClientPush {
   const when = `${day(b.date)} в ${fmtTime(b.start)}`;
   const data = { event, bookingId: b.id };
   switch (event) {
-    case "created": return { title: "Вы записаны", body: `${when} · ${b.car}. Ждём вас: Большевиков 18к2, парковка, 4 уровень`, data };
+    case "created": if (b.confirmed === false) return { title: "Подтвердите запись", body: `${when} · ${b.car}. Нажмите, чтобы подтвердить`, data: { ...data, confirmRequired: "1" } };
+      return { title: "Вы записаны", body: `${when} · ${b.car}. Ждём вас: Большевиков 18к2, парковка, 4 уровень`, data };
     case "reminder": return { title: "Скоро мойка", body: `Сегодня в ${fmtTime(b.start)} · ${b.car}`, data };
     case "ready": return { title: "Машина готова", body: `${b.car} · к оплате ${rub(total(b))}. Счёт в приложении`, data: { ...data, amount: String(total(b)) } };
     case "cancelled": return { title: "Запись отменена", body: `${when} · ${b.car}`, data };
