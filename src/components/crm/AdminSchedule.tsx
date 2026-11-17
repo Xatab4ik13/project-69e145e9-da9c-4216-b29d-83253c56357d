@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowRight, Banknote, Bell, Building2, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
+  ArrowRight, Banknote, Bell, Building2, Calendar, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, CircleHelp,
   Clock, CreditCard, HandCoins, LayoutDashboard, LogOut, Phone, Plus, Search, Smartphone, Star, User, Wallet, Wrench, X,
 } from "lucide-react";
 import { aquarius_logo as logo } from "@/assets/images";
@@ -442,21 +442,25 @@ function BookingCard({ b, selected, onClick }: { b: Booking; selected: boolean; 
   const h = b.duration * PX_PER_MIN;
   const extras = b.services.length - 1;
   const { Icon } = tone;
+  const needsWasher = b.wash === "done" && b.payment === "paid" && !b.washer;
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`absolute inset-x-2 flex flex-col justify-start overflow-hidden rounded-lg border px-3 py-1 text-left leading-tight transition-colors ${tone.card} ${selected ? "z-[5] ring-2 ring-crm ring-offset-2 ring-offset-background" : ""}`}
+      className={`absolute inset-x-2 flex flex-col justify-start overflow-hidden rounded-lg border px-3 py-1 text-left leading-tight transition-colors ${needsWasher ? "border-2 border-crm-alert-foreground bg-crm-alert text-crm-alert-foreground" : tone.card} ${selected ? "z-[5] ring-2 ring-crm ring-offset-2 ring-offset-background" : ""}`}
       style={{ top: (b.start - OPEN_MIN) * PX_PER_MIN + 1, height: h - 2 }}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
         <span className="shrink-0 whitespace-nowrap font-semibold">{fmtTime(b.start)} – {fmtTime(b.start + b.duration)}</span>
         {h > 45 && (
-          <span className={`flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold ${tone.badge}`}>
-            <Icon className="h-3 w-3" />{STATE_LABEL[state]}
+          <span className={`flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold ${needsWasher ? "bg-crm-alert-foreground text-crm-foreground" : tone.badge}`}>
+            {needsWasher ? <CircleAlert className="h-3 w-3" /> : <Icon className="h-3 w-3" />}{needsWasher ? "Нужен мойщик" : STATE_LABEL[state]}
           </span>
         )}
       </div>
+      {needsWasher && h > 110 && (
+        <p className="mt-1 flex items-center justify-center gap-1 rounded bg-crm-alert-foreground px-1.5 py-0.5 text-center text-xs font-bold uppercase text-crm-foreground">Укажите мойщика</p>
+      )}
       <p className="truncate font-semibold">{b.car}</p>
       {h > 60 && <p className="truncate text-xs opacity-80">{b.packageName}{extras > 0 ? ` + ${extras} доп${extras > 1 && extras < 5 ? "а" : extras >= 5 ? "ов" : ""}` : ""}</p>}
       {h > 70 && (
@@ -601,18 +605,19 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
             </div>
           )}
           {b.wash === "done" && b.payment === "paid" && !b.washer && (
-            <div className="mt-3 rounded-lg bg-crm-warn p-3 text-crm-warn-foreground">
-              <p className="font-semibold">Укажите мойщика</p>
+            <div className="mt-3 rounded-lg border-2 border-crm-alert-foreground bg-crm-alert p-3 text-crm-alert-foreground">
+              <p className="flex items-center gap-2 text-base font-bold uppercase"><CircleAlert className="h-5 w-5 shrink-0" /> Нужно указать мойщика</p>
+              <p className="mt-1 text-sm">Запись не закрыта: выберите мойщика и сохраните.</p>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {WASHERS.map((w) => (
                   <button key={w} type="button" onClick={() => setWasher(w)} aria-pressed={washer === w}
-                    className={`relative rounded-lg border bg-background px-1 py-2.5 text-sm font-medium text-foreground ${washer === w ? "border-2 border-crm text-crm" : "border-border"}`}>
-                    {washer === w && <Check className="absolute right-1 top-1 h-4 w-4 rounded-full bg-crm p-0.5 text-crm-foreground" />}
+                    className={`relative rounded-lg border bg-background px-1 py-2.5 text-sm font-medium text-foreground ${washer === w ? "border-2 border-crm-alert-foreground text-crm-alert-foreground" : "border-border"}`}>
+                    {washer === w && <Check className="absolute right-1 top-1 h-4 w-4 rounded-full bg-crm-alert-foreground p-0.5 text-crm-foreground" />}
                     {w}
                   </button>
                 ))}
               </div>
-              <button type="button" disabled={!washer} onClick={() => washer && onUpdate((x) => ({ ...x, washer }))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Сохранить мойщика</button>
+              <button type="button" disabled={!washer} onClick={() => washer && onUpdate((x) => ({ ...x, washer }))} className="mt-3 w-full rounded-lg bg-crm-alert-foreground py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Сохранить мойщика</button>
             </div>
           )}
           {b.wash === "done" && b.payment !== "paid" && (

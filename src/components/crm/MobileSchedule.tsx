@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  Bell, Building2, CalendarDays, ChevronLeft, ChevronRight, HandCoins, LayoutDashboard, Menu, Plus, Search, Star, User, Wallet, Wrench,
+  Bell, Building2, CalendarDays, ChevronLeft, ChevronRight, CircleAlert, HandCoins, LayoutDashboard, Menu, Plus, Search, Star, User, Wallet, Wrench,
   LogOut,
   Smartphone,
 } from "lucide-react";
@@ -242,20 +242,24 @@ function MobileBookingCard({ booking, onClick }: { booking: Booking; onClick: ()
   const tone = TONE[state];
   const { Icon } = tone;
   const extras = booking.services.length - 1;
+  const needsWasher = booking.wash === "done" && booking.payment === "paid" && !booking.washer;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative block w-full rounded-xl p-4 pr-8 text-left shadow-sm ${tone.card}`}
-      aria-label={`${booking.car}, ${fmtTime(booking.start)}–${fmtTime(booking.start + booking.duration)}, ${STATE_LABEL[state]}`}
+      className={`relative block w-full rounded-xl p-4 pr-8 text-left shadow-sm ${needsWasher ? "border-2 border-crm-alert-foreground bg-crm-alert text-crm-alert-foreground" : tone.card}`}
+      aria-label={`${booking.car}, ${fmtTime(booking.start)}–${fmtTime(booking.start + booking.duration)}, ${needsWasher ? "нужен мойщик" : STATE_LABEL[state]}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <span className="text-sm font-bold tabular-nums">{fmtTime(booking.start)}–{fmtTime(booking.start + booking.duration)}</span>
-        <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold ${tone.badge}`}>
-          <Icon className="h-3 w-3" /> {STATE_LABEL[state]}
+        <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold ${needsWasher ? "bg-crm-alert-foreground text-crm-foreground" : tone.badge}`}>
+          {needsWasher ? <CircleAlert className="h-3 w-3" /> : <Icon className="h-3 w-3" />} {needsWasher ? "Нужен мойщик" : STATE_LABEL[state]}
         </span>
       </div>
+      {needsWasher && (
+        <span className="mt-1 block rounded bg-crm-alert-foreground px-1.5 py-0.5 text-center text-xs font-bold uppercase text-crm-foreground">Укажите мойщика</span>
+      )}
       <span className="mt-1 block truncate text-base font-bold">{booking.car}</span>
       <span className="mt-0.5 block truncate text-xs opacity-80">
         {booking.packageName}{extras > 0 ? ` + ${extras} доп.` : ""}
