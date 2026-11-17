@@ -484,9 +484,9 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
   app.post("/client/push/token", async (c) => {
     const phone = await clientPhone(c);
     if (!phone) return noClient(c);
-    const data = await body(c, z.object({ token: z.string().min(10).max(500) }));
+    const data = await body(c, z.object({ token: z.string().min(10).max(500), platform: z.enum(["android", "ios"]).default("android") }));
     if (!data) return c.json({ error: "Неверный токен" }, 400);
-    await sql`insert into client_push_tokens (token, phone) values (${data.token}, ${phone}) on conflict (token) do update set phone = excluded.phone`;
+    await sql`insert into client_push_tokens (token, phone, platform) values (${data.token}, ${phone}, ${data.platform}) on conflict (token) do update set phone = excluded.phone, platform = excluded.platform`;
     return c.json({ ok: true });
   });
   app.delete("/client/push/token", async (c) => {

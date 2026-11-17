@@ -2,18 +2,26 @@ import type { SQL } from "bun";
 import { washNow } from "../../src/lib/crm/clock";
 import { clientPush, isClientReminderDue, type ClientEvent } from "../../src/lib/crm/client-push";
 import type { Booking } from "../../src/lib/crm/types";
+import { apnsEnabled, sendApns } from "./apns";
 
 const PROJECT = process.env.RUSTORE_PROJECT_ID ?? "";
 const TOKEN = process.env.RUSTORE_SERVICE_TOKEN ?? "";
 export const rustoreEnabled = Boolean(PROJECT && TOKEN);
+export const clientPushEnabled = rustoreEnabled || apnsEnabled;
 
-/** Sends one RuStore push to every device of the phone; dead tokens are dropped. */
+/** Sends one push to every device of the phone: iOS via APNs, Android via RuStore; dead tokens are dropped. */
 export async function notifyClient(sql: SQL, event: ClientEvent, b: Pick<Booking, "id" | "date" | "start" | "car" | "services" | "bonus" | "phone">) {
   const phone = (b.phone ?? "").replace(/\D/g, "").slice(-10);
-  if (!rustoreEnabled || phone.length !== 10) return;
-  const tokens = (await sql`select token from client_push_tokens where phone = ${phone}`) as { token: string }[];
+  if (!clientPushEnabled || phone.length !== 10) return;
+  const tokens = (await sql`select token, platform from client_push_tokens where phone = ${phone}`) as { token: string; platform: string }[];
   const msg = clientPush(event, b);
-  await Promise.all(tokens.map(async ({ token }) => {
+  await Promise.all(tokens.map(async ({ token, platform }) => {
+    if (platform === "ios") {
+      if (!apnsEnabled) return;
+      if (await sendApns(token, msg) === "dead") await sql`delete from client_push_tokens where token = ${token}`;
+      return;
+    }
+    if (!rustoreEnabled) return;
     const res = await fetch(`https://vkpns.rustore.ru/v1/projects/${PROJECT}/messages:send`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${TOKEN}` },
@@ -28,7 +36,7 @@ export async function notifyClient(sql: SQL, event: ClientEvent, b: Pick<Booking
 
 /** Runs every minute: «Скоро мойка» to app clients before today's bookings. */
 export async function runClientReminders(sql: SQL, at: Date = new Date()) {
-  if (!rustoreEnabled) return;
+  if (!clientPushEnabled) return;
   const { today, nowMin } = washNow(at);
   const rows = (await sql`select b.id, b.date, b.start_min, b.wash, b.car, b.phone, b.services, b.bonus from bookings b
     where b.date = ${today} and b.client_reminder_sent_at is null and b.wash = 'scheduled'
