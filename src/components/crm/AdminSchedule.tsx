@@ -59,6 +59,15 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
     const live = new Set(bookings.map((b) => b.id));
     return [...history.filter((b) => !live.has(b.id)), ...bookings];
   }, [history, bookings]);
+  /** Keep the open section across page reloads (per tab). */
+  useEffect(() => {
+    const saved = window.sessionStorage.getItem("crm-section") as AdminSection | null;
+    const view = window.sessionStorage.getItem("crm-schedule-view");
+    if (saved && (role === "owner" || !["dashboard", "finance", "washers", "app"].includes(saved))) setSection(saved);
+    if (view === "day" || view === "week") setScheduleView(view);
+  }, [role]);
+  useEffect(() => { window.sessionStorage.setItem("crm-section", section); }, [section]);
+  useEffect(() => { window.sessionStorage.setItem("crm-schedule-view", scheduleView); }, [scheduleView]);
   const ownerScreen = section === "dashboard" || section === "finance" || section === "washers" || section === "loyalty" || section === "clients";
   useEffect(() => {
     if (!ownerScreen) return;
@@ -68,8 +77,10 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
       api.finance().then((f) => { if (alive) { setOps(f.ops); setOverrides(f.overrides); } }, (e: ApiError) => alive && setLoadError(e.message));
     };
     pull();
-    const id = window.setInterval(pull, 60_000);
-    return () => { alive = false; window.clearInterval(id); };
+    const id = window.setInterval(pull, 20_000);
+    const onVisible = () => document.visibilityState === "visible" && pull();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { alive = false; window.clearInterval(id); document.removeEventListener("visibilitychange", onVisible); };
   }, [ownerScreen, today, onLogout]);
   const addOp = (op: FinOp) => api.addOp(op).then((saved) => setOps((l) => [...l, saved]), (e: Error) => setLoadError(`Не сохранилось: ${e.message}`));
   const removeOp = (id: string) => api.removeOp(id).then(() => setOps((l) => l.filter((o) => o.id !== id)), (e: Error) => setLoadError(`Не удалилось: ${e.message}`));
@@ -100,8 +111,11 @@ export function AdminSchedule({ role, onLogout }: { role: CrmRole; onLogout: () 
   }, [from, to, onLogout]);
   useEffect(() => {
     load();
-    const id = window.setInterval(load, 20_000);
-    return () => window.clearInterval(id);
+    const id = window.setInterval(load, 10_000);
+    const onVisible = () => document.visibilityState === "visible" && load();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", load);
+    return () => { window.clearInterval(id); document.removeEventListener("visibilitychange", onVisible); window.removeEventListener("focus", load); };
   }, [load]);
 
   const selected = bookings.find((b) => b.id === selectedId) ?? null;
