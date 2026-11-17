@@ -612,7 +612,7 @@ function OrderPanel({ b, onClose, onCancel, onUpdate, mobile = false }: { b: Boo
                   </button>
                 ))}
               </div>
-              <button type="button" disabled={!washer} onClick={() => onUpdate((x) => ({ ...x, washer: washer ?? undefined }))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Сохранить мойщика</button>
+              <button type="button" disabled={!washer} onClick={() => washer && onUpdate((x) => ({ ...x, washer }))} className="mt-3 w-full rounded-lg bg-crm py-3 text-base font-semibold text-crm-foreground disabled:opacity-50">Сохранить мойщика</button>
             </div>
           )}
           {b.wash === "done" && b.payment !== "paid" && (
