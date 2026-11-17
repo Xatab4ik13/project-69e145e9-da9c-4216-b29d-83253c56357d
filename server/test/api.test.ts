@@ -24,7 +24,7 @@ d("Aquarius API", () => {
 
   beforeAll(async () => {
     await sql.unsafe("drop schema public cascade; create schema public;");
-    for (const f of ["001_init.sql", "002_no_overlap.sql", "003_finance.sql", "004_push.sql", "005_client_auth.sql", "006_client_cars.sql", "007_bonus.sql", "008_client_push.sql", "009_payments.sql", "010_clients.sql"]) await sql.unsafe(readFileSync(join(import.meta.dir, "..", "migrations", f), "utf8"));
+    for (const f of ["001_init.sql", "002_no_overlap.sql", "003_finance.sql", "004_push.sql", "005_client_auth.sql", "006_client_cars.sql", "007_bonus.sql", "008_client_push.sql", "009_payments.sql", "010_clients.sql", "011_clients_no_name.sql", "012_client_push_platform.sql"]) await sql.unsafe(readFileSync(join(import.meta.dir, "..", "migrations", f), "utf8"));
     const hash = await Bun.password.hash("secret123");
     await sql`insert into users (login, password_hash, role) values ('owner', ${hash}, 'owner'), ('admin', ${hash}, 'admin')`;
   });
@@ -113,6 +113,38 @@ d("Aquarius API", () => {
     expect(fin.overrides).toEqual({ "2026-12": { rent: 100000 } });
     await call(`/crm/finance/ops/${saved.id}`, { method: "DELETE" }, owner);
     expect((await (await call("/crm/finance", {}, owner)).json()).ops).toEqual([]);
+  });
+
+  test("a CRM booking is confirmed by the client from the app", async () => {
+    const cookie = await login("admin");
+    const phone = "9003334455";
+    const res = await call("/crm/bookings", { method: "POST", body: JSON.stringify({
+      date: "2026-11-20", box: 1, start: 12 * 60, duration: 60, car: "Kia Rio", phone, packageName: "Стандарт",
+      services: [{ name: "x", price: 1200 }] }) }, cookie);
+    const { booking } = await res.json();
+    expect(booking.confirmed).toBe(false);
+    const token = crypto.randomUUID() + crypto.randomUUID();
+    const hash = new Bun.CryptoHasher("sha256").update(token).digest("hex");
+    await sql`insert into client_sessions (token_hash, phone, expires_at) values (${hash}, ${phone}, now() + interval '1 day')`;
+    const conf = await call(`/client/bookings/${booking.id}/confirm`, { method: "POST", headers: { authorization: `Bearer ${token}` } });
+    expect(conf.status).toBe(200);
+    expect((await conf.json()).booking.confirmed).toBe(true);
+    const list = (await (await call("/crm/bookings?from=2026-11-20&to=2026-11-20", {}, cookie)).json()).bookings;
+    expect(list.find((b: { id: string }) => b.id === booking.id).confirmed).toBe(true);
+  });
+
+  test("closing a wash with cash or terminal requires a washer", async () => {
+    const cookie = await login("owner");
+    const res = await call("/crm/bookings", { method: "POST", body: JSON.stringify({
+      date: "2026-11-21", box: 2, start: 12 * 60, duration: 60, car: "Lada", phone: "9005556677", packageName: "Стандарт",
+      services: [{ name: "x", price: 1200 }] }) }, cookie);
+    const { booking } = await res.json();
+    await call(`/crm/bookings/${booking.id}`, { method: "PATCH", body: JSON.stringify({ wash: "done", payment: "awaiting", paymentMethod: "cash" }) }, cookie);
+    const noWasher = await call(`/crm/bookings/${booking.id}`, { method: "PATCH", body: JSON.stringify({ payment: "paid" }) }, cookie);
+    expect(noWasher.status).toBe(400);
+    const withWasher = await call(`/crm/bookings/${booking.id}`, { method: "PATCH", body: JSON.stringify({ payment: "paid", washer: "Рома" }) }, cookie);
+    expect(withWasher.status).toBe(200);
+    expect((await withWasher.json()).booking.washer).toBe("Рома");
   });
 });
 
