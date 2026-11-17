@@ -295,6 +295,15 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
   app.post("/auth/client/code", async (c) => {
     const data = await body(c, z.object({ phone: phoneSchema }));
     if (!data) return c.json({ error: "Введите номер телефона" }, 400);
+    // Тестовый вход для ревьюеров App Store / RuStore: постоянный код без Telegram.
+    const reviewPhone = (process.env.REVIEW_PHONE ?? "").replace(/\D/g, "").slice(-10);
+    const reviewCode = process.env.REVIEW_CODE ?? "";
+    if (reviewPhone && /^\d{6}$/.test(reviewCode) && data.phone === reviewPhone) {
+      await sql`insert into client_auth_codes (phone, code_hash, attempts, expires_at)
+        values (${data.phone}, ${sha256(reviewCode)}, 0, now() + ${`${CODE_TTL_MIN} minutes`}::interval)
+        on conflict (phone) do update set code_hash = excluded.code_hash, attempts = 0, expires_at = excluded.expires_at, created_at = now()`;
+      return c.json({ ok: true, ttl: CODE_TTL_MIN * 60 });
+    }
     if (!codeRequestLimit(data.phone)) return c.json({ error: "Код уже отправлен. Подождите минуту." }, 429);
     if (!codeDayLimit(data.phone)) return c.json({ error: "Слишком много кодов за сутки. Попробуйте завтра." }, 429);
 
