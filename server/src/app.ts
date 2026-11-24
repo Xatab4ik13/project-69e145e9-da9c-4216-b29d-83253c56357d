@@ -9,6 +9,7 @@ import { washNow } from "../../src/lib/crm/clock";
 import { carInfo, logoFile, searchCars } from "./carsbase";
 import { notifyAll, vapidPublicKey } from "./push";
 import { sendTelegramCode } from "./telegram";
+import { sendSmsCode } from "./sms";
 import { notifyClient } from "./rustore";
 import { tbankConfigured, tbankInit, verifyNotification } from "./tbank";
 import { eventForChange } from "../../src/lib/crm/client-push";
@@ -289,12 +290,15 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
   // ---------- client auth (приложение, код из Telegram) ----------
   const codeRequestLimit = limiter(1, 60_000); // 1 код в минуту на номер
   const codeDayLimit = limiter(5, 24 * 60 * 60_000); // не больше 5 кодов в сутки
+  const smsMinuteLimit = limiter(1, 60_000); // SMS: 1 в минуту на номер
+  const smsHourLimit = limiter(3, 60 * 60_000); // SMS: не больше 3 в час на номер
   const CODE_TTL_MIN = 5;
   const CODE_MAX_ATTEMPTS = 5;
 
   app.post("/auth/client/code", async (c) => {
-    const data = await body(c, z.object({ phone: phoneSchema }));
+    const data = await body(c, z.object({ phone: phoneSchema, channel: z.enum(["sms", "telegram"]).optional() }));
     if (!data) return c.json({ error: "Введите номер телефона" }, 400);
+    const channel = data.channel ?? "telegram";
     // Тестовый вход для ревьюеров App Store / RuStore: постоянный код без Telegram.
     const reviewPhone = (process.env.REVIEW_PHONE ?? "").replace(/\D/g, "").slice(-10);
     const reviewCode = process.env.REVIEW_CODE ?? "";
@@ -302,22 +306,25 @@ export function createApp(sql: SQL, opts: { secureCookie: boolean; now?: () => D
       await sql`insert into client_auth_codes (phone, code_hash, attempts, expires_at)
         values (${data.phone}, ${sha256(reviewCode)}, 0, now() + ${`${CODE_TTL_MIN} minutes`}::interval)
         on conflict (phone) do update set code_hash = excluded.code_hash, attempts = 0, expires_at = excluded.expires_at, created_at = now()`;
-      return c.json({ ok: true, ttl: CODE_TTL_MIN * 60 });
+      return c.json({ ok: true, ttl: CODE_TTL_MIN * 60, channel });
     }
-    if (!codeRequestLimit(data.phone)) return c.json({ error: "Код уже отправлен. Подождите минуту." }, 429);
-    if (!codeDayLimit(data.phone)) return c.json({ error: "Слишком много кодов за сутки. Попробуйте завтра." }, 429);
+    if (channel === "sms") {
+      if (!smsMinuteLimit(data.phone)) return c.json({ error: "Слишком много попыток. Подождите минуту." }, 429);
+      if (!smsHourLimit(data.phone)) return c.json({ error: "Слишком много попыток. Попробуйте через час." }, 429);
+    } else if (!codeRequestLimit(data.phone)) return c.json({ error: "Код уже отправлен. Подождите минуту." }, 429);
+    if (channel === "telegram" && !codeDayLimit(data.phone)) return c.json({ error: "Слишком много кодов за сутки. Попробуйте завтра." }, 429);
 
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const sent = await sendTelegramCode(`+7${data.phone}`, code);
+    const sent = channel === "sms" ? await sendSmsCode(data.phone, code) : await sendTelegramCode(`+7${data.phone}`, code);
     if (!sent.ok) {
-      console.error("telegram gateway:", sent.error);
+      console.error(channel === "sms" ? "smspilot:" : "telegram gateway:", sent.error);
       return c.json({ error: "Не удалось отправить код. Попробуйте позже." }, 502);
     }
 
     await sql`insert into client_auth_codes (phone, code_hash, attempts, expires_at)
       values (${data.phone}, ${sha256(code)}, 0, now() + ${`${CODE_TTL_MIN} minutes`}::interval)
       on conflict (phone) do update set code_hash = excluded.code_hash, attempts = 0, expires_at = excluded.expires_at, created_at = now()`;
-    return c.json({ ok: true, ttl: CODE_TTL_MIN * 60 });
+    return c.json({ ok: true, ttl: CODE_TTL_MIN * 60, channel });
   });
 
   app.post("/auth/client/verify", async (c) => {
