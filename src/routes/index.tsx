@@ -11,6 +11,7 @@ import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronRight, Clock, Copy, Corne
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { parking_map_aquarius as imgMap } from "@/assets/images";
 import { parking_car_4 as imgParkCar } from "@/assets/images";
+import appIphones from "@/assets/aquarius-app-iphones.webp.asset.json";
 
 const ADDRESS = "Санкт-Петербург, проспект Большевиков, 18к2";
 const PHONE = "+7 (904) 511-73-96";
@@ -198,7 +199,18 @@ function AppPromo() {
   ];
   return (
     <section data-nav="app" className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
-      <div className="grid gap-8 rounded-2xl bg-muted p-8 max-md:gap-4 max-md:p-4 md:grid-cols-[1.2fr_1fr]">
+      <div className="grid gap-8 rounded-2xl bg-muted p-8 max-md:gap-4 max-md:p-4 md:grid-cols-[1fr_1.2fr]">
+        <div className="flex items-center justify-center max-md:min-h-[200px]">
+          <img
+            src={appIphones.url}
+            alt="Приложение Aquarius на двух iPhone: главная страница и раздел бонусов"
+            width={900}
+            height={822}
+            loading="lazy"
+            decoding="async"
+            className="h-auto max-h-[420px] w-full max-w-[460px] rounded-2xl object-contain"
+          />
+        </div>
         <div>
           <h2 className="font-display text-4xl uppercase">Aquarius в вашем телефоне</h2>
           <p className="mt-2 max-md:hidden">Ваш автомобиль, любимая мойка и бонусная карта — всегда под рукой.</p>
@@ -221,7 +233,6 @@ function AppPromo() {
             </ul>
           </div>
         </div>
-        <div className="min-h-[320px] max-md:order-first max-md:min-h-[200px]" aria-hidden="true" />
       </div>
     </section>
   );

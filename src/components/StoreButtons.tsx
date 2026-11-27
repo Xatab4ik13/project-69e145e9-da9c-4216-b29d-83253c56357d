@@ -30,9 +30,13 @@ export function GooglePlayLogo({ className }: { className?: string }) {
 const BTN =
   "inline-flex items-center gap-2 rounded-lg border border-foreground bg-background px-4 py-1.5 font-semibold leading-tight";
 
+// Приложение в App Store.
+export const APP_STORE_URL =
+  "https://apps.apple.com/ru/app/aquarius-%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%BE%D0%B9%D0%BA%D0%B0/id6835844181";
+
 export function AppStoreButton({ className = "" }: { className?: string }) {
   return (
-    <a href="#" className={`${BTN} ${className}`}>
+    <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" className={`${BTN} ${className}`}>
       <AppleLogo className="h-6 w-6 shrink-0" />
       <span className="flex flex-col text-left"><span className="text-[10px] font-normal">Загрузите в</span>App Store</span>
     </a>
