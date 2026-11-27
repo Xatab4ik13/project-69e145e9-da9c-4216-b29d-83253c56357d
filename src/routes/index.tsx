@@ -199,18 +199,7 @@ function AppPromo() {
   ];
   return (
     <section data-nav="app" className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
-      <div className="grid gap-8 rounded-2xl bg-muted p-8 max-md:gap-4 max-md:p-4 md:grid-cols-[1fr_1.2fr]">
-        <div className="flex items-center justify-center max-md:min-h-[200px]">
-          <img
-            src={imgAppIphones.url}
-            alt="Приложение Aquarius на двух iPhone: главная страница и раздел бонусов"
-            width={900}
-            height={822}
-            loading="lazy"
-            decoding="async"
-            className="h-auto max-h-[420px] w-full max-w-[460px] rounded-2xl object-contain"
-          />
-        </div>
+      <div className="grid gap-8 rounded-2xl bg-muted p-8 max-md:gap-4 max-md:p-4 md:grid-cols-[1.2fr_1fr]">
         <div>
           <h2 className="font-display text-4xl uppercase">Aquarius в вашем телефоне</h2>
           <p className="mt-2 max-md:hidden">Ваш автомобиль, любимая мойка и бонусная карта — всегда под рукой.</p>
@@ -232,6 +221,17 @@ function AppPromo() {
               <li>История визитов</li>
             </ul>
           </div>
+        </div>
+        <div className="flex items-center justify-center max-md:min-h-[200px]">
+          <img
+            src={imgAppIphones.url}
+            alt="Приложение Aquarius на двух iPhone: главная страница и раздел бонусов"
+            width={900}
+            height={822}
+            loading="lazy"
+            decoding="async"
+            className="h-auto max-h-[420px] w-full max-w-[460px] object-contain"
+          />
         </div>
       </div>
     </section>
