@@ -1,5 +1,6 @@
 // Картинки лежат в public/images и отдаются тем же сервером, что и сайт.
 export const aquarius_logo = { url: "/images/aquarius-logo.webp" };
+export const app_iphones = { url: "/images/aquarius-app-iphones.webp" };
 export const car_wash_hero = { url: "/images/car-wash-hero.webp" };
 export const care_antirain = { url: "/images/care-antirain.webp" };
 export const care_body_degrease = { url: "/images/care-body-degrease.webp" };

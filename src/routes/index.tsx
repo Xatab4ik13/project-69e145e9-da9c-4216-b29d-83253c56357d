@@ -11,7 +11,7 @@ import { ArrowLeft, ArrowRight, ArrowUp, Check, ChevronRight, Clock, Copy, Corne
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { parking_map_aquarius as imgMap } from "@/assets/images";
 import { parking_car_4 as imgParkCar } from "@/assets/images";
-import appIphones from "@/assets/aquarius-app-iphones.webp.asset.json";
+import { app_iphones as imgAppIphones } from "@/assets/images";
 
 const ADDRESS = "Санкт-Петербург, проспект Большевиков, 18к2";
 const PHONE = "+7 (904) 511-73-96";
@@ -202,7 +202,7 @@ function AppPromo() {
       <div className="grid gap-8 rounded-2xl bg-muted p-8 max-md:gap-4 max-md:p-4 md:grid-cols-[1fr_1.2fr]">
         <div className="flex items-center justify-center max-md:min-h-[200px]">
           <img
-            src={appIphones.url}
+            src={imgAppIphones.url}
             alt="Приложение Aquarius на двух iPhone: главная страница и раздел бонусов"
             width={900}
             height={822}
